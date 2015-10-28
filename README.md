@@ -42,12 +42,23 @@ docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup 
 API
 ---
 
-* Memory consumption (in bytes)
+* Memory consumption
 
     `GET /containers/:id/mem`
 
     Return 200 OK
-    Content-Type: text/plain
+    Content-Type: application/json
+
+```json
+{
+  "mem_usage": 123,
+  "mem_limit": 5000,
+  "max_mem_usage": 500,
+  "max_swap_mem_usage": 200,
+  "swap_mem_usage": 145,
+  "swap_mem_limit": 1000
+}
+```
 
 * CPU usage (percentage)
 

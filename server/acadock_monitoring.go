@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -15,15 +16,21 @@ import (
 	"github.com/codegangsta/martini"
 )
 
-func containerMemUsageHandler(params martini.Params) (int, string) {
+func containerMemUsageHandler(params martini.Params, res http.ResponseWriter) {
 	id := params["id"]
 
-	containerMemory, err := mem.GetUsage(id)
+	containerMemoryUsage, err := mem.GetUsage(id)
 	if err != nil {
-		return 500, err.Error()
+		res.WriteHeader(500)
+		res.Header().Set("Content-Type", "text/plain")
+		fmt.Fprintf(res, err.Error())
+		return
 	}
-	containerMemoryStr := strconv.FormatInt(containerMemory, 10)
-	return 200, containerMemoryStr
+
+	res.WriteHeader(200)
+	res.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(res).Encode(&containerMemoryUsage)
 }
 
 func containerCpuUsageHandler(params martini.Params) (int, string) {

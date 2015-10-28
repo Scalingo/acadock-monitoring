@@ -6,8 +6,11 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/Scalingo/acadock-monitoring/mem"
 	"gopkg.in/errgo.v1"
 )
+
+type MemoryUsage mem.Usage
 
 type Client struct {
 	Endpoint string

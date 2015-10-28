@@ -1,9 +1,10 @@
 # CHANGELOG
 
-## To be released
+## v0.2.0
 
 * Can run in a container
 * Stats of net interface of containers
+* More memory stats
 
 ## v0.1.2
 
