@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -26,15 +27,17 @@ func NewClient(endpoint string) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) Memory(dockerId string) (int64, error) {
+func (c *Client) Memory(dockerId string) (*MemoryUsage, error) {
 	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/mem", nil)
 	if err != nil {
-		return -1, errgo.Mask(err)
+		return nil, errgo.Mask(err)
 	}
+	defer req.Body.Close()
 
-	mem, err := c.getInt(req)
+	var mem *MemoryUsage
+	err = json.NewDecoder(req.Body).Decode(&mem)
 	if err != nil {
-		return -1, errgo.Mask(err)
+		return nil, errgo.Mask(err)
 	}
 
 	return mem, nil
@@ -45,6 +48,7 @@ func (c *Client) CpuUsage(dockerId string) (int64, error) {
 	if err != nil {
 		return -1, errgo.Mask(err)
 	}
+	defer req.Body.Close()
 
 	cpu, err := c.getInt(req)
 	if err != nil {
@@ -65,7 +69,6 @@ func (c *Client) getInt(req *http.Request) (int64, error) {
 	if err != nil {
 		return -1, errgo.Mask(err)
 	}
-	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
