@@ -3,12 +3,34 @@ package runner
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"os/exec"
 
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/go-netns"
 	"github.com/Scalingo/go-netstat"
 )
+
+var (
+	netstatBinPath     string
+	netstatBinName     = "acadock-monitoring-ns-netstat"
+	alternativeBinPath = config.ENV["RUNNER_DIR"] + "/" + netstatBinName + "/" + netstatBinName
+)
+
+func init() {
+	var err error
+	netstatBinPath, err = exec.LookPath(netstatBinName)
+	if err != nil {
+		_, err := os.Stat(alternativeBinPath)
+		if err != nil {
+			panic(err)
+		} else {
+			netstatBinPath = alternativeBinPath
+			return
+		}
+		panic(err)
+	}
+}
 
 func NetStatsRunner(pid string) (netstat.NetworkStats, error) {
 	ns, err := netns.SetnsFromProcDir(config.ENV["PROC_DIR"] + "/" + pid)
@@ -18,7 +40,7 @@ func NetStatsRunner(pid string) (netstat.NetworkStats, error) {
 	defer ns.Close()
 
 	stdout := new(bytes.Buffer)
-	cmd := exec.Command(config.ENV["RUNNER_DIR"] + "/net")
+	cmd := exec.Command(netstatBinPath)
 	cmd.Stdout = stdout
 	err = cmd.Start()
 	if err != nil {
