@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.2.1
+
+* Change runner PATH model
+* Rename net runner to acadock-monitoring-ns-netstat
+
 ## v0.2.0
 
 * Can run in a container
