@@ -26,9 +26,7 @@ func init() {
 			panic(err)
 		} else {
 			netstatBinPath = alternativeBinPath
-			return
 		}
-		panic(err)
 	}
 }
 
