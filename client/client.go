@@ -32,10 +32,16 @@ func (c *Client) Memory(dockerId string) (*MemoryUsage, error) {
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
-	defer req.Body.Close()
+
+	res, err := c.do(req)
+	if err != nil {
+		return nil, errgo.Mask(err)
+	}
+
+	defer res.Body.Close()
 
 	var mem *MemoryUsage
-	err = json.NewDecoder(req.Body).Decode(&mem)
+	err = json.NewDecoder(res.Body).Decode(&mem)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
@@ -48,7 +54,6 @@ func (c *Client) CpuUsage(dockerId string) (int64, error) {
 	if err != nil {
 		return -1, errgo.Mask(err)
 	}
-	defer req.Body.Close()
 
 	cpu, err := c.getInt(req)
 	if err != nil {
@@ -69,6 +74,7 @@ func (c *Client) getInt(req *http.Request) (int64, error) {
 	if err != nil {
 		return -1, errgo.Mask(err)
 	}
+	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
