@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Scalingo/go-netstat"
+	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/acadock-monitoring/runner"
+	"github.com/Scalingo/go-netstat"
 )
 
 var (
@@ -59,22 +60,18 @@ func monitorContainer(id string, iface string) {
 	}
 }
 
-type NetUsage struct {
-	netstat.NetworkStat
-	RxBps int64
-	TxBps int64
-}
+type Usage client.NetUsage
 
-func GetUsage(id string) (*NetUsage, error) {
+func GetUsage(id string) (Usage, error) {
 	id, err := docker.ExpandId(id)
 	if err != nil {
-		return nil, err
+		return Usage{}, err
 	}
-	usage := NetUsage{}
+	usage := Usage{}
 	usage.NetworkStat = netUsages[id]
 	usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousNetUsages[id].Received.Bytes) / float64(config.RefreshTime))
 	usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousNetUsages[id].Transmit.Bytes) / float64(config.RefreshTime))
-	return &usage, nil
+	return usage, nil
 }
 
 func stopMonitoring(id string) {

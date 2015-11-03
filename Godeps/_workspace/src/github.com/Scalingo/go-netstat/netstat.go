@@ -10,20 +10,20 @@ import (
 type NetworkStats []NetworkStat
 
 type networkInfo struct {
-	Bytes      int64
-	Packets    int64
-	Drop       int64
-	Errs       int64
-	Fifo       int64
-	Frame      int64
-	Compressed int64
-	Multicast  int64
+	Bytes      int64 `json:"bytes"`
+	Packets    int64 `json:"packets"`
+	Drop       int64 `json:"drop"`
+	Errs       int64 `json:"errs"`
+	Fifo       int64 `json:"fifo"`
+	Frame      int64 `json:"frame"`
+	Compressed int64 `json:"compressed"`
+	Multicast  int64 `json:"multicast"`
 }
 
 type NetworkStat struct {
-	Interface string
-	Received  networkInfo
-	Transmit  networkInfo
+	Interface string      `json:"interface"`
+	Received  networkInfo `json:"received"`
+	Transmit  networkInfo `json:"transmit"`
 }
 
 func Stats() (NetworkStats, error) {

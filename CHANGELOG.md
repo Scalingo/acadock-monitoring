@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v0.3.0
+
+* /containers/:id/cpu returns an object with `.usage_in_percents`
+* /containers/:id/memory drops `.swap_memory_usage`, `.swap_memory_limit` and `.max_swap_memory`
+* /containers/:id/memory get `.swap_usage`, `.swap_limit` and `.max_swap_usage`
+* NEW /containers/:id/usage to get cpu + mem and optionally net usage
+
 ## v0.2.4
 
 * Remove dependency to app from API client (client package)

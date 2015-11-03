@@ -92,20 +92,20 @@ func monitorContainer(id string) {
 	}
 }
 
-func GetUsage(id string) (*Usage, error) {
+func GetUsage(id string) (Usage, error) {
 	id, err := docker.ExpandId(id)
 	if err != nil {
 		log.Println("Error when expanding id:", err)
-		return nil, err
+		return Usage{}, err
 	}
 	if _, ok := previousCpuUsages[id]; !ok {
-		return nil, nil
+		return Usage{}, nil
 	}
 	deltaCpuUsage := float64(cpuUsages[id] - previousCpuUsages[id])
 	deltaSystemCpuUsage := float64(currentSystemUsage[id] - previousSystemUsage[id])
 
 	percents := int(deltaCpuUsage / deltaSystemCpuUsage * 100 * float64(runtime.NumCPU()))
-	return &Usage{
+	return Usage{
 		UsageInPercents: percents,
 	}, nil
 }

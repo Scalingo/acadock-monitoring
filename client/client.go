@@ -2,9 +2,11 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
+	"github.com/Scalingo/go-netstat"
 	"gopkg.in/errgo.v1"
 )
 
@@ -21,8 +23,20 @@ type CpuUsage struct {
 	UsageInPercents int `json:"usage_in_percents"`
 }
 
+type NetUsage struct {
+	netstat.NetworkStat
+	RxBps int64 `json:"rx_bps"`
+	TxBps int64 `json:"tx_bps"`
+}
+
 type Client struct {
 	Endpoint string
+}
+
+type Usage struct {
+	Memory *MemoryUsage `json:"memory"`
+	Cpu    *CpuUsage    `json:"cpu"`
+	Net    *NetUsage    `json:"net,omitempty"`
 }
 
 func NewClient(endpoint string) (*Client, error) {
@@ -36,47 +50,65 @@ func NewClient(endpoint string) (*Client, error) {
 }
 
 func (c *Client) Memory(dockerId string) (*MemoryUsage, error) {
-	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/mem", nil)
-	if err != nil {
-		return nil, errgo.Mask(err)
-	}
-
-	res, err := c.do(req)
-	if err != nil {
-		return nil, errgo.Mask(err)
-	}
-
-	defer res.Body.Close()
-
 	var mem *MemoryUsage
-	err = json.NewDecoder(res.Body).Decode(&mem)
+	err := c.getResource(dockerId, "mem", mem)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
-
 	return mem, nil
 }
 
 func (c *Client) CpuUsage(dockerId string) (*CpuUsage, error) {
-	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/cpu", nil)
+	var cpu *CpuUsage
+	err := c.getResource(dockerId, "cpu", cpu)
 	if err != nil {
 		return nil, errgo.Mask(err)
+	}
+	return cpu, nil
+}
+
+func (c *Client) NetUsage(dockerId string) (*NetUsage, error) {
+	var net *NetUsage
+	err := c.getResource(dockerId, "net", net)
+	if err != nil {
+		return nil, errgo.Mask(err)
+	}
+
+	return net, nil
+}
+
+func (c *Client) Usage(dockerId string, net bool) (*Usage, error) {
+	var usage *Usage
+	err := c.getResourceWithQuery(dockerId, "usage", fmt.Sprintf("net=%v", net), usage)
+	if err != nil {
+		return nil, errgo.Mask(err)
+	}
+	return usage, nil
+}
+
+func (c *Client) getResource(dockerId, resourceType string, data interface{}) error {
+	return c.getResourceWithQuery(dockerId, resourceType, "", data)
+}
+
+func (c *Client) getResourceWithQuery(dockerId, resourceType string, query string, data interface{}) error {
+	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/"+resourceType+"&"+query, nil)
+	if err != nil {
+		return errgo.Mask(err)
 	}
 
 	res, err := c.do(req)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return errgo.Mask(err)
 	}
 
 	defer res.Body.Close()
 
-	var cpu *CpuUsage
-	err = json.NewDecoder(res.Body).Decode(&cpu)
+	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return errgo.Mask(err)
 	}
 
-	return cpu, nil
+	return nil
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {

@@ -9,11 +9,49 @@ import (
 	"net/http"
 	"net/http/pprof"
 
+	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/cpu"
 	"github.com/Scalingo/acadock-monitoring/mem"
 	"github.com/Scalingo/acadock-monitoring/net"
 	"github.com/codegangsta/martini"
 )
+
+func containerUsageHandler(res http.ResponseWriter, req *http.Request, params martini.Params) {
+	id := params["id"]
+	usage := client.Usage{}
+
+	memUsage, err := mem.GetUsage(id)
+	if err != nil {
+		res.WriteHeader(500)
+		res.Header().Set("Content-Type", "text/plain")
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+	usage.Memory = &memUsage.MemoryUsage
+
+	cpuUsage, err := cpu.GetUsage(id)
+	if err != nil {
+		res.WriteHeader(500)
+		res.Header().Set("Content-Type", "text/plain")
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+	usage.Cpu = (*client.CpuUsage)(&cpuUsage)
+
+	if req.URL.Query().Get("net") == "true" {
+		netUsage, err := net.GetUsage(id)
+		if err != nil {
+			res.WriteHeader(500)
+			res.Header().Set("Content-Type", "text/plain")
+			res.Write([]byte(err.Error()))
+			return
+		}
+		usage.Net = (*client.NetUsage)(&netUsage)
+	}
+
+	res.WriteHeader(200)
+	json.NewEncoder(res).Encode(&usage)
+}
 
 func containerMemUsageHandler(params martini.Params, res http.ResponseWriter) {
 	id := params["id"]
@@ -72,6 +110,7 @@ func main() {
 	r.Get("/containers/:id/mem", containerMemUsageHandler)
 	r.Get("/containers/:id/cpu", containerCpuUsageHandler)
 	r.Get("/containers/:id/net", containerNetUsageHandler)
+	r.Get("/containers/:id/usage", containerUsageHandler)
 
 	if *doProfile {
 		log.Println("Enable profiling")
