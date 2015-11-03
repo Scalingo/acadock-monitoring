@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v0.2.4
+
+* Remove dependency to app from API client (client package)
+
+## v0.2.3
+
+* Fix nil exception when looking for memory data
+
+## v0.2.2
+
+* Update client package to fit new API
+
 ## v0.2.1
 
 * Change runner PATH model

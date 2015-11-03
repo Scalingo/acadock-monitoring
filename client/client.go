@@ -7,11 +7,17 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/Scalingo/acadock-monitoring/mem"
 	"gopkg.in/errgo.v1"
 )
 
-type MemoryUsage mem.Usage
+type MemoryUsage struct {
+	MemoryUsage        int64 `json:"memory_usage"`
+	SwapMemoryUsage    int64 `json:"swap_memory_usage"`
+	MemoryLimit        int64 `json:"memory_limit"`
+	SwapMemoryLimit    int64 `json:"swap_memory_limit"`
+	MaxMemoryUsage     int64 `json:"max_memory_usage"`
+	MaxSwapMemoryUsage int64 `json:"max_swap_memory_usage"`
+}
 
 type Client struct {
 	Endpoint string

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 )
@@ -19,14 +20,7 @@ const (
 	LXC_MAX_SWAP_MEM_FILE   = "memory.memsw.max_usage_in_bytes"
 )
 
-type Usage struct {
-	MemoryUsage        int64 `json:"memory_usage"`
-	SwapMemoryUsage    int64 `json:"swap_memory_usage"`
-	MemoryLimit        int64 `json:"memory_limit"`
-	SwapMemoryLimit    int64 `json:"swap_memory_limit"`
-	MaxMemoryUsage     int64 `json:"max_memory_usage"`
-	MaxSwapMemoryUsage int64 `json:"max_swap_memory_usage"`
-}
+type Usage client.MemoryUsage
 
 func GetUsage(id string) (Usage, error) {
 	usage := Usage{}
