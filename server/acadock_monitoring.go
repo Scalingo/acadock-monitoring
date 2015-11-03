@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"strconv"
 
 	"net/http"
 	"net/http/pprof"
@@ -33,15 +32,18 @@ func containerMemUsageHandler(params martini.Params, res http.ResponseWriter) {
 	json.NewEncoder(res).Encode(&containerMemoryUsage)
 }
 
-func containerCpuUsageHandler(params martini.Params) (int, string) {
+func containerCpuUsageHandler(res http.ResponseWriter, req *http.Request, params martini.Params) {
 	id := params["id"]
 
-	containerCpu, err := cpu.GetUsage(id)
+	containerCpuUsage, err := cpu.GetUsage(id)
 	if err != nil {
-		return 200, err.Error()
+		res.WriteHeader(500)
+		res.Header().Set("Content-Type", "text/plain")
+		fmt.Fprintf(res, err.Error())
+		return
 	}
-	containerCpuStr := strconv.FormatInt(containerCpu, 10)
-	return 200, containerCpuStr
+	res.WriteHeader(200)
+	json.NewEncoder(res).Encode(&containerCpuUsage)
 }
 
 func containerNetUsageHandler(params martini.Params, res http.ResponseWriter) {
@@ -49,6 +51,8 @@ func containerNetUsageHandler(params martini.Params, res http.ResponseWriter) {
 
 	containerNet, err := net.GetUsage(id)
 	if err != nil {
+		res.WriteHeader(500)
+		res.Header().Set("Content-Type", "text/plain")
 		res.Write([]byte(err.Error()))
 		return
 	}

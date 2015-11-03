@@ -20,7 +20,12 @@ const (
 	LXC_MAX_SWAP_MEM_FILE   = "memory.memsw.max_usage_in_bytes"
 )
 
-type Usage client.MemoryUsage
+type Usage struct {
+	client.MemoryUsage
+	SwapMemoryUsage    int64 `json:"-"`
+	SwapMemoryLimit    int64 `json:"-"`
+	MaxSwapMemoryUsage int64 `json:"-"`
+}
 
 func GetUsage(id string) (Usage, error) {
 	usage := Usage{}
@@ -36,7 +41,7 @@ func GetUsage(id string) (Usage, error) {
 	go readMemoryCgroupInt64Async(id, LXC_MAX_MEM_FILE, &usage.MaxMemoryUsage, errors, wg)
 	go readMemoryCgroupInt64Async(id, LXC_MAX_SWAP_MEM_FILE, &usage.MaxSwapMemoryUsage, errors, wg)
 	go readMemoryCgroupInt64Async(id, LXC_MEM_LIMIT_FILE, &usage.MemoryLimit, errors, wg)
-	go readMemoryCgroupInt64Async(id, LXC_MEM_USAGE_FILE, &usage.MemoryUsage, errors, wg)
+	go readMemoryCgroupInt64Async(id, LXC_MEM_USAGE_FILE, &usage.MemoryUsage.MemoryUsage, errors, wg)
 	go readMemoryCgroupInt64Async(id, LXC_SWAP_MEM_LIMIT_FILE, &usage.SwapMemoryLimit, errors, wg)
 	go readMemoryCgroupInt64Async(id, LXC_SWAP_MEM_USAGE_FILE, &usage.SwapMemoryUsage, errors, wg)
 
@@ -51,6 +56,9 @@ func GetUsage(id string) (Usage, error) {
 		}
 	}
 
+	usage.SwapUsage = usage.SwapMemoryUsage - usage.MemoryUsage.MemoryUsage
+	usage.SwapLimit = usage.SwapMemoryLimit - usage.MemoryLimit
+	usage.MaxSwapUsage = usage.MaxSwapMemoryUsage - usage.MaxMemoryUsage
 	return usage, nil
 }
 

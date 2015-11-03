@@ -2,21 +2,23 @@ package client
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"gopkg.in/errgo.v1"
 )
 
 type MemoryUsage struct {
-	MemoryUsage        int64 `json:"memory_usage"`
-	SwapMemoryUsage    int64 `json:"swap_memory_usage"`
-	MemoryLimit        int64 `json:"memory_limit"`
-	SwapMemoryLimit    int64 `json:"swap_memory_limit"`
-	MaxMemoryUsage     int64 `json:"max_memory_usage"`
-	MaxSwapMemoryUsage int64 `json:"max_swap_memory_usage"`
+	MemoryUsage    int64 `json:"memory_usage"`
+	SwapUsage      int64 `json:"swap_usage"`
+	MemoryLimit    int64 `json:"memory_limit"`
+	SwapLimit      int64 `json:"swap_limit"`
+	MaxMemoryUsage int64 `json:"max_memory_usage"`
+	MaxSwapUsage   int64 `json:"max_swap_usage"`
+}
+
+type CpuUsage struct {
+	UsageInPercents int `json:"usage_in_percents"`
 }
 
 type Client struct {
@@ -55,42 +57,30 @@ func (c *Client) Memory(dockerId string) (*MemoryUsage, error) {
 	return mem, nil
 }
 
-func (c *Client) CpuUsage(dockerId string) (int64, error) {
+func (c *Client) CpuUsage(dockerId string) (*CpuUsage, error) {
 	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/cpu", nil)
 	if err != nil {
-		return -1, errgo.Mask(err)
+		return nil, errgo.Mask(err)
 	}
 
-	cpu, err := c.getInt(req)
+	res, err := c.do(req)
 	if err != nil {
-		return -1, errgo.Mask(err)
+		return nil, errgo.Mask(err)
+	}
+
+	defer res.Body.Close()
+
+	var cpu *CpuUsage
+	err = json.NewDecoder(res.Body).Decode(&cpu)
+	if err != nil {
+		return nil, errgo.Mask(err)
 	}
 
 	return cpu, nil
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
-	req.Header.Add("Content-Type", "text/plain")
+	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", "Acadocker Client v1")
 	return http.DefaultClient.Do(req)
-}
-
-func (c *Client) getInt(req *http.Request) (int64, error) {
-	res, err := c.do(req)
-	if err != nil {
-		return -1, errgo.Mask(err)
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return -1, errgo.Mask(err)
-	}
-
-	i, err := strconv.ParseInt(string(body), 10, 64)
-	if err != nil {
-		return -1, errgo.Mask(err)
-	}
-
-	return i, nil
 }

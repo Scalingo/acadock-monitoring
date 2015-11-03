@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 )
@@ -19,6 +20,8 @@ import (
 const (
 	LXC_CPUACCT_USAGE_FILE = "cpuacct.usage"
 )
+
+type Usage client.CpuUsage
 
 var (
 	currentSystemUsage  = make(map[string]int64)
@@ -89,19 +92,22 @@ func monitorContainer(id string) {
 	}
 }
 
-func GetUsage(id string) (int64, error) {
+func GetUsage(id string) (*Usage, error) {
 	id, err := docker.ExpandId(id)
 	if err != nil {
 		log.Println("Error when expanding id:", err)
-		return -1, err
+		return nil, err
 	}
 	if _, ok := previousCpuUsages[id]; !ok {
-		return -1, nil
+		return nil, nil
 	}
 	deltaCpuUsage := float64(cpuUsages[id] - previousCpuUsages[id])
 	deltaSystemCpuUsage := float64(currentSystemUsage[id] - previousSystemUsage[id])
 
-	return int64(deltaCpuUsage / deltaSystemCpuUsage * 100 * float64(runtime.NumCPU())), nil
+	percents := int(deltaCpuUsage / deltaSystemCpuUsage * 100 * float64(runtime.NumCPU()))
+	return &Usage{
+		UsageInPercents: percents,
+	}, nil
 }
 
 func systemUsage() (int64, error) {
