@@ -91,7 +91,7 @@ func (c *Client) getResource(dockerId, resourceType string, data interface{}) er
 }
 
 func (c *Client) getResourceWithQuery(dockerId, resourceType string, query string, data interface{}) error {
-	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/"+resourceType+"&"+query, nil)
+	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/"+resourceType+"?"+query, nil)
 	if err != nil {
 		return errgo.Mask(err)
 	}
