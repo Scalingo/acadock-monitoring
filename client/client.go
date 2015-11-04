@@ -78,7 +78,7 @@ func (c *Client) NetUsage(dockerId string) (*NetUsage, error) {
 }
 
 func (c *Client) Usage(dockerId string, net bool) (*Usage, error) {
-	var usage *Usage
+	usage := &Usage{}
 	err := c.getResourceWithQuery(dockerId, "usage", fmt.Sprintf("net=%v", net), usage)
 	if err != nil {
 		return nil, errgo.Mask(err)
