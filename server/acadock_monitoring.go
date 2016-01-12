@@ -11,6 +11,7 @@ import (
 
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/cpu"
+	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/acadock-monitoring/mem"
 	"github.com/Scalingo/acadock-monitoring/net"
 	"github.com/codegangsta/martini"
@@ -99,6 +100,29 @@ func containerNetUsageHandler(params martini.Params, res http.ResponseWriter) {
 	json.NewEncoder(res).Encode(&containerNet)
 }
 
+func containersUsageHandler(res http.ResponseWriter) {
+	usage := client.NewContainersUsage()
+	containerIdChan := make(chan string)
+	go docker.ListRunningContainers(containerIdChan)
+	for id := range containerIdChan {
+		cpuUsage, err := cpu.GetUsage(id)
+		if err != nil {
+			log.Println("Error getting cpu usage of ", id, ":", err)
+			continue
+		}
+		memUsage, err := mem.GetUsage(id)
+		if err != nil {
+			log.Println("Error getting mem usage of ", id, ":", err)
+			continue
+		}
+		usage[id] = client.Usage{
+			Cpu:    (*client.CpuUsage)(&cpuUsage),
+			Memory: &memUsage.MemoryUsage,
+		}
+	}
+	json.NewEncoder(res).Encode(&usage)
+}
+
 func main() {
 	doProfile := flag.Bool("profile", false, "profile app")
 	flag.Parse()
@@ -111,6 +135,7 @@ func main() {
 	r.Get("/containers/:id/cpu", containerCpuUsageHandler)
 	r.Get("/containers/:id/net", containerNetUsageHandler)
 	r.Get("/containers/:id/usage", containerUsageHandler)
+	r.Get("/containers/usage", containersUsageHandler)
 
 	if *doProfile {
 		log.Println("Enable profiling")

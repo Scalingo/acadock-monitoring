@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.3.1
+
+* NEW /containers/usage to get cpu + mem for all containers
+
 ## v0.3.0
 
 * /containers/:id/cpu returns an object with `.usage_in_percents`

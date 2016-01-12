@@ -24,6 +24,7 @@ const (
 type Usage client.CpuUsage
 
 var (
+	numCPU              = runtime.NumCPU()
 	currentSystemUsage  = make(map[string]int64)
 	previousSystemUsage = make(map[string]int64)
 	previousCpuUsages   = make(map[string]int64)
@@ -104,7 +105,7 @@ func GetUsage(id string) (Usage, error) {
 	deltaCpuUsage := float64(cpuUsages[id] - previousCpuUsages[id])
 	deltaSystemCpuUsage := float64(currentSystemUsage[id] - previousSystemUsage[id])
 
-	percents := int(deltaCpuUsage / deltaSystemCpuUsage * 100 * float64(runtime.NumCPU()))
+	percents := int(deltaCpuUsage / deltaSystemCpuUsage * 100 * float64(numCPU))
 	return Usage{
 		UsageInPercents: percents,
 	}, nil

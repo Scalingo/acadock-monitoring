@@ -19,6 +19,7 @@ func ListRunningContainers(ids chan string) error {
 	for _, container := range containers {
 		ids <- container.ID
 	}
+	close(ids)
 
 	return nil
 }

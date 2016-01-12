@@ -39,6 +39,12 @@ type Usage struct {
 	Net    *NetUsage    `json:"net,omitempty"`
 }
 
+type ContainersUsage map[string]Usage
+
+func NewContainersUsage() ContainersUsage {
+	return ContainersUsage(make(map[string]Usage))
+}
+
 func NewClient(endpoint string) (*Client, error) {
 	_, err := url.Parse(endpoint)
 	if err != nil {
