@@ -92,12 +92,27 @@ func (c *Client) Usage(dockerId string, net bool) (*Usage, error) {
 	return usage, nil
 }
 
+func (c *Client) AllContainersUsage() (ContainersUsage, error) {
+	var usage ContainersUsage
+	err := c.getResource("", "usage", &usage)
+	if err != nil {
+		return nil, errgo.Mask(err)
+	}
+	return usage, nil
+}
+
 func (c *Client) getResource(dockerId, resourceType string, data interface{}) error {
 	return c.getResourceWithQuery(dockerId, resourceType, "", data)
 }
 
 func (c *Client) getResourceWithQuery(dockerId, resourceType string, query string, data interface{}) error {
-	req, err := http.NewRequest("GET", c.Endpoint+"/containers/"+dockerId+"/"+resourceType+"?"+query, nil)
+	var endpoint string
+	if dockerId == "" {
+		endpoint = c.Endpoint + "/containers/" + resourceType + "?" + query
+	} else {
+		endpoint = c.Endpoint + "/containers/" + dockerId + "/" + resourceType + "?" + query
+	}
+	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		return errgo.Mask(err)
 	}
