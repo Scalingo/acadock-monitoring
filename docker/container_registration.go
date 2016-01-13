@@ -1,6 +1,9 @@
 package docker
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 var (
 	registeredChans   []chan string
@@ -27,6 +30,15 @@ func RegisterToContainersStream() chan string {
 	registrationMutex.Lock()
 	defer registrationMutex.Unlock()
 	registeredChans = append(registeredChans, c)
-	go ListRunningContainers(c)
+	go func(c chan string) {
+		containers, err := ListContainers()
+		if err != nil {
+			log.Println("register-chan fail to list containers", err)
+			return
+		}
+		for _, container := range containers {
+			c <- container.ID
+		}
+	}(c)
 	return c
 }

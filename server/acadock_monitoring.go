@@ -102,22 +102,29 @@ func containerNetUsageHandler(params martini.Params, res http.ResponseWriter) {
 
 func containersUsageHandler(res http.ResponseWriter) {
 	usage := client.NewContainersUsage()
-	containerIdChan := make(chan string)
-	go docker.ListRunningContainers(containerIdChan)
-	for id := range containerIdChan {
-		cpuUsage, err := cpu.GetUsage(id)
+	containers, err := docker.ListContainers()
+	if err != nil {
+		res.WriteHeader(500)
+		log.Println("containers-usage, fail to list containers", err)
+		errors := map[string]string{"message": "fail to list containers", "error": err.Error()}
+		json.NewEncoder(res).Encode(&errors)
+		return
+	}
+	for _, container := range containers {
+		cpuUsage, err := cpu.GetUsage(container.ID)
 		if err != nil {
-			log.Println("Error getting cpu usage of ", id, ":", err)
+			log.Println("Error getting cpu usage of ", container.ID, ":", err)
 			continue
 		}
-		memUsage, err := mem.GetUsage(id)
+		memUsage, err := mem.GetUsage(container.ID)
 		if err != nil {
-			log.Println("Error getting mem usage of ", id, ":", err)
+			log.Println("Error getting mem usage of ", container.ID, ":", err)
 			continue
 		}
-		usage[id] = client.Usage{
+		usage[container.ID] = client.Usage{
 			Cpu:    (*client.CpuUsage)(&cpuUsage),
 			Memory: &memUsage.MemoryUsage,
+			Labels: container.Labels,
 		}
 	}
 	json.NewEncoder(res).Encode(&usage)

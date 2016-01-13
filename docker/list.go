@@ -5,21 +5,16 @@ import (
 	"gopkg.in/errgo.v1"
 )
 
-func ListRunningContainers(ids chan string) error {
+func ListContainers() ([]docker.APIContainers, error) {
 	client, err := Client()
 	if err != nil {
-		return errgo.Mask(err)
+		return nil, errgo.Mask(err)
 	}
 
 	containers, err := client.ListContainers(docker.ListContainersOptions{})
 	if err != nil {
-		return errgo.Mask(err)
+		return nil, errgo.Mask(err)
 	}
 
-	for _, container := range containers {
-		ids <- container.ID
-	}
-	close(ids)
-
-	return nil
+	return containers, nil
 }

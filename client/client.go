@@ -34,9 +34,10 @@ type Client struct {
 }
 
 type Usage struct {
-	Memory *MemoryUsage `json:"memory"`
-	Cpu    *CpuUsage    `json:"cpu"`
-	Net    *NetUsage    `json:"net,omitempty"`
+	Memory *MemoryUsage      `json:"memory"`
+	Cpu    *CpuUsage         `json:"cpu"`
+	Net    *NetUsage         `json:"net,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 type ContainersUsage map[string]Usage
