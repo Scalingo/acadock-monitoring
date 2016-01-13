@@ -44,6 +44,7 @@ func expandSystemdId(dir, id string) (string, error) {
 	if err != nil {
 		return "", errgo.Mask(err)
 	}
+	d.Close()
 	for _, f := range files {
 		if len(f) < 32 {
 			continue
@@ -65,6 +66,7 @@ func expandDockerId(dir, id string) (string, error) {
 	if err != nil {
 		return "", errgo.Mask(err)
 	}
+	d.Close()
 	for _, f := range files {
 		if strings.HasPrefix(f, id) {
 			return f, nil

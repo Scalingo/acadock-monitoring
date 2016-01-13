@@ -39,6 +39,7 @@ func cpuacctUsage(container string) (int64, error) {
 		log.Println(err)
 		return 0, err
 	}
+	defer f.Close()
 
 	buffer := make([]byte, 16)
 	n, err := f.Read(buffer)
