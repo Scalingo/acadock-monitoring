@@ -135,7 +135,7 @@ func main() {
 	doProfile := flag.Bool("profile", false, "profile app")
 	flag.Parse()
 	go cpu.Monitor()
-	if os.Getenv("NET_MONITORING") == "false" {
+	if os.Getenv("NET_MONITORING") != "false" {
 		go net.Monitor("eth0")
 	}
 

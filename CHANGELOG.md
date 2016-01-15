@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.3.4
+
+* Fix logic in net monitoring
+
 ## v0.3.3
 
 * Let user disable Net monitoring
