@@ -6,14 +6,15 @@ import (
 )
 
 var ENV = map[string]string{
-	"DOCKER_URL":    "http://localhost:4243",
-	"PORT":          "4244",
-	"REFRESH_TIME":  "5",
-	"CGROUP_SOURCE": "docker",
-	"CGROUP_DIR":    "/sys/fs/cgroup",
-	"PROC_DIR":      "/proc",
-	"RUNNER_DIR":    "/usr/bin",
-	"DEBUG":         "false",
+	"DOCKER_URL":     "http://127.0.0.1:4243",
+	"PORT":           "4244",
+	"REFRESH_TIME":   "20",
+	"CGROUP_SOURCE":  "docker",
+	"CGROUP_DIR":     "/sys/fs/cgroup",
+	"PROC_DIR":       "/proc",
+	"RUNNER_DIR":     "/usr/bin",
+	"DEBUG":          "false",
+	"NET_MONITORING": "true",
 }
 
 var (

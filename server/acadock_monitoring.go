@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"net/http"
 	"net/http/pprof"
@@ -134,7 +135,9 @@ func main() {
 	doProfile := flag.Bool("profile", false, "profile app")
 	flag.Parse()
 	go cpu.Monitor()
-	go net.Monitor("eth0")
+	if os.Getenv("NET_MONITORING") == "false" {
+		go net.Monitor("eth0")
+	}
 
 	r := martini.Classic()
 

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.3.3
+
+* Let user disable Net monitoring
+
 ## v0.3.2
 
 * BUGFIX fd leak when reading cgroup file
