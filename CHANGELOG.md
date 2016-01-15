@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.3.2
+
+* BUGFIX fd leak when reading cgroup file
+* NEW add labels to /containers/usage to get metadata of containers
+
 ## v0.3.1
 
 * NEW /containers/usage to get cpu + mem for all containers
