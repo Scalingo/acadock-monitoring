@@ -57,6 +57,13 @@ func GetUsage(id string) (Usage, error) {
 	}
 
 	usage.SwapUsage = usage.SwapMemoryUsage - usage.MemoryUsage.MemoryUsage
+
+	// As swap usage depneds of memory usage, both value may result in a negative value
+	// In this case, it means memory has changed between read operations and that there is no swap
+	if usage.SwapUsage < 0 {
+		usage.MemoryUsage.MemoryUsage = usage.SwapMemoryUsage
+		usage.SwapMemoryUsage = 0
+	}
 	usage.SwapLimit = usage.SwapMemoryLimit - usage.MemoryLimit
 	usage.MaxSwapUsage = usage.MaxSwapMemoryUsage - usage.MaxMemoryUsage
 	return usage, nil

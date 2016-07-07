@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.3.5
+
+* Fix memory monitoring: negative swap values were possible before, not anymore
+
 ## v0.3.4
 
 * Fix logic in net monitoring
