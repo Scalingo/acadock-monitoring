@@ -84,13 +84,13 @@ func monitorContainer(id string) {
 		cpuUsagesMutex.Lock()
 		previousCpuUsages[id] = cpuUsages[id]
 		cpuUsages[id] = usage
-		cpuUsagesMutex.Unlock()
 
 		previousSystemUsage[id] = currentSystemUsage[id]
 		currentSystemUsage[id], err = systemUsage()
 		if err != nil {
 			log.Println(err)
 		}
+		cpuUsagesMutex.Unlock()
 	}
 }
 
@@ -100,6 +100,10 @@ func GetUsage(id string) (Usage, error) {
 		log.Println("Error when expanding id:", err)
 		return Usage{}, err
 	}
+
+	cpuUsagesMutex.Lock()
+	defer cpuUsagesMutex.Unlock()
+
 	if _, ok := previousCpuUsages[id]; !ok {
 		return Usage{}, nil
 	}
