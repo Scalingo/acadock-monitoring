@@ -16,7 +16,6 @@ From environment
 * `DOCKER_URL`: docker endpoint (http://127.0.0.1:4243 by default)
 * `REFRESH_TIME`: number of second between CPU/net refresh (1 by default)
 * `PROC_DIR`: mountpoint for procfs (default to /proc)
-* `RUNNER_DIR`: directory of runner, process to run in namespaces of containers, (default to /usr/bin)
 * `CGROUP_DIR`: mountpoint of cgroups (default to /sys/fs/cgroup)
 * `CGROUP_SOURCE`: "docker" or "systemd" (docker by default)
   docker:  /sys/fs/cgroup/:cgroup/memory/docker
@@ -32,11 +31,12 @@ Run from docker:
 docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup \
            -v /proc:/host/proc:ro                    -e PROC_DIR=/host/proc \
            -v /var/run/docker.sock:/host/docker.sock -e DOCKER_URL=unix:///host/docker.sock \
-           -p 4244:4244 --privileged --pid=host \
+           -p 4244:4244 --privileged --pid=host --network=host \
            -d scalingo/acadock-monitoring
 ```
 
-`--pid=host`: The daemon has to find the real /proc/#{pid}/ns directory to enter a namespace  
+`--pid=host`: The daemon has to find the real /proc/#{pid}/ns directory to enter a namespace
+`--network=host`: Acadock should in the host namespace to access other containers network namespaces (for network metrics)
 `--privileged`: Acadock has to enter the other containers namespaces
 
 API
@@ -71,6 +71,18 @@ API
     Return 200 OK
     Content-Type: application/json
     `GET /containers/:id/net`
+
+* Mem+CPU+Network for a container
+
+    Return 200 OK
+    Content-Type: application/json
+    `GET /containers/:id/usage`
+
+* Mem+CPU+Network for **all** containers
+
+    Return 200 OK
+    Content-Type: application/json
+    `GET /containers/usage`
 
 ### Developers
 

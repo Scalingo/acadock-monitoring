@@ -1,5 +1,12 @@
 # CHANGELOG
 
+** v0.4.0
+
+* Net monitoring improvement
+  -> Just setns/fork to find the host network interface ID, then directly
+     read `veth` value from the host without having to enter the namespace
+     again
+
 ** v0.3.6
 
 * Fix race condition
