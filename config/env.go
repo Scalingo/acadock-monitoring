@@ -8,7 +8,7 @@ import (
 var ENV = map[string]string{
 	"DOCKER_URL":     "http://127.0.0.1:4243",
 	"PORT":           "4244",
-	"REFRESH_TIME":   "2",
+	"REFRESH_TIME":   "20",
 	"CGROUP_SOURCE":  "docker",
 	"CGROUP_DIR":     "/sys/fs/cgroup",
 	"PROC_DIR":       "/proc",
