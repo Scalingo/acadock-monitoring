@@ -36,7 +36,6 @@ func cpuacctUsage(container string) (int64, error) {
 	file := config.CgroupPath("cpuacct", container) + "/" + LXC_CPUACCT_USAGE_FILE
 	f, err := os.Open(file)
 	if err != nil {
-		log.Println(err)
 		return 0, err
 	}
 	defer f.Close()
@@ -70,6 +69,7 @@ func monitorContainer(id string) {
 		<-tick.C
 		var err error
 		usage, err := cpuacctUsage(id)
+		cpuUsagesMutex.Lock()
 		if err != nil {
 			if _, ok := cpuUsages[id]; ok {
 				delete(cpuUsages, id)
@@ -78,10 +78,10 @@ func monitorContainer(id string) {
 				delete(previousCpuUsages, id)
 			}
 			log.Println("stop monitoring", id, "reason:", err)
+			cpuUsagesMutex.Unlock()
 			return
 		}
 
-		cpuUsagesMutex.Lock()
 		previousCpuUsages[id] = cpuUsages[id]
 		cpuUsages[id] = usage
 
