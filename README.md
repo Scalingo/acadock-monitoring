@@ -35,9 +35,9 @@ docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup 
            -d scalingo/acadock-monitoring
 ```
 
-`--pid=host`: The daemon has to find the real /proc/#{pid}/ns directory to enter a namespace
-`--network=host`: Acadock should in the host namespace to access other containers network namespaces (for network metrics)
-`--privileged`: Acadock has to enter the other containers namespaces
+- `--pid=host`: The daemon has to find the real /proc/#{pid}/ns directory to enter a namespace
+- `--network=host`: Acadock should in the host namespace to access other containers network namespaces (for network metrics)
+- `--privileged`: Acadock has to enter the other containers namespaces
 
 API
 ---
