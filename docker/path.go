@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Scalingo/acadock-monitoring/config"
-	"gopkg.in/errgo.v1"
+	"github.com/pkg/errors"
 )
 
 func ExpandId(id string) (string, error) {
@@ -15,7 +15,7 @@ func ExpandId(id string) (string, error) {
 		return fullId, nil
 	}
 	if err != IdNotInCache {
-		return "", errgo.Mask(err)
+		return "", errors.Wrap(err, "fail to expand id from cache")
 	}
 
 	dir := filepath.Dir(config.CgroupPath("memory", id))
@@ -28,7 +28,7 @@ func ExpandId(id string) (string, error) {
 		panic("not a known CGROUP SOURCE")
 	}
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrapf(err, "fail to expand id from cgroup source %v", config.ENV["CGROUP_SOURCE"])
 	}
 
 	containerIdsCache = append(containerIdsCache, id)
@@ -38,11 +38,11 @@ func ExpandId(id string) (string, error) {
 func expandSystemdId(dir, id string) (string, error) {
 	d, err := os.Open(dir)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrapf(err, "fail to open '%v'", dir)
 	}
 	files, err := d.Readdirnames(0)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrapf(err, "fail to read directory entries of '%v'", dir)
 	}
 	d.Close()
 	for _, f := range files {
@@ -54,17 +54,17 @@ func expandSystemdId(dir, id string) (string, error) {
 			return fullId, nil
 		}
 	}
-	return "", errgo.New("id not found")
+	return "", errors.New("id not found")
 }
 
 func expandDockerId(dir, id string) (string, error) {
 	d, err := os.Open(dir)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrapf(err, "fail to open '%v'", dir)
 	}
 	files, err := d.Readdirnames(0)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrapf(err, "fail to read directory entries of '%v'", dir)
 	}
 	d.Close()
 	for _, f := range files {
@@ -72,5 +72,5 @@ func expandDockerId(dir, id string) (string, error) {
 			return f, nil
 		}
 	}
-	return "", errgo.New("id not found")
+	return "", errors.New("id not found")
 }

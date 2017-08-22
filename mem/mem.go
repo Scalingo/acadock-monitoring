@@ -1,7 +1,6 @@
 package mem
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"sync"
@@ -9,6 +8,7 @@ import (
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -31,8 +31,7 @@ func GetUsage(id string) (Usage, error) {
 	usage := Usage{}
 	id, err := docker.ExpandId(id)
 	if err != nil {
-		log.Println("Error when expanding id:", err)
-		return usage, err
+		return usage, errors.Wrapf(err, "fail to expand '%v'", id)
 	}
 
 	errors := make(chan error)
@@ -83,23 +82,20 @@ func readMemoryCgroupInt64(id, file string) (int64, error) {
 	path := config.CgroupPath("memory", id) + "/" + file
 	f, err := os.Open(path)
 	if err != nil {
-		log.Println("Error while opening:", err)
-		return -1, err
+		return -1, errors.Wrapf(err, "fail to open '%v'", path)
 	}
 	defer f.Close()
 
 	buffer := make([]byte, 16)
 	n, err := f.Read(buffer)
 	if err != nil {
-		log.Println("Error while reading ", path, ":", err)
-		return -1, err
+		return -1, errors.Wrapf(err, "fail to read '%v'", path)
 	}
 
 	buffer = buffer[:n-1]
 	val, err := strconv.ParseInt(string(buffer), 10, 64)
 	if err != nil {
-		log.Println("Error while parsing ", string(buffer), " : ", err)
-		return -1, err
+		return -1, errors.Wrapf(err, "fail to read int in '%v'", string(buffer))
 	}
 
 	return val, nil

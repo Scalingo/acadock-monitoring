@@ -9,12 +9,13 @@ import (
 
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
+	"github.com/pkg/errors"
 )
 
 func getContainerIface(id string) (string, error) {
 	ifaceID, err := getContainerIfaceID(id)
 	if err != nil {
-		return "", fmt.Errorf("fail to get container interface ID '%v': %v", id, err)
+		return "", errors.Wrapf(err, "fail to get container '%v' interface", id)
 	}
 
 	stdout := new(bytes.Buffer)
@@ -36,13 +37,13 @@ func getContainerIface(id string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("interface not found for '%v', %v", id, ifaceID)
+	return "", errors.Errorf("interface not found for '%v', %v", id, ifaceID)
 }
 
 func getContainerIfaceID(id string) (string, error) {
 	pid, err := docker.Pid(id)
 	if err != nil {
-		return "", fmt.Errorf("fail to get pid of container '%v': %v", id, err)
+		return "", errors.Wrapf(err, "fail to get pid of container '%v'", id)
 	}
 
 	stdout := new(bytes.Buffer)
@@ -56,7 +57,7 @@ func getContainerIfaceID(id string) (string, error) {
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return "", fmt.Errorf("%v: %v", err, stdout.String())
+		return "", errors.Wrapf(err, "'%v' failed with '%v'", cmd, stdout.String())
 	}
 
 	return stdout.String(), nil
