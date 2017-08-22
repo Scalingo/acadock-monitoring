@@ -1,18 +1,18 @@
 # CHANGELOG
 
-** v0.4.1
+## v0.4.1
 
 * Improve logging using logrus, less spammy
 * Replace martini by gorilla/mux and negroni
 
-** v0.4.0
+## v0.4.0
 
 * Net monitoring improvement
   -> Just setns/fork to find the host network interface ID, then directly
      read `veth` value from the host without having to enter the namespace
      again
 
-** v0.3.6
+## v0.3.6
 
 * Fix race condition
 
