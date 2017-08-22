@@ -2,7 +2,6 @@ package net
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/go-netstat"
+	log "github.com/Sirupsen/logrus"
 )
 
 type Usage client.NetUsage
@@ -67,7 +67,7 @@ func (monitor *NetMonitor) listeningNewInterfaces() {
 	for containerID := range containerIDs {
 		iface, err := getContainerIface(containerID)
 		if err != nil {
-			log.Println("Fail to get network interface of", containerID, ":", err)
+			log.WithError(err).Errorf("Fail to get network interface of '%v'", containerID)
 			continue
 		}
 		monitor.containerIfacesMutex.Lock()

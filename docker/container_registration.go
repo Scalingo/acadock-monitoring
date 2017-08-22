@@ -1,8 +1,9 @@
 package docker
 
 import (
-	"log"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
@@ -33,7 +34,7 @@ func RegisterToContainersStream() chan string {
 	go func(c chan string) {
 		containers, err := ListContainers()
 		if err != nil {
-			log.Println("register-chan fail to list containers", err)
+			log.WithError(err).Warn("register-chan fail to list containers")
 			return
 		}
 		for _, container := range containers {

@@ -2,9 +2,6 @@ package cpu
 
 import (
 	"bufio"
-	"errors"
-	"fmt"
-	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -15,6 +12,8 @@ import (
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
+	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -49,8 +48,7 @@ func cpuacctUsage(container string) (int64, error) {
 
 	res, err := strconv.ParseInt(bufferStr, 10, 64)
 	if err != nil {
-		log.Println("Failed to parse : ", err)
-		return 0, err
+		return 0, errors.Wrapf(err, "fail to parse '%v'", file)
 	}
 	return res, nil
 }
@@ -58,7 +56,7 @@ func cpuacctUsage(container string) (int64, error) {
 func Monitor() {
 	containers := docker.RegisterToContainersStream()
 	for c := range containers {
-		fmt.Println("monitor cpu", c)
+		log.Infof("Monitoring CPU of %v", c)
 		go monitorContainer(c)
 	}
 }
@@ -77,7 +75,7 @@ func monitorContainer(id string) {
 			if _, ok := previousCpuUsages[id]; ok {
 				delete(previousCpuUsages, id)
 			}
-			log.Println("stop monitoring", id, "reason:", err)
+			log.Infof("Stop monitoring CPU of '%v', reason: '%v'", id, err)
 			cpuUsagesMutex.Unlock()
 			return
 		}
@@ -88,7 +86,7 @@ func monitorContainer(id string) {
 		previousSystemUsage[id] = currentSystemUsage[id]
 		currentSystemUsage[id], err = systemUsage()
 		if err != nil {
-			log.Println(err)
+			log.WithError(err).Warn("fail to read system CPU usage")
 		}
 		cpuUsagesMutex.Unlock()
 	}
@@ -97,8 +95,7 @@ func monitorContainer(id string) {
 func GetUsage(id string) (Usage, error) {
 	id, err := docker.ExpandId(id)
 	if err != nil {
-		log.Println("Error when expanding id:", err)
-		return Usage{}, err
+		return Usage{}, errors.Wrapf(err, "fail to expand ID '%v'", id)
 	}
 
 	cpuUsagesMutex.Lock()
