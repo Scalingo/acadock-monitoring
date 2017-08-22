@@ -1,5 +1,10 @@
 # CHANGELOG
 
+** v0.4.1
+
+* Improve logging using logrus, less spammy
+* Replace martini by gorilla/mux and negroni
+
 ** v0.4.0
 
 * Net monitoring improvement
