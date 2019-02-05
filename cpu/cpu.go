@@ -39,7 +39,7 @@ func cpuacctUsage(container string) (int64, error) {
 	}
 	defer f.Close()
 
-	buffer := make([]byte, 16)
+	buffer := make([]byte, 64)
 	n, err := f.Read(buffer)
 	buffer = buffer[:n]
 
