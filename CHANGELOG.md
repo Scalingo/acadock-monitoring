@@ -1,8 +1,9 @@
 # CHANGELOG
 
-## v0.4.2
+## v0.5.0
 
 * Fix int overflow when parsing cpuacct cgroup file
+* Ignore first values of net/cpu monitoring to avoid extreme values (return 0 instead)
 * Migration from godep to dep
 
 ## v0.4.1
