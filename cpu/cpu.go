@@ -105,15 +105,12 @@ func GetUsage(id string) (Usage, error) {
 		return Usage{}, nil
 	}
 
-	// First value will be negative as previousXXX will be equal 0
-	// It results in two negative values.
-	deltaCPUUsage := float64(previousCPUUsages[id] - cpuUsages[id])
-	deltaSystemCPUUsage := float64(previousSystemUsage[id] - currentSystemUsage[id])
+	deltaCPUUsage := float64(cpuUsages[id] - previousCPUUsages[id])
+	deltaSystemCPUUsage := float64(currentSystemUsage[id] - previousSystemUsage[id])
 
 	var percents int
-	// If none of the value is negative, the first values are over
+	// If both values are positive, the first values are over
 	if deltaCPUUsage > 0.0 && deltaSystemCPUUsage > 0.0 {
-		// We divide two negative values, so the '-' sign disappear
 		percents = int((deltaCPUUsage / deltaSystemCPUUsage) * 100 * float64(numCPU))
 	}
 

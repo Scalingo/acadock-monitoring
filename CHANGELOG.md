@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.5.1
+
+* Fix CPU value reading
+
 ## v0.5.0
 
 * Fix int overflow when parsing cpuacct cgroup file
