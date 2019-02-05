@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.4.2
+
+* Fix int overflow when parsing cpuacct cgroup file
+* Migration from godep to dep
+
 ## v0.4.1
 
 * Improve logging using logrus, less spammy

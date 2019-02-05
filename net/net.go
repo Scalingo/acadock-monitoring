@@ -92,8 +92,16 @@ func (monitor *NetMonitor) GetUsage(id string) (Usage, error) {
 
 	monitor.netUsagesMutex.Lock()
 	usage.NetworkStat = netUsages[id]
-	usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousNetUsages[id].Received.Bytes) / float64(config.RefreshTime))
-	usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousNetUsages[id].Transmit.Bytes) / float64(config.RefreshTime))
+
+	previousRxBps := previousNetUsages[id].Received.Bytes
+	previousTxBps := previousNetUsages[id].Transmit.Bytes
+	if previousRxBps > 0 {
+		usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousRxBps) / float64(config.RefreshTime))
+	}
+	if previousTxBps > 0 {
+		usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousTxBps) / float64(config.RefreshTime))
+	}
+
 	monitor.netUsagesMutex.Unlock()
 
 	return usage, nil

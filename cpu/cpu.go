@@ -26,7 +26,7 @@ var (
 	numCPU              = runtime.NumCPU()
 	currentSystemUsage  = make(map[string]int64)
 	previousSystemUsage = make(map[string]int64)
-	previousCpuUsages   = make(map[string]int64)
+	previousCPUUsages   = make(map[string]int64)
 	cpuUsages           = make(map[string]int64)
 	cpuUsagesMutex      = &sync.Mutex{}
 )
@@ -72,15 +72,15 @@ func monitorContainer(id string) {
 			if _, ok := cpuUsages[id]; ok {
 				delete(cpuUsages, id)
 			}
-			if _, ok := previousCpuUsages[id]; ok {
-				delete(previousCpuUsages, id)
+			if _, ok := previousCPUUsages[id]; ok {
+				delete(previousCPUUsages, id)
 			}
 			log.Infof("Stop monitoring CPU of '%v', reason: '%v'", id, err)
 			cpuUsagesMutex.Unlock()
 			return
 		}
 
-		previousCpuUsages[id] = cpuUsages[id]
+		previousCPUUsages[id] = cpuUsages[id]
 		cpuUsages[id] = usage
 
 		previousSystemUsage[id] = currentSystemUsage[id]
@@ -101,13 +101,22 @@ func GetUsage(id string) (Usage, error) {
 	cpuUsagesMutex.Lock()
 	defer cpuUsagesMutex.Unlock()
 
-	if _, ok := previousCpuUsages[id]; !ok {
+	if _, ok := previousCPUUsages[id]; !ok {
 		return Usage{}, nil
 	}
-	deltaCpuUsage := float64(cpuUsages[id] - previousCpuUsages[id])
-	deltaSystemCpuUsage := float64(currentSystemUsage[id] - previousSystemUsage[id])
 
-	percents := int(deltaCpuUsage / deltaSystemCpuUsage * 100 * float64(numCPU))
+	// First value will be negative as previousXXX will be equal 0
+	// It results in two negative values.
+	deltaCPUUsage := float64(previousCPUUsages[id] - cpuUsages[id])
+	deltaSystemCPUUsage := float64(previousSystemUsage[id] - currentSystemUsage[id])
+
+	var percents int
+	// If none of the value is negative, the first values are over
+	if deltaCPUUsage > 0.0 && deltaSystemCPUUsage > 0.0 {
+		// We divide two negative values, so the '-' sign disappear
+		percents = int((deltaCPUUsage / deltaSystemCPUUsage) * 100 * float64(numCPU))
+	}
+
 	return Usage{
 		UsageInPercents: percents,
 	}, nil
