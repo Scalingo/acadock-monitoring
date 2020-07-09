@@ -31,7 +31,11 @@ type NetUsage struct {
 
 type Client struct {
 	Endpoint string
+	Username string
+	Password string
 }
+
+type ClientOpts func(*Client) *Client
 
 type Usage struct {
 	Memory *MemoryUsage      `json:"memory"`
@@ -46,13 +50,24 @@ func NewContainersUsage() ContainersUsage {
 	return ContainersUsage(make(map[string]Usage))
 }
 
-func NewClient(endpoint string) (*Client, error) {
+func WithAuthentication(user, pass string) ClientOpts {
+	return func(c *Client) *Client {
+		c.Username = user
+		c.Password = pass
+		return c
+	}
+}
+
+func NewClient(endpoint string, opts ...ClientOpts) (*Client, error) {
 	_, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
 
 	c := &Client{Endpoint: endpoint}
+	for _, opt := range opts {
+		c = opt(c)
+	}
 	return c, nil
 }
 
@@ -136,5 +151,10 @@ func (c *Client) getResourceWithQuery(dockerId, resourceType string, query strin
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", "Acadocker Client v1")
+
+	if c.Username != "" && c.Password != "" {
+		req.SetBasicAuth(c.Username, c.Password)
+	}
+
 	return http.DefaultClient.Do(req)
 }

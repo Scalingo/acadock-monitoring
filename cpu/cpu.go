@@ -12,8 +12,8 @@ import (
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
-	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
