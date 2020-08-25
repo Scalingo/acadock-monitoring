@@ -83,7 +83,7 @@ func main() {
 	r.HandleFunc("/containers/{id}/net", controller.ContainerNetUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/usage", controller.ContainerUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/usage", controller.ContainersUsageHandler).Methods("GET")
-	r.HandleFunc("/host/resources", controller.HostResources)
+	r.HandleFunc("/host/usage", controller.HostResources)
 
 	if *doProfile {
 		pprofRouter := mux.NewRouter()

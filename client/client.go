@@ -139,17 +139,40 @@ func (c *Client) AllContainersUsage() (ContainersUsage, error) {
 	return usage, nil
 }
 
+type HostUsageOpts struct {
+	IncludeContainerIfLabel string
+}
+
+func (c *Client) HostUsage(opts HostUsageOpts) (HostUsage, error) {
+	query := ""
+	if opts.IncludeContainerIfLabel != "" {
+		query = fmt.Sprintf("include_container_if_label=%s", opts.IncludeContainerIfLabel)
+	}
+	var res HostUsage
+	err := c.getPathWithQuery("/host/usage", query, &res)
+	if err != nil {
+		return res, errgo.Notef(err, "fail to get host usage")
+	}
+	return res, nil
+}
+
 func (c *Client) getResource(dockerId, resourceType string, data interface{}) error {
 	return c.getResourceWithQuery(dockerId, resourceType, "", data)
 }
 
 func (c *Client) getResourceWithQuery(dockerId, resourceType string, query string, data interface{}) error {
-	var endpoint string
+	var path string
 	if dockerId == "" {
-		endpoint = c.Endpoint + "/containers/" + resourceType + "?" + query
+		path = "/containers/" + resourceType + "?" + query
 	} else {
-		endpoint = c.Endpoint + "/containers/" + dockerId + "/" + resourceType + "?" + query
+		path = "/containers/" + dockerId + "/" + resourceType + "?" + query
 	}
+	return c.getPathWithQuery(path, query, data)
+}
+
+func (c *Client) getPathWithQuery(path, query string, data interface{}) error {
+	endpoint := c.Endpoint + path
+
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		return errgo.Mask(err)
