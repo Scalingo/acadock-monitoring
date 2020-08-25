@@ -62,8 +62,24 @@ func (l LoadAvgReader) Read(ctx context.Context) (LoadAverage, error) {
 		return res, errors.Wrap(err, "fail to parse loadavg line")
 	}
 	if n != 6 { // If this line did not have 6 fields there was an error
-		return res, fmt.Errorf("Invalid loadavg line, parsed %d field expected 6", n)
+		return res, fmt.Errorf("invalid loadavg line, parsed %d field expected 6", n)
 	}
 
 	return res, nil
+}
+
+type LoadAvgMetricsWrapper struct {
+	r LoadAvgReader
+}
+
+func FilterWrap(r LoadAvgReader) LoadAvgMetricsWrapper {
+	return LoadAvgMetricsWrapper{r: r}
+}
+
+func (w LoadAvgMetricsWrapper) Read(ctx context.Context) (float64, error) {
+	res, err := w.r.Read(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return float64(res.RunningProcess), nil
 }

@@ -23,6 +23,28 @@ type CpuUsage struct {
 	UsageInPercents int `json:"usage_in_percents"`
 }
 
+type HostUsage struct {
+	CPU    HostCpuUsage    `json:"cpu"`
+	Memory HostMemoryUsage `json:"memory"`
+}
+type HostCpuUsage struct {
+	Usage                            float64 `json:"usage"`
+	Amount                           int     `json:"amount"`
+	QueueLengthExponentiallySmoothed float64 `json:"queue_length_exponentially_smoothed"`
+}
+
+type HostMemoryUsage struct {
+	Free            uint64 `json:"free"`
+	Total           uint64 `json:"total"`
+	Swap            uint64 `json:"swap"`
+	MemoryUsage     uint64 `json:"memory_usage"`
+	MemoryCommitted uint64 `json:"memory_committed""`
+	MaxMemoryUsage  uint64 `json:"max_memory_usage"`
+	SwapUsage       uint64 `json:"swap_usage"`
+	SwapCommitted   uint64 `json:"swap_committed"`
+	MaxSwapUsage    uint64 `json:"max_swap_usage"`
+}
+
 type NetUsage struct {
 	netstat.NetworkStat
 	RxBps int64 `json:"rx_bps"`

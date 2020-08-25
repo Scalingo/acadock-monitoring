@@ -1,0 +1,9 @@
+{
+  "base_package": "github.com/Scalingo/acadock-monitoring",
+  "mocks": [
+    {
+      "interface": "Sysconf",
+      "src_package": "procfs"
+    }
+  ]
+}

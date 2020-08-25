@@ -33,6 +33,10 @@ type SingleCPUStat struct {
 	GuestNice time.Duration
 }
 
+func (c SingleCPUStat) Sum() time.Duration {
+	return c.User + c.Nice + c.System + c.IDLE + c.IOWait + c.IRQ + c.SoftIRQ + c.Steal + c.Guest + c.GuestNice
+}
+
 func (c CPUStats) All() SingleCPUStat {
 	return c.CPUs["cpu"]
 }
@@ -105,12 +109,12 @@ func (c CPUStatReader) readOneCPULine(ctx context.Context, line string, userHZ i
 	timeBuffer := make([]time.Duration, 10) // This buffer will store the final values for every fields.
 
 	// Parse the line and store it in rawBuffer
-	n, err := fmt.Sscanf(line, "%s %d %d %d %d %d %d %d %d %d %d", &result.Name, &rawBuffer[0], &rawBuffer[1], &rawBuffer[2], &rawBuffer[3], &rawBuffer[4], &rawBuffer[4], &rawBuffer[6], &rawBuffer[7], &rawBuffer[8], &rawBuffer[9])
+	n, err := fmt.Sscanf(line, "%s %d %d %d %d %d %d %d %d %d %d", &result.Name, &rawBuffer[0], &rawBuffer[1], &rawBuffer[2], &rawBuffer[3], &rawBuffer[4], &rawBuffer[5], &rawBuffer[6], &rawBuffer[7], &rawBuffer[8], &rawBuffer[9])
 	if err != nil {
 		return result, errors.Wrap(err, "fail to parse procstat line")
 	}
 	if n != 11 { // If we failed to parse enough value
-		return result, fmt.Errorf("Invalid procstat line, parsed %d field expected 11", n)
+		return result, fmt.Errorf("invalid procstat line, parsed %d field expected 11", n)
 	}
 
 	scaleFactor := time.Second / time.Duration(userHZ) // The scale factor depends on the SC_CLK_TCK sysconf.

@@ -10,7 +10,7 @@ import (
 	"github.com/Scalingo/go-utils/logger"
 )
 
-var ErrNotEnoughMetrics = fmt.Errorf("No enough metrics yet")
+var ErrNotEnoughMetrics = fmt.Errorf("no enough metrics yet")
 
 type MetricsReader interface {
 	Read(ctx context.Context) (float64, error)
@@ -46,7 +46,7 @@ func WithQueueLength(length int) ExponentialSmoothingOpts {
 	}
 }
 
-func NewExponentialSmothing(from MetricsReader, opts ...ExponentialSmoothingOpts) *ExponentialSmoothing {
+func NewExponentialSmoothing(from MetricsReader, opts ...ExponentialSmoothingOpts) (*ExponentialSmoothing, error) {
 	result := ExponentialSmoothing{
 		reader:          from,
 		averageLength:   5,
@@ -63,8 +63,20 @@ func NewExponentialSmothing(from MetricsReader, opts ...ExponentialSmoothingOpts
 	for _, opt := range opts {
 		result = opt(result)
 	}
+	if result.queueLength <= 0 {
+		return nil, fmt.Errorf("QueueLength should be >0, current value: %v", result.queueLength)
+	}
 
-	return &result
+	if result.averageLength <= 0 {
+		return nil, fmt.Errorf("averageLength should be >0, current value: %v", result.averageLength)
+	}
+
+	if result.averageInterval <= 1*time.Millisecond {
+		return nil, fmt.Errorf("averageInterval should be > 1ms, current values: %s", result.averageInterval.String())
+
+	}
+
+	return &result, nil
 }
 
 func (e *ExponentialSmoothing) Start(ctx context.Context) {
@@ -88,7 +100,6 @@ func (e *ExponentialSmoothing) Start(ctx context.Context) {
 
 		// Compute the next average if needed
 		if e.lastAverageTime.Add(e.averageInterval).Before(time.Now()) {
-			log.Info("Mean !")
 			var result float64
 			for _, v := range values {
 				result += v
@@ -116,7 +127,7 @@ func (e *ExponentialSmoothing) Read(ctx context.Context) (float64, error) {
 }
 
 func exponentialSmoothing(values []float64, ptr int, alpha float64) float64 {
-	if ptr == 0 {
+	if ptr <= 0 {
 		return values[0]
 	}
 
@@ -127,7 +138,6 @@ func (e *ExponentialSmoothing) waitForNextSample() {
 	timeBetweenSamples := e.averageInterval / time.Duration(e.averageLength)
 	timeToNextSample := e.lastSampleTime.Add(timeBetweenSamples)
 	timeToWait := timeToNextSample.Sub(time.Now())
-	fmt.Println(timeToWait)
 
 	if timeToWait > 0 {
 		time.Sleep(timeToWait)

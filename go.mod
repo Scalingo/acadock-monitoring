@@ -13,10 +13,12 @@ require (
 	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
 	github.com/fsouza/go-dockerclient v0.0.0-20160107101209-175e1df97327
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
+	github.com/golang/mock v1.3.1
 	github.com/gorilla/mux v1.7.4
 	github.com/influxdata/influxdb v1.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
+	github.com/stretchr/testify v1.5.1
 	github.com/tklauser/go-sysconf v0.0.0-20200513113950-67a71062da8a
 	github.com/urfave/negroni v1.0.0
 	gopkg.in/errgo.v1 v1.0.1

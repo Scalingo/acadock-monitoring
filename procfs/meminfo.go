@@ -47,6 +47,27 @@ type MemInfo struct {
 	VmallocChunk uint64 `meminfo_header:"VmallocChunk"`
 	DirectMap4k  uint64 `meminfo_header:"DirectMap4k"`
 	DirectMap2M  uint64 `meminfo_header:"DirectMap2M"`
+	DirectMap1G  uint64 `meminfo_header:"DirectMap1G"`
+}
+
+// Memory available in the system. It is not just the free memory.
+//
+// The available memory is actually what the `free` command line tool calls `-/+ buffers/cache`.
+// It uses information from /proc/meminfo: it sums the MemFree, the Buffers and the Cached.
+//
+// cf. `free` source code: https://github.com/mmalecki/procps/blob/fe4c4a7314f32907b9f558ad0d8b8d0ff1cc76be/free.c#L97
+// cf. man 5 proc
+
+func (m MemInfo) FreeBuffers() uint64 {
+	return m.MemFree + m.Buffers + m.Cached
+}
+
+func (m MemInfo) MemUsed() uint64 {
+	return m.MemTotal - m.MemFree
+}
+
+func (m MemInfo) SwapUsed() uint64 {
+	return m.SwapTotal - m.SwapFree
 }
 
 type Meminfo interface {
@@ -119,7 +140,7 @@ func (m MemInfoReader) Read(context.Context) (MemInfo, error) {
 // FilllStruct will create a fill a MemInfo struct by using it's meminfo_header tags to search the correct value in a map
 func (m MemInfoReader) FillStruct(values map[string]uint64) MemInfo {
 	result := MemInfo{}                      // Create the struct
-	elems := reflect.ValueOf(&result).Elem() // Use reflecttivity to be able to dynamically set struct fields (Elem is used to dereference the pointer)
+	elems := reflect.ValueOf(&result).Elem() // Use reflectivity to be able to dynamically set struct fields (Elem is used to dereference the pointer)
 	types := elems.Type()                    // And to extract it's types (this will be used to list the different fields of the struct (and their tags))
 	for i := 0; i < types.NumField(); i++ {  // Foreach field in the struct
 		fieldType := types.Field(i)                   // Get the field type

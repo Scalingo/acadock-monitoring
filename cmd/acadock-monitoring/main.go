@@ -1,20 +1,20 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"flag"
 	"fmt"
-	"os"
-
 	"net/http"
 	"net/http/pprof"
+	"os"
 
-	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
-	"github.com/Scalingo/acadock-monitoring/docker"
+	"github.com/Scalingo/acadock-monitoring/filters"
 	"github.com/Scalingo/acadock-monitoring/mem"
 	"github.com/Scalingo/acadock-monitoring/net"
+	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/Scalingo/acadock-monitoring/webserver"
 	"github.com/Scalingo/go-handlers"
 	"github.com/Scalingo/go-utils/logger"
 	"github.com/facebookgo/grace/gracehttp"
@@ -29,118 +29,13 @@ func (m *JSONContentTypeMiddleware) ServeHTTP(res http.ResponseWriter, req *http
 	next(res, req)
 }
 
-func (c *NetController) containerUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
-	id := params["id"]
-	usage := client.Usage{}
-
-	memUsage, err := mem.GetUsage(id)
-	if err != nil {
-		return err
-	}
-	usage.Memory = &memUsage.MemoryUsage
-
-	cpuUsage, err := cpu.GetUsage(id)
-	if err != nil {
-		return err
-	}
-	usage.Cpu = (*client.CpuUsage)(&cpuUsage)
-
-	netUsage, err := c.netMonitor.GetUsage(id)
-	if err != nil {
-		return err
-	}
-	usage.Net = (*client.NetUsage)(&netUsage)
-
-	res.WriteHeader(200)
-	json.NewEncoder(res).Encode(&usage)
-	return nil
-}
-
-func containerMemUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
-	id := mux.Vars(req)["id"]
-
-	containerMemoryUsage, err := mem.GetUsage(id)
-	if err != nil {
-		return err
-	}
-
-	res.WriteHeader(200)
-	json.NewEncoder(res).Encode(&containerMemoryUsage)
-	return nil
-}
-
-func containerCpuUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
-	id := params["id"]
-
-	containerCpuUsage, err := cpu.GetUsage(id)
-	if err != nil {
-		return err
-	}
-	res.WriteHeader(200)
-	json.NewEncoder(res).Encode(&containerCpuUsage)
-	return nil
-}
-
-type NetController struct {
-	netMonitor *net.NetMonitor
-}
-
-func (c *NetController) containerNetUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
-	id := params["id"]
-	containerNet, err := c.netMonitor.GetUsage(id)
-	if err != nil {
-		return err
-	}
-
-	res.WriteHeader(200)
-	json.NewEncoder(res).Encode(&containerNet)
-	return nil
-}
-
-func (c *NetController) containersUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
-	log := logger.Get(req.Context())
-	usage := client.NewContainersUsage()
-	containers, err := docker.ListContainers()
-	if err != nil {
-		res.WriteHeader(500)
-		log.WithError(err).Error("Fail to list containers")
-		errors := map[string]string{"message": "fail to list containers", "error": err.Error()}
-		json.NewEncoder(res).Encode(&errors)
-		return nil
-	}
-	for _, container := range containers {
-		cpuUsage, err := cpu.GetUsage(container.ID)
-		if err != nil {
-			log.WithError(err).Errorf("Fail to get CPU usage of '%v'", container.ID)
-			continue
-		}
-		memUsage, err := mem.GetUsage(container.ID)
-		if err != nil {
-			log.WithError(err).Errorf("Fail to get Memory usage of '%v'", container.ID)
-			continue
-		}
-		netUsage, err := c.netMonitor.GetUsage(container.ID)
-		if err != nil {
-			log.WithError(err).Errorf("Fail to get Network usage of '%v'", container.ID)
-			continue
-		}
-		usage[container.ID] = client.Usage{
-			Cpu:    (*client.CpuUsage)(&cpuUsage),
-			Memory: &memUsage.MemoryUsage,
-			Net:    (*client.NetUsage)(&netUsage),
-			Labels: container.Labels,
-		}
-	}
-	json.NewEncoder(res).Encode(&usage)
-	return nil
-}
-
 func main() {
 	if config.Debug {
 		os.Setenv("LOGGER_LEVEL", "debug")
 	}
 
 	log := logger.Default()
+	ctx := logger.ToCtx(context.Background(), log)
 
 	doProfile := flag.Bool("profile", false, "profile app")
 	nsIfaceID := flag.String("ns-iface-id", "", "<pid>")
@@ -155,28 +50,40 @@ func main() {
 		return
 	}
 
-	go cpu.Monitor()
-
-	netMonitor := net.NewNetMonitor()
-	go netMonitor.Start()
-
-	netController := &NetController{
-		netMonitor: netMonitor,
+	hostCPU := procfs.NewCPUStatReader()
+	hostMemory := procfs.NewMemInfoReader()
+	hostLoadAvg := procfs.NewLoadAvgReader()
+	queueLength, err := filters.NewExponentialSmoothing(procfs.FilterWrap(hostLoadAvg),
+		filters.WithQueueLength(config.QueueLengthElementsNeeded),
+		filters.WithAverageConfig(config.QueueLengthPointsPerSample, config.QueueLengthSamplingInterval),
+	)
+	if err != nil {
+		panic(err)
 	}
+
+	go queueLength.Start(ctx)
+	cpu := cpu.NewCPUUsageMonitor(hostCPU)
+	go cpu.Start(ctx)
+	net := net.NewNetMonitor()
+	go net.Start()
+	mem := mem.NewMemoryUsageGetter()
+
+	controller := webserver.NewController(mem, cpu, net, queueLength, hostMemory)
 
 	globalRouter := mux.NewRouter()
 	r := handlers.NewRouter(log)
-	if config.ENV["HTTP_USERNAME"] != "" && config.ENV["HTTP_PASSWORD"] != "" {
-		r.Use(handlers.AuthMiddleware(func(user, password string) bool {
-			return user == config.ENV["HTTP_USERNAME"] && password == config.ENV["HTTP_PASSWORD"]
-		}))
-	}
+	//if config.ENV["HTTP_USERNAME"] != "" && config.ENV["HTTP_PASSWORD"] != "" {
+	//	r.Use(handlers.AuthMiddleware(func(user, password string) bool {
+	//		return user == config.ENV["HTTP_USERNAME"] && password == config.ENV["HTTP_PASSWORD"]
+	//	}))
+	//}
 
-	r.HandleFunc("/containers/{id}/mem", containerMemUsageHandler).Methods("GET")
-	r.HandleFunc("/containers/{id}/cpu", containerCpuUsageHandler).Methods("GET")
-	r.HandleFunc("/containers/{id}/net", netController.containerNetUsageHandler).Methods("GET")
-	r.HandleFunc("/containers/{id}/usage", netController.containerUsageHandler).Methods("GET")
-	r.HandleFunc("/containers/usage", netController.containersUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/{id}/mem", controller.ContainerMemUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/{id}/cpu", controller.ContainerCpuUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/{id}/net", controller.ContainerNetUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/{id}/usage", controller.ContainerUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/usage", controller.ContainersUsageHandler).Methods("GET")
+	r.HandleFunc("/host/resources", controller.HostResources)
 
 	if *doProfile {
 		pprofRouter := mux.NewRouter()
@@ -205,6 +112,7 @@ func main() {
 	n := negroni.New(negroni.NewRecovery(), &JSONContentTypeMiddleware{})
 	n.UseHandler(globalRouter)
 
+	log.Info("Listening on :" + config.ENV["PORT"])
 	log.Fatal(gracehttp.Serve(&http.Server{
 		Addr: ":" + config.ENV["PORT"], Handler: n,
 	}))

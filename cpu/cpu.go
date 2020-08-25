@@ -1,13 +1,14 @@
 package cpu
 
 import (
-	"bufio"
+	"context"
 	"os"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/Scalingo/acadock-monitoring/procfs"
 
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
@@ -22,16 +23,31 @@ const (
 
 type Usage client.CpuUsage
 
-var (
-	numCPU              = runtime.NumCPU()
-	currentSystemUsage  = make(map[string]int64)
-	previousSystemUsage = make(map[string]int64)
-	previousCPUUsages   = make(map[string]int64)
-	cpuUsages           = make(map[string]int64)
-	cpuUsagesMutex      = &sync.Mutex{}
-)
+type CPUUsageMonitor struct {
+	numCPU              int
+	currentHostUsage    *procfs.SingleCPUStat
+	previousHostUsage   *procfs.SingleCPUStat
+	currentSystemUsage  map[string]time.Duration
+	previousSystemUsage map[string]time.Duration
+	previousCPUUsages   map[string]time.Duration
+	cpuUsages           map[string]time.Duration
+	cpuUsagesMutex      *sync.Mutex
+	cpuStatReader       procfs.CPUStat
+}
 
-func cpuacctUsage(container string) (int64, error) {
+func NewCPUUsageMonitor(cpustat procfs.CPUStat) *CPUUsageMonitor {
+	return &CPUUsageMonitor{
+		numCPU:              runtime.NumCPU(),
+		currentSystemUsage:  make(map[string]time.Duration),
+		previousSystemUsage: make(map[string]time.Duration),
+		previousCPUUsages:   make(map[string]time.Duration),
+		cpuUsages:           make(map[string]time.Duration),
+		cpuUsagesMutex:      &sync.Mutex{},
+		cpuStatReader:       cpustat,
+	}
+}
+
+func (m *CPUUsageMonitor) cpuacctUsage(container string) (time.Duration, error) {
 	file := config.CgroupPath("cpuacct", container) + "/" + LXC_CPUACCT_USAGE_FILE
 	f, err := os.Open(file)
 	if err != nil {
@@ -50,112 +66,113 @@ func cpuacctUsage(container string) (int64, error) {
 	if err != nil {
 		return 0, errors.Wrapf(err, "fail to parse '%v'", file)
 	}
-	return res, nil
+	return time.Duration(res) * time.Nanosecond, nil
 }
 
-func Monitor() {
+func (m *CPUUsageMonitor) Start(ctx context.Context) {
+	go m.monitorHostUsage(ctx)
 	containers := docker.RegisterToContainersStream()
 	for c := range containers {
 		log.Infof("Monitoring CPU of %v", c)
-		go monitorContainer(c)
+		go m.monitorContainer(ctx, c)
 	}
 }
 
-func monitorContainer(id string) {
+func (m *CPUUsageMonitor) monitorHostUsage(ctx context.Context) {
+	//tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
+	tick := time.NewTicker(time.Second)
+	for {
+		<-tick.C
+		current, err := m.cpuStatReader.Read(ctx)
+		if err != nil {
+			log.WithError(err).Error("fail to get container ")
+			continue
+		}
+		currentCPUUsage := current.All()
+		m.cpuUsagesMutex.Lock()
+		m.previousHostUsage = m.currentHostUsage
+		m.currentHostUsage = &currentCPUUsage
+		m.cpuUsagesMutex.Unlock()
+	}
+}
+
+func (m *CPUUsageMonitor) monitorContainer(ctx context.Context, id string) {
 	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
 	for {
 		<-tick.C
 		var err error
-		usage, err := cpuacctUsage(id)
-		cpuUsagesMutex.Lock()
+		usage, err := m.cpuacctUsage(id)
+		m.cpuUsagesMutex.Lock()
 		if err != nil {
-			if _, ok := cpuUsages[id]; ok {
-				delete(cpuUsages, id)
+			if _, ok := m.cpuUsages[id]; ok {
+				delete(m.cpuUsages, id)
 			}
-			if _, ok := previousCPUUsages[id]; ok {
-				delete(previousCPUUsages, id)
+			if _, ok := m.previousCPUUsages[id]; ok {
+				delete(m.previousCPUUsages, id)
 			}
 			log.Infof("Stop monitoring CPU of '%v', reason: '%v'", id, err)
-			cpuUsagesMutex.Unlock()
+			m.cpuUsagesMutex.Unlock()
 			return
 		}
 
-		previousCPUUsages[id] = cpuUsages[id]
-		cpuUsages[id] = usage
+		m.previousCPUUsages[id] = m.cpuUsages[id]
+		m.cpuUsages[id] = usage
 
-		previousSystemUsage[id] = currentSystemUsage[id]
-		currentSystemUsage[id], err = systemUsage()
+		m.previousSystemUsage[id] = m.currentSystemUsage[id]
+		systemUsage, err := m.cpuStatReader.Read(ctx)
 		if err != nil {
 			log.WithError(err).Warn("fail to read system CPU usage")
 		}
-		cpuUsagesMutex.Unlock()
+		m.currentSystemUsage[id] = systemUsage.All().Sum()
+		m.cpuUsagesMutex.Unlock()
 	}
 }
 
-func GetUsage(id string) (Usage, error) {
+func (m CPUUsageMonitor) GetHostUsage() (client.HostCpuUsage, error) {
+	m.cpuUsagesMutex.Lock()
+	defer m.cpuUsagesMutex.Unlock()
+	if m.previousCPUUsages == nil || m.currentHostUsage == nil {
+		return client.HostCpuUsage{}, nil
+	}
+
+	deltaSum := float64(m.currentHostUsage.Sum() - m.previousHostUsage.Sum())
+	deltaIdled := float64(m.currentHostUsage.IDLE - m.previousHostUsage.IDLE)
+
+	if deltaIdled < 0 || deltaSum < 0 {
+		return client.HostCpuUsage{}, nil
+	}
+
+	usage := (deltaSum - deltaIdled) / deltaSum
+	return client.HostCpuUsage{
+		Usage:                            usage,
+		Amount:                           m.numCPU,
+		QueueLengthExponentiallySmoothed: 0,
+	}, nil
+}
+
+func (m CPUUsageMonitor) GetContainerUsage(id string) (Usage, error) {
 	id, err := docker.ExpandId(id)
 	if err != nil {
 		return Usage{}, errors.Wrapf(err, "fail to expand ID '%v'", id)
 	}
 
-	cpuUsagesMutex.Lock()
-	defer cpuUsagesMutex.Unlock()
+	m.cpuUsagesMutex.Lock()
+	defer m.cpuUsagesMutex.Unlock()
 
-	if _, ok := previousCPUUsages[id]; !ok {
+	if _, ok := m.previousCPUUsages[id]; !ok {
 		return Usage{}, nil
 	}
 
-	deltaCPUUsage := float64(cpuUsages[id] - previousCPUUsages[id])
-	deltaSystemCPUUsage := float64(currentSystemUsage[id] - previousSystemUsage[id])
+	deltaCPUUsage := float64(m.cpuUsages[id] - m.previousCPUUsages[id])
+	deltaSystemCPUUsage := float64(m.currentSystemUsage[id] - m.previousSystemUsage[id])
 
 	var percents int
 	// If both values are positive, the first values are over
 	if deltaCPUUsage > 0.0 && deltaSystemCPUUsage > 0.0 {
-		percents = int((deltaCPUUsage / deltaSystemCPUUsage) * 100 * float64(numCPU))
+		percents = int((deltaCPUUsage / deltaSystemCPUUsage) * 100 * float64(m.numCPU))
 	}
 
 	return Usage{
 		UsageInPercents: percents,
 	}, nil
-}
-
-func systemUsage() (int64, error) {
-	f, err := os.OpenFile("/proc/stat", os.O_RDONLY, 0600)
-	if err != nil {
-		return -1, err
-	}
-
-	var line string
-	buffer := bufio.NewReader(f)
-	for {
-		lineBytes, _, err := buffer.ReadLine()
-		if err != nil {
-			return -1, err
-		}
-		line = string(lineBytes)
-		if strings.HasPrefix(line, "cpu ") {
-			break
-		}
-	}
-
-	err = f.Close()
-	if err != nil {
-		return -1, err
-	}
-
-	fields := strings.Fields(string(line))
-	if len(fields) < 8 {
-		return -1, errors.New("invalid cpu line in /stat/proc: " + string(line))
-	}
-
-	sum := int64(0)
-	for i := 1; i < 8; i++ {
-		n, err := strconv.ParseInt(fields[i], 10, 64)
-		if err != nil {
-			return -1, err
-		}
-		sum += n
-	}
-
-	return sum * 1e9 / 100, nil
 }
