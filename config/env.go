@@ -16,8 +16,6 @@ var ENV = map[string]string{
 	"RUNNER_DIR":                     "/usr/bin",
 	"DEBUG":                          "false",
 	"NET_MONITORING":                 "true",
-	"HTTP_USERNAME":                  "",
-	"HTTP_PASSWORD":                  "",
 	"QUEUE_LENGTH_SAMPLING_INTERVAL": "5s",
 	"QUEUE_LENGTH_POINTS_PER_SAMPLE": "5",
 	"QUEUE_LENGTH_ELEMENTS_NEEDED":   "6",
