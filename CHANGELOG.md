@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.6.0
+
+* Add Host resources monitoring
+* Add authentication
+
 ## v0.5.1
 
 * Fix CPU value reading
