@@ -19,6 +19,8 @@ var ENV = map[string]string{
 	"QUEUE_LENGTH_SAMPLING_INTERVAL": "5s",
 	"QUEUE_LENGTH_POINTS_PER_SAMPLE": "5",
 	"QUEUE_LENGTH_ELEMENTS_NEEDED":   "6",
+	"HTTP_USERNAME":                  "",
+	"HTTP_PASSWORD":                  "",
 }
 
 var (
