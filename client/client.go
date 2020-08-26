@@ -10,6 +10,8 @@ import (
 	"gopkg.in/errgo.v1"
 )
 
+var _ AcadockClient = &Client{}
+
 type MemoryUsage struct {
 	MemoryUsage    int64 `json:"memory_usage"`
 	SwapUsage      int64 `json:"swap_usage"`
@@ -49,6 +51,15 @@ type NetUsage struct {
 	netstat.NetworkStat
 	RxBps int64 `json:"rx_bps"`
 	TxBps int64 `json:"tx_bps"`
+}
+
+type AcadockClient interface {
+	AllContainersUsage() (ContainersUsage, error)
+	Memory(dockerId string) (*MemoryUsage, error)
+	CpuUsage(dockerId string) (*CpuUsage, error)
+	NetUsage(dockerId string) (*NetUsage, error)
+	Usage(dockerId string, net bool) (*Usage, error)
+	HostUsage(opts HostUsageOpts) (HostUsage, error)
 }
 
 type Client struct {
