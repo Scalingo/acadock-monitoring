@@ -51,7 +51,7 @@ Is returns a function that returns whether the an error is equal to the given
 error. It is intended to be used as a "pass" argument to Mask and friends; for
 example:
 
-    return errors.Mask(err, errors.Is(http.ErrNoCookie))
+    return errgo.Mask(err, errgo.Is(http.ErrNoCookie))
 
 would return an error with an http.ErrNoCookie cause only if that was err's
 diagnosis; otherwise the diagnosis would be itself.
@@ -75,7 +75,7 @@ from the os.Open call when (and only when) the file does not exist.
 
     f, err := os.Open("non-existent-file")
     if err != nil {
-    	return errors.Mask(err, os.IsNotExist)
+        return errgo.Mask(err, os.IsNotExist)
     }
 
 In order to add context to returned errors, it is conventional to call Mask when
@@ -160,7 +160,7 @@ type Err struct {
 	// by the Cause method.
 	Cause_ error
 
-	// Underlying holds the underlying error, if any.
+	// Underlying_ holds the underlying error, if any.
 	Underlying_ error
 
 	// File and Line identify the source code location where the error was

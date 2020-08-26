@@ -27,7 +27,14 @@ type Usage struct {
 	MaxSwapMemoryUsage int64 `json:"-"`
 }
 
-func GetUsage(id string) (Usage, error) {
+type MemoryUsageGetter struct {
+}
+
+func NewMemoryUsageGetter() MemoryUsageGetter {
+	return MemoryUsageGetter{}
+}
+
+func (m MemoryUsageGetter) GetMemoryUsage(id string) (Usage, error) {
 	usage := Usage{}
 	id, err := docker.ExpandId(id)
 	if err != nil {
@@ -37,12 +44,12 @@ func GetUsage(id string) (Usage, error) {
 	errors := make(chan error)
 	wg := &sync.WaitGroup{}
 	wg.Add(6)
-	go readMemoryCgroupInt64Async(id, LXC_MAX_MEM_FILE, &usage.MaxMemoryUsage, errors, wg)
-	go readMemoryCgroupInt64Async(id, LXC_MAX_SWAP_MEM_FILE, &usage.MaxSwapMemoryUsage, errors, wg)
-	go readMemoryCgroupInt64Async(id, LXC_MEM_LIMIT_FILE, &usage.MemoryLimit, errors, wg)
-	go readMemoryCgroupInt64Async(id, LXC_MEM_USAGE_FILE, &usage.MemoryUsage.MemoryUsage, errors, wg)
-	go readMemoryCgroupInt64Async(id, LXC_SWAP_MEM_LIMIT_FILE, &usage.SwapMemoryLimit, errors, wg)
-	go readMemoryCgroupInt64Async(id, LXC_SWAP_MEM_USAGE_FILE, &usage.SwapMemoryUsage, errors, wg)
+	go m.readMemoryCgroupInt64Async(id, LXC_MAX_MEM_FILE, &usage.MaxMemoryUsage, errors, wg)
+	go m.readMemoryCgroupInt64Async(id, LXC_MAX_SWAP_MEM_FILE, &usage.MaxSwapMemoryUsage, errors, wg)
+	go m.readMemoryCgroupInt64Async(id, LXC_MEM_LIMIT_FILE, &usage.MemoryLimit, errors, wg)
+	go m.readMemoryCgroupInt64Async(id, LXC_MEM_USAGE_FILE, &usage.MemoryUsage.MemoryUsage, errors, wg)
+	go m.readMemoryCgroupInt64Async(id, LXC_SWAP_MEM_LIMIT_FILE, &usage.SwapMemoryLimit, errors, wg)
+	go m.readMemoryCgroupInt64Async(id, LXC_SWAP_MEM_USAGE_FILE, &usage.SwapMemoryUsage, errors, wg)
 
 	go func() {
 		wg.Wait()
@@ -57,7 +64,7 @@ func GetUsage(id string) (Usage, error) {
 
 	usage.SwapUsage = usage.SwapMemoryUsage - usage.MemoryUsage.MemoryUsage
 
-	// As swap usage depneds of memory usage, both value may result in a negative value
+	// As swap usage depends of memory usage, both value may result in a negative value
 	// In this case, it means memory has changed between read operations and that there is no swap
 	if usage.SwapUsage < 0 {
 		usage.MemoryUsage.MemoryUsage = usage.SwapMemoryUsage
@@ -68,9 +75,9 @@ func GetUsage(id string) (Usage, error) {
 	return usage, nil
 }
 
-func readMemoryCgroupInt64Async(id, file string, ret *int64, errors chan error, wg *sync.WaitGroup) {
+func (m MemoryUsageGetter) readMemoryCgroupInt64Async(id, file string, ret *int64, errors chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
-	val, err := readMemoryCgroupInt64(id, file)
+	val, err := m.readMemoryCgroupInt64(id, file)
 	if err != nil {
 		errors <- err
 		return
@@ -78,7 +85,7 @@ func readMemoryCgroupInt64Async(id, file string, ret *int64, errors chan error, 
 	*ret = val
 }
 
-func readMemoryCgroupInt64(id, file string) (int64, error) {
+func (m MemoryUsageGetter) readMemoryCgroupInt64(id, file string) (int64, error) {
 	path := config.CgroupPath("memory", id) + "/" + file
 	f, err := os.Open(path)
 	if err != nil {

@@ -3,23 +3,30 @@ package config
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 var ENV = map[string]string{
-	"DOCKER_URL":     "http://127.0.0.1:4243",
-	"PORT":           "4244",
-	"REFRESH_TIME":   "20",
-	"CGROUP_SOURCE":  "docker",
-	"CGROUP_DIR":     "/sys/fs/cgroup",
-	"PROC_DIR":       "/proc",
-	"RUNNER_DIR":     "/usr/bin",
-	"DEBUG":          "false",
-	"NET_MONITORING": "true",
+	"DOCKER_URL":                     "http://127.0.0.1:4243",
+	"PORT":                           "4244",
+	"REFRESH_TIME":                   "20",
+	"CGROUP_SOURCE":                  "docker",
+	"CGROUP_DIR":                     "/sys/fs/cgroup",
+	"PROC_DIR":                       "/proc",
+	"RUNNER_DIR":                     "/usr/bin",
+	"DEBUG":                          "false",
+	"NET_MONITORING":                 "true",
+	"QUEUE_LENGTH_SAMPLING_INTERVAL": "5s",
+	"QUEUE_LENGTH_POINTS_PER_SAMPLE": "5",
+	"QUEUE_LENGTH_ELEMENTS_NEEDED":   "6",
 }
 
 var (
-	RefreshTime int
-	Debug       bool
+	RefreshTime                 int
+	Debug                       bool
+	QueueLengthSamplingInterval time.Duration
+	QueueLengthPointsPerSample  int
+	QueueLengthElementsNeeded   int
 )
 
 func init() {
@@ -37,6 +44,21 @@ func init() {
 
 	var err error
 	RefreshTime, err = strconv.Atoi(ENV["REFRESH_TIME"])
+	if err != nil {
+		panic(err)
+	}
+
+	QueueLengthElementsNeeded, err = strconv.Atoi(ENV["QUEUE_LENGTH_ELEMENTS_NEEDED"])
+	if err != nil {
+		panic(err)
+	}
+
+	QueueLengthPointsPerSample, err = strconv.Atoi(ENV["QUEUE_LENGTH_POINTS_PER_SAMPLE"])
+	if err != nil {
+		panic(err)
+	}
+
+	QueueLengthSamplingInterval, err = time.ParseDuration(ENV["QUEUE_LENGTH_SAMPLING_INTERVAL"])
 	if err != nil {
 		panic(err)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/go-netstat"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type Usage client.NetUsage

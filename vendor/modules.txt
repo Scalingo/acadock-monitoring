@@ -1,0 +1,69 @@
+# github.com/Scalingo/go-handlers v1.3.0
+github.com/Scalingo/go-handlers
+# github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
+github.com/Scalingo/go-netns
+# github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
+github.com/Scalingo/go-netstat
+# github.com/Scalingo/go-utils v7.0.1+incompatible
+github.com/Scalingo/go-utils/errors
+github.com/Scalingo/go-utils/logger
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a
+github.com/facebookgo/clock
+# github.com/facebookgo/grace v0.0.0-20180706040059-75cf19382434
+github.com/facebookgo/grace/gracehttp
+github.com/facebookgo/grace/gracenet
+# github.com/facebookgo/httpdown v0.0.0-20180706035922-5979d39b15c2
+github.com/facebookgo/httpdown
+# github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4
+github.com/facebookgo/stats
+# github.com/fsouza/go-dockerclient v0.0.0-20160107101209-175e1df97327
+github.com/fsouza/go-dockerclient
+github.com/fsouza/go-dockerclient/external/github.com/Sirupsen/logrus
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/opts
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/archive
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/fileutils
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/homedir
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/idtools
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/ioutils
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/longpath
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/pools
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/promise
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/stdcopy
+github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/system
+github.com/fsouza/go-dockerclient/external/github.com/docker/go-units
+github.com/fsouza/go-dockerclient/external/github.com/hashicorp/go-cleanhttp
+github.com/fsouza/go-dockerclient/external/github.com/opencontainers/runc/libcontainer/user
+github.com/fsouza/go-dockerclient/external/golang.org/x/net/context
+github.com/fsouza/go-dockerclient/external/golang.org/x/sys/unix
+# github.com/gofrs/uuid v3.3.0+incompatible
+github.com/gofrs/uuid
+# github.com/golang/mock v1.3.1
+github.com/golang/mock/gomock
+# github.com/gorilla/mux v1.7.4
+github.com/gorilla/mux
+# github.com/konsorten/go-windows-terminal-sequences v1.0.3
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/pkg/errors v0.9.1
+github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/sirupsen/logrus v1.6.0
+github.com/sirupsen/logrus
+# github.com/stretchr/testify v1.5.1
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# github.com/tklauser/go-sysconf v0.0.0-20200513113950-67a71062da8a
+github.com/tklauser/go-sysconf
+# github.com/tklauser/numcpus v0.0.0-20200513113108-b180d8d09e7f
+github.com/tklauser/numcpus
+# github.com/urfave/negroni v1.0.0
+github.com/urfave/negroni
+# golang.org/x/sys v0.0.0-20200513112337-417ce2331b5c
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+# gopkg.in/errgo.v1 v1.0.1
+gopkg.in/errgo.v1
+# gopkg.in/yaml.v2 v2.2.8
+gopkg.in/yaml.v2
