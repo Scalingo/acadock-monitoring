@@ -163,15 +163,19 @@ func (c *Client) getResource(dockerId, resourceType string, data interface{}) er
 func (c *Client) getResourceWithQuery(dockerId, resourceType string, query string, data interface{}) error {
 	var path string
 	if dockerId == "" {
-		path = "/containers/" + resourceType + "?" + query
+		path = "/containers/" + resourceType
 	} else {
-		path = "/containers/" + dockerId + "/" + resourceType + "?" + query
+		path = "/containers/" + dockerId + "/" + resourceType
 	}
 	return c.getPathWithQuery(path, query, data)
 }
 
 func (c *Client) getPathWithQuery(path, query string, data interface{}) error {
 	endpoint := c.Endpoint + path
+
+	if query != "" {
+		endpoint = fmt.Sprintf("%s?%s", endpoint, query)
+	}
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
