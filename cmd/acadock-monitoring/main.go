@@ -72,7 +72,11 @@ func main() {
 
 	globalRouter := mux.NewRouter()
 	r := handlers.NewRouter(log)
-
+	if config.ENV["HTTP_USERNAME"] != "" && config.ENV["HTTP_PASSWORD"] != "" {
+		r.Use(handlers.AuthMiddleware(func(user, password string) bool {
+			return user == config.ENV["HTTP_USERNAME"] && password == config.ENV["HTTP_PASSWORD"]
+		}))
+	}
 	r.HandleFunc("/containers/{id}/mem", controller.ContainerMemUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/cpu", controller.ContainerCpuUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/net", controller.ContainerNetUsageHandler).Methods("GET")
