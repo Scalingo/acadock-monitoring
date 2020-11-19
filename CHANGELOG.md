@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.6.1
+
+* Bump dependencies, stop using github.com/Scalingo/go-utils globally and uses submodules
+
 ## v0.6.0
 
 * Add Host resources monitoring
