@@ -50,7 +50,7 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.7.0
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.5.1
+# github.com/stretchr/testify v1.7.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/tklauser/go-sysconf v0.0.0-20200513113950-67a71062da8a
@@ -65,5 +65,5 @@ golang.org/x/sys/unix
 golang.org/x/sys/windows
 # gopkg.in/errgo.v1 v1.0.1
 gopkg.in/errgo.v1
-# gopkg.in/yaml.v2 v2.2.8
-gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+gopkg.in/yaml.v3

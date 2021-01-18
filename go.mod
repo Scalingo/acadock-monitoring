@@ -23,7 +23,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tklauser/go-sysconf v0.0.0-20200513113950-67a71062da8a
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/sys v0.0.0-20201119102817-f84b799fce68 // indirect
