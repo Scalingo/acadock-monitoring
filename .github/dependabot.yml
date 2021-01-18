@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    vendor: true
+    directory: "/"
+    allow:
+      - dependency-type: "all"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
