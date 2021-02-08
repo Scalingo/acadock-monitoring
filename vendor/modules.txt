@@ -1,4 +1,4 @@
-# github.com/Scalingo/go-handlers v1.3.1
+# github.com/Scalingo/go-handlers v1.4.0
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 github.com/Scalingo/go-netns
@@ -38,7 +38,7 @@ github.com/fsouza/go-dockerclient/external/github.com/hashicorp/go-cleanhttp
 github.com/fsouza/go-dockerclient/external/github.com/opencontainers/runc/libcontainer/user
 github.com/fsouza/go-dockerclient/external/golang.org/x/net/context
 github.com/fsouza/go-dockerclient/external/golang.org/x/sys/unix
-# github.com/gofrs/uuid v3.3.0+incompatible
+# github.com/gofrs/uuid v3.4.0+incompatible
 github.com/gofrs/uuid
 # github.com/golang/mock v1.4.4
 github.com/golang/mock/gomock

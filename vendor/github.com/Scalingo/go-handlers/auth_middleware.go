@@ -3,11 +3,15 @@ package handlers
 import (
 	"bufio"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 )
+
+const invalidAuthError = "invalid auth"
 
 func AuthMiddleware(check func(user, password string) bool) MiddlewareFunc {
 	return MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
@@ -32,7 +36,12 @@ func AuthMiddleware(check func(user, password string) bool) MiddlewareFunc {
 
 			if !check(httpUser, httpPassword) {
 				res.WriteHeader(401)
-				return errors.New("invalid auth")
+				if req.Header.Get("Content-Type") == "application/json" {
+					_ = json.NewEncoder(res).Encode(&(map[string]string{"error": invalidAuthError}))
+				} else {
+					_, _ = fmt.Fprintln(res, invalidAuthError)
+				}
+				return nil
 			}
 			return handler(res, req, vars)
 		}

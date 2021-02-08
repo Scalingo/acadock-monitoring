@@ -1,5 +1,4 @@
-Custom Router and Handler
-=========================
+# Custom Router and Handler v1.4.0
 
 [ ![Codeship Status for Scalingo/go-handlers](https://app.codeship.com/projects/9bd8e5d0-d609-0135-e8d1-2aadb9628cc1/status?branch=master)](https://app.codeship.com/projects/263154)
 
@@ -86,7 +85,6 @@ Thie middleware writes in the logs with the `Error` log level.
 To send logs to rollbar, ensure your logger is properly configured
 with the rollbar hook.
 
-
 ```go
 import (
   "gopkg.in/Scalingo/logrus-rollbar.v1"
@@ -96,3 +94,20 @@ logger := logger.Default(logrus_rollbar.New(0))
 router := handlers.NewRouter(logger)
 router.Use(MiddlewareFunc(ErrorHandler))
 ```
+
+## Release a New Version
+
+Bump new version number in `CHANGELOG.md` and `README.md`.
+
+Commit, tag and create a new release:
+
+```sh
+git add CHANGELOG.md README.md
+git commit -m "Bump v1.4.0"
+git tag v1.4.0
+git push origin master
+git push --tags
+hub release create v1.4.0
+```
+
+The title of the release should be the version number and the text of the release is the same as the changelog.
