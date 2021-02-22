@@ -16,7 +16,7 @@ require (
 	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/fsouza/go-dockerclient v0.0.0-20160107101209-175e1df97327
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/gorilla/mux v1.8.0
 	github.com/influxdata/influxdb v1.8.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
