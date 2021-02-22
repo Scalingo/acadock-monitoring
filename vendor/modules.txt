@@ -44,11 +44,14 @@ github.com/gofrs/uuid
 github.com/golang/mock/gomock
 # github.com/gorilla/mux v1.8.0
 github.com/gorilla/mux
+# github.com/magefile/mage v1.10.0
+github.com/magefile/mage/mg
+github.com/magefile/mage/sh
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/sirupsen/logrus v1.7.0
+# github.com/sirupsen/logrus v1.8.0
 github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.7.0
 github.com/stretchr/testify/assert
