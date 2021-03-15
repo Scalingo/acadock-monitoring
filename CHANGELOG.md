@@ -1,4 +1,11 @@
-# CHANGELOG
+# Changelog
+
+## To be Released
+
+* Bump github.com/golang/mock from 1.3.1 to 1.5.0
+* Bump github.com/stretchr/testify from 1.5.1 to 1.7.0
+* Bump github.com/Scalingo/go-handlers from 1.3.1 to 1.4.0
+* Bump github.com/sirupsen/logrus from 1.7.0 to 1.8.1
 
 ## v0.6.1
 
