@@ -40,7 +40,7 @@ type HostMemoryUsage struct {
 	Total           uint64 `json:"total"`
 	Swap            uint64 `json:"swap"`
 	MemoryUsage     uint64 `json:"memory_usage"`
-	MemoryCommitted uint64 `json:"memory_committed""`
+	MemoryCommitted uint64 `json:"memory_committed"`
 	MaxMemoryUsage  uint64 `json:"max_memory_usage"`
 	SwapUsage       uint64 `json:"swap_usage"`
 	SwapCommitted   uint64 `json:"swap_committed"`
