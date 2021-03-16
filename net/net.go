@@ -59,7 +59,7 @@ func (monitor *NetMonitor) Start() error {
 			monitor.netUsagesMutex.Unlock()
 		}
 	}
-	return nil
+	// unreachable code
 }
 
 func (monitor *NetMonitor) listeningNewInterfaces() {
