@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/Scalingo/acadock-monitoring/config"
@@ -9,7 +9,7 @@ import (
 
 func Pid(id string) (string, error) {
 	path := config.CgroupPath("memory", id)
-	content, err := ioutil.ReadFile(path + "/tasks")
+	content, err := os.ReadFile(path + "/tasks")
 	if err != nil {
 		return "", err
 	}
