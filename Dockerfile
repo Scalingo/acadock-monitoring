@@ -1,4 +1,4 @@
-FROM golang:1.14.4
+FROM golang:1.16
 
 MAINTAINER leo@scalingo.com
 
