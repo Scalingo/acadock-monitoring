@@ -6,7 +6,7 @@ services:
       - /sys/fs/cgroup:/host/cgroup:ro
       - /proc:/host/proc:ro
       - /var/run/docker.sock:/host/docker.sock
-      - .:/go/src/github.com/Scalingo/acadock-monitoring/
+      - .:/go/src/github.com/Scalingo/acadock-monitoring
     environment:
       HTTP_USERNAME: acadock-monitoring
       HTTP_PASSWORD: p1p0m0l0
