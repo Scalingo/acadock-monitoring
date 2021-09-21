@@ -1,4 +1,4 @@
-Acadock Monitoring - Docker container monitoring
+Acadock Monitoring - Docker container monitoring v0.6.1
 ================================================
 
 This webservice provides live data on Docker containers. It takes
@@ -84,6 +84,19 @@ API
     Content-Type: application/json
     `GET /containers/usage`
 
-### Developers
+## Release a New Version
 
-> Léo Unbekandt `<leo@scalingo.com>`
+Bump new version number in:
+
+- `CHANGELOG.md`
+- `README.md`
+
+Commit, tag and create a new release:
+
+```sh
+git add CHANGELOG.md README.md
+git commit -m "Bump v0.6.1"
+git tag v0.6.1
+git push origin master v0.6.1
+hub release create v0.6.1
+```
