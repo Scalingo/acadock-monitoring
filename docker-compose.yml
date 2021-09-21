@@ -13,10 +13,8 @@ services:
       CGROUP_DIR: /host/cgroup
       PROC_DIR: /host/proc
       DOCKER_URL: unix:///host/docker.sock
+      PORT: 4244
     command: reflex -r '\.go$$' -s -- sh -c 'go build ./cmd/acadock-monitoring && ./acadock-monitoring'
     privileged: true
     pid: host
     network_mode: host
-    ports:
-      - "4244:4244"
-
