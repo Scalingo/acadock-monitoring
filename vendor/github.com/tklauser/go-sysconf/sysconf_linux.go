@@ -6,58 +6,24 @@ package sysconf
 
 import (
 	"bufio"
-	"encoding/binary"
 	"io/ioutil"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/tklauser/numcpus"
 	"golang.org/x/sys/unix"
 )
 
 const (
-	_AT_NULL   = 0  // End of auxiliary vector
-	_AT_CLKTCK = 17 // Frequency of times()
-
+	// CLK_TCK is a constant on Linux for all architectures except alpha and ia64.
+	// See e.g.
+	// https://git.musl-libc.org/cgit/musl/tree/src/conf/sysconf.c#n30
+	// https://github.com/containerd/cgroups/pull/12
+	// https://lore.kernel.org/lkml/agtlq6$iht$1@penguin.transmeta.com/
 	_SYSTEM_CLK_TCK = 100
-
-	uintSize uint = 32 << (^uint(0) >> 63)
 )
-
-var (
-	clktck     int64
-	clktckOnce sync.Once
-)
-
-func getclktck() int64 {
-	// I currently don't know a way to get the loaded-provided auxv, thus
-	// get it from /proc/self/auxv on Linux.
-	// Code based on cpu_linux.go in golang.org/x/sys/cpu
-	buf, err := ioutil.ReadFile("/proc/self/auxv")
-	if err == nil {
-		pb := int(uintSize / 8)
-		for i := 0; i < len(buf)-pb*2; i += pb * 2 {
-			var tag, val uint
-			switch uintSize {
-			case 32:
-				tag = uint(binary.LittleEndian.Uint32(buf[i:]))
-				val = uint(binary.LittleEndian.Uint32(buf[i+pb:]))
-			case 64:
-				tag = uint(binary.LittleEndian.Uint64(buf[i:]))
-				val = uint(binary.LittleEndian.Uint64(buf[i+pb:]))
-			}
-
-			switch tag {
-			case _AT_CLKTCK:
-				return int64(val)
-			}
-		}
-	}
-	return _SYSTEM_CLK_TCK
-}
 
 func readProcFsInt64(path string, fallback int64) int64 {
 	data, err := ioutil.ReadFile(path)
@@ -151,23 +117,9 @@ func getNprocs() int64 {
 }
 
 func getNprocsConf() int64 {
-	// TODO(tk): read /sys/devices/system/cpu/present instead?
-	d, err := os.Open("/sys/devices/system/cpu")
+	count, err := numcpus.GetConfigured()
 	if err == nil {
-		defer d.Close()
-		fis, err := d.Readdir(-1)
-		if err == nil {
-			count := int64(0)
-			for _, fi := range fis {
-				if name := fi.Name(); fi.IsDir() && strings.HasPrefix(name, "cpu") {
-					_, err := strconv.ParseInt(name[3:], 10, 64)
-					if err == nil {
-						count++
-					}
-				}
-			}
-			return count
-		}
+		return int64(count)
 	}
 
 	// TODO(tk): fall back to reading /proc/cpuinfo on legacy systems
@@ -216,8 +168,7 @@ func sysconf(name int) (int64, error) {
 		}
 		return childMax, nil
 	case SC_CLK_TCK:
-		clktckOnce.Do(func() { clktck = getclktck() })
-		return clktck, nil
+		return _SYSTEM_CLK_TCK, nil
 	case SC_DELAYTIMER_MAX:
 		return _DELAYTIMER_MAX, nil
 	case SC_GETGR_R_SIZE_MAX:
@@ -327,18 +278,18 @@ func sysconf(name int) (int64, error) {
 		return _POSIX_TYPED_MEMORY_OBJECTS, nil
 
 	case SC_V7_ILP32_OFF32:
-		return -1, nil
+		return _POSIX_V7_ILP32_OFF32, nil
 	case SC_V7_ILP32_OFFBIG:
-		return -1, nil
+		return _POSIX_V7_ILP32_OFFBIG, nil
 	case SC_V7_LP64_OFF64:
 		return _POSIX_V7_LP64_OFF64, nil
 	case SC_V7_LPBIG_OFFBIG:
 		return _POSIX_V7_LPBIG_OFFBIG, nil
 
 	case SC_V6_ILP32_OFF32:
-		return -1, nil
+		return _POSIX_V6_ILP32_OFF32, nil
 	case SC_V6_ILP32_OFFBIG:
-		return -1, nil
+		return _POSIX_V6_ILP32_OFFBIG, nil
 	case SC_V6_LP64_OFF64:
 		return _POSIX_V6_LP64_OFF64, nil
 	case SC_V6_LPBIG_OFFBIG:
@@ -390,5 +341,5 @@ func sysconf(name int) (int64, error) {
 		return _UIO_MAXIOV, nil
 	}
 
-	return -1, errInvalid
+	return sysconfGeneric(name)
 }
