@@ -140,10 +140,10 @@ github.com/sirupsen/logrus
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/tklauser/go-sysconf v0.0.0-20200513113950-67a71062da8a
+# github.com/tklauser/go-sysconf v0.3.9
 ## explicit
 github.com/tklauser/go-sysconf
-# github.com/tklauser/numcpus v0.0.0-20200513113108-b180d8d09e7f
+# github.com/tklauser/numcpus v0.3.0
 github.com/tklauser/numcpus
 # github.com/urfave/negroni v1.0.0
 ## explicit
@@ -154,7 +154,7 @@ go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+# golang.org/x/sys v0.0.0-20210816074244-15123e1e1f71
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix

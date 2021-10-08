@@ -7,6 +7,7 @@
 * Bump github.com/stretchr/testify from 1.5.1 to 1.7.0
 * Bump github.com/Scalingo/go-handlers from 1.3.1 to 1.4.0
 * Bump github.com/sirupsen/logrus from 1.7.0 to 1.8.1
+* Bump github.com/tklauser/go-sysconf from v0.0.0-20200513113950-67a71062da8a to 0.3.9
 
 ## v0.6.1
 

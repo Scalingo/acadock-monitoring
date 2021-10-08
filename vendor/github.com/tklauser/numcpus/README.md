@@ -1,21 +1,20 @@
 # numcpus
 
-[![GitHub Actions Status][1]][2]
-[![Build Status][3]][4]
-[![Go Report Card][5]][6]
-[![GoDoc][7]][8]
+[![Go Reference](https://pkg.go.dev/badge/github.com/tklauser/numcpus.svg)](https://pkg.go.dev/github.com/tklauser/numcpus)
+[![GitHub Action Status](https://github.com/tklauser/numcpus/workflows/Tests/badge.svg)](https://github.com/tklauser/numcpus/actions?query=workflow%3ATests)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tklauser/numcpus)](https://goreportcard.com/report/github.com/tklauser/numcpus)
 
-Package numcpus provides information about the number of CPU.
+Package numcpus provides information about the number of CPU in a system.
 
-It gets the number of CPUs (online, offline, present, possible or kernel
-maximum) on a Linux, Darwin, FreeBSD, NetBSD, OpenBSD or DragonflyBSD
-system.
+It gets the number of CPUs (online, offline, present, possible, configured or
+kernel maximum) on a Linux, Darwin, FreeBSD, NetBSD, OpenBSD,  DragonflyBSD or
+Solaris/Illumos system.
 
 On Linux, the information is retrieved by reading the corresponding CPU
 topology files in `/sys/devices/system/cpu`.
 
-Not all functions are supported on Darwin, FreeBSD, NetBSD, OpenBSD and
-DragonflyBSD.
+Not all functions are supported on Darwin, FreeBSD, NetBSD, OpenBSD,
+DragonflyBSD and Solaris/Illumos.
 
 ## Usage
 
@@ -46,14 +45,5 @@ func main() {
 
 ## References
 
-* [Linux kernel sysfs documenation for CPU attributes](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu)
+* [Linux kernel sysfs documentation for CPU attributes](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu)
 * [Linux kernel CPU topology documentation](https://www.kernel.org/doc/Documentation/cputopology.txt)
-
-[1]: https://github.com/tklauser/numcpus/workflows/Test/badge.svg
-[2]: https://github.com/tklauser/numcpus
-[3]: https://travis-ci.com/tklauser/numcpus.svg?branch=master
-[4]: https://travis-ci.com/tklauser/numcpus
-[5]: https://goreportcard.com/badge/github.com/tklauser/numcpus
-[6]: https://goreportcard.com/report/github.com/tklauser/numcpus
-[7]: https://godoc.org/github.com/tklauser/numcpus?status.svg
-[8]: https://godoc.org/github.com/tklauser/numcpus
