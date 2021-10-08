@@ -1,5 +1,4 @@
-Acadock Monitoring - Docker container monitoring v0.6.1
-================================================
+# Acadock Monitoring - Docker container monitoring v1.0.0
 
 This webservice provides live data on Docker containers. It takes
 data from the Linux kernel control groups and from the namespace of
@@ -7,8 +6,7 @@ the container and expose them through a HTTP API.
 
 > The solution is still a work in progress.
 
-Configuration
--------------
+## Configuration
 
 From environment
 
@@ -22,8 +20,7 @@ From environment
   systemd: /sys/fs/cgroup/:cgroup/memory/system.slice/docker-#{id}.slice
 * `DEBUG`: output of debugging information (default "false", switch to "true" to enable)
 
-Docker
-------
+## Docker
 
 Run from docker:
 
@@ -39,8 +36,7 @@ docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup 
 `--network=host`: Acadock should in the host namespace to access other containers network namespaces (for network metrics)
 `--privileged`: Acadock has to enter the other containers namespaces
 
-API
----
+## API
 
 * Memory consumption
 
@@ -95,8 +91,8 @@ Commit, tag and create a new release:
 
 ```sh
 git add CHANGELOG.md README.md
-git commit -m "Bump v0.6.1"
-git tag v0.6.1
-git push origin master v0.6.1
-hub release create v0.6.1
+git commit -m "Bump v1.0.0"
+git tag v1.0.0
+git push origin master v1.0.0
+hub release create v1.0.0
 ```

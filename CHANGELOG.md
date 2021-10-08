@@ -2,6 +2,8 @@
 
 ## To be Released
 
+## v1.0.0
+
 * Bump Go version to 1.16
 * Bump github.com/golang/mock from 1.3.1 to 1.5.0
 * Bump github.com/stretchr/testify from 1.5.1 to 1.7.0
