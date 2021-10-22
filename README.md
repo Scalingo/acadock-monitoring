@@ -96,3 +96,14 @@ git tag v1.0.0
 git push origin master v1.0.0
 hub release create v1.0.0
 ```
+
+The project is using [goreleaser](https://goreleaser.com) to build its archives.
+
+To build locally the archives, you can use the following command, it will
+automatically use the version of the last tag created.
+
+```
+goreleaser release --skip-publish --skip-announce --skip-sign --rm-dist
+```
+
+Add the builds to the newly created release.
