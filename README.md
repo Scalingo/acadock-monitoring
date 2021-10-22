@@ -103,5 +103,7 @@ To build locally the archives, you can use the following command, it will
 automatically use the version of the last tag created.
 
 ```
-goreleaser release --skip-publish --skip-announce --skip-sign  --rm-dist
+goreleaser release --skip-publish --skip-announce --skip-sign --rm-dist
 ```
+
+Add the builds to the newly created release.
