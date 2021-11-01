@@ -6,7 +6,7 @@ require (
 	github.com/Scalingo/go-handlers v1.4.0
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
-	github.com/Scalingo/go-utils/logger v1.0.0
+	github.com/Scalingo/go-utils/logger v1.1.0
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
