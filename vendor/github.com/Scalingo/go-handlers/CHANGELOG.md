@@ -2,6 +2,13 @@
 
 ## To be Released
 
+## v1.4.1
+
+* Bump github.com/sirupsen/logrus from 1.7.0 to 1.8.1
+* fix(error_middleware): ValidationError shouldn't be logged as Error
+* Bump github.com/Scalingo/go-utils/logger from 1.0.0 to 1.1.0
+* chore(deps): upgrade github.com/gofrs/uuid from 3.4.0 to 4.1.0
+
 ## v1.4.0
 
 * Don't return an invalid auth error for AuthMiddleware and add the ability to encode the error in json instead of text
