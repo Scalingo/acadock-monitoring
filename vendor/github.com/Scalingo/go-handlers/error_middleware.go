@@ -28,7 +28,7 @@ var ErrorMiddleware MiddlewareFunc = MiddlewareFunc(func(handler HandlerFunc) Ha
 				if !ok {
 					err = stderr.New(rec.(string))
 				}
-				log.WithError(err).Error("recover panic")
+				log.WithError(err).Error("Recover panic")
 				w.WriteHeader(500)
 				fmt.Fprintln(w, err)
 			}
@@ -42,23 +42,25 @@ var ErrorMiddleware MiddlewareFunc = MiddlewareFunc(func(handler HandlerFunc) Ha
 		}
 
 		if err != nil {
-			log.WithField("error", err).Error("request error")
-			writeError(rw, err)
+			log = log.WithField("error", err)
+			writeError(log, rw, err)
 		}
 
 		return err
 	}
 })
 
-func writeError(w negroni.ResponseWriter, err error) {
+func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 	if w.Header().Get("Content-Type") == "" {
 		w.Header().Set("Content-Type", "text/plain")
 	}
 
 	isCauseValidationErrors := errors.IsRootCause(err, &errors.ValidationErrors{})
 	if isCauseValidationErrors {
+		log.Info("Request validation error")
 		w.WriteHeader(422)
 	} else if w.Status() == 0 {
+		log.Error("Request error")
 		// If the status is 0, it means WriteHeader has not been called and we've to
 		// write it, otherwise it has been done in the handler with another response
 		// code.
