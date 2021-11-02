@@ -38,7 +38,7 @@ github.com/Scalingo/go-netns
 github.com/Scalingo/go-netstat
 # github.com/Scalingo/go-utils/errors v1.0.0
 github.com/Scalingo/go-utils/errors
-# github.com/Scalingo/go-utils/logger v1.0.0
+# github.com/Scalingo/go-utils/logger v1.1.0
 ## explicit
 github.com/Scalingo/go-utils/logger
 # github.com/containerd/cgroups v1.0.1
@@ -162,5 +162,5 @@ golang.org/x/sys/windows
 # gopkg.in/errgo.v1 v1.0.1
 ## explicit
 gopkg.in/errgo.v1
-# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+# gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 gopkg.in/yaml.v3

@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"net/http"
-)
+import "net/http"
 
 func CorsMiddleware(next HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, vars map[string]string) error {
