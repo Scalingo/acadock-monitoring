@@ -1,12 +1,12 @@
 # github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
-# github.com/Microsoft/go-winio v0.5.0
+# github.com/Microsoft/go-winio v0.5.1
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
 github.com/Microsoft/go-winio/pkg/security
 github.com/Microsoft/go-winio/vhd
-# github.com/Microsoft/hcsshim v0.8.18
+# github.com/Microsoft/hcsshim v0.8.23
 github.com/Microsoft/hcsshim
 github.com/Microsoft/hcsshim/computestorage
 github.com/Microsoft/hcsshim/internal/cow
@@ -43,13 +43,13 @@ github.com/Scalingo/go-utils/errors
 github.com/Scalingo/go-utils/logger
 # github.com/containerd/cgroups v1.0.1
 github.com/containerd/cgroups/stats/v1
-# github.com/containerd/containerd v1.5.5
+# github.com/containerd/containerd v1.5.8
 github.com/containerd/containerd/log
 github.com/containerd/containerd/pkg/userns
 github.com/containerd/containerd/sys
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v20.10.8+incompatible
+# github.com/docker/docker v20.10.12+incompatible
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/container
 github.com/docker/docker/api/types/filters
@@ -95,7 +95,7 @@ github.com/facebookgo/httpdown
 github.com/facebookgo/stats
 # github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4
 ## explicit
-# github.com/fsouza/go-dockerclient v1.7.4
+# github.com/fsouza/go-dockerclient v1.7.6
 ## explicit
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid v4.1.0+incompatible
@@ -123,10 +123,10 @@ github.com/moby/term/windows
 github.com/morikuni/aec
 # github.com/opencontainers/go-digest v1.0.0
 github.com/opencontainers/go-digest
-# github.com/opencontainers/image-spec v1.0.1
+# github.com/opencontainers/image-spec v1.0.2
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/opencontainers/runc v1.0.1
+# github.com/opencontainers/runc v1.0.3
 github.com/opencontainers/runc/libcontainer/user
 # github.com/pkg/errors v0.9.1
 ## explicit
