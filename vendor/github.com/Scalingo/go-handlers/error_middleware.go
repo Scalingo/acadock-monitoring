@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
@@ -67,7 +68,12 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 		w.WriteHeader(500)
 	}
 
-	if w.Header().Get("Content-Type") == "application/json" {
+	// If the body has already been partially written, do not write anything else
+	if w.Size() != 0 {
+		return
+	}
+
+	if isContentTypeJSON(w.Header().Get("Content-Type")) {
 		if isCauseValidationErrors {
 			json.NewEncoder(w).Encode(errors.RootCause(err))
 		} else {
@@ -76,4 +82,13 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 	} else {
 		fmt.Fprintln(w, err)
 	}
+}
+
+// isContentTypeJSON returns true if the given string is a valid JSON value for the HTTP Content-Type header. Various values can be used to state that a payload is a JSON:
+// - The RFC 4627 defines the Content-Type "application/json" (https://datatracker.ietf.org/doc/html/rfc4627)
+// - The RFC 6839 defines the suffix "+json":
+//     The suffix "+json" MAY be used with any media type whose representation follows that established for "application/json"
+//     (https://datatracker.ietf.org/doc/html/rfc6839#page-4)
+func isContentTypeJSON(contentType string) bool {
+	return contentType == "application/json" || strings.HasSuffix(contentType, "+json")
 }

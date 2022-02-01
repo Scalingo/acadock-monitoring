@@ -3,7 +3,7 @@ module github.com/Scalingo/acadock-monitoring
 go 1.16
 
 require (
-	github.com/Scalingo/go-handlers v1.4.1
+	github.com/Scalingo/go-handlers v1.4.2
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
 	github.com/Scalingo/go-utils/logger v1.1.0
