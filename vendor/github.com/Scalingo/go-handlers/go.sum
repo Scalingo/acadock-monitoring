@@ -1,6 +1,6 @@
 github.com/Scalingo/errgo-rollbar v0.2.0/go.mod h1:InPX+PbaicLpePiWdmay2bJ4gtF4anm2L8T6rITx41A=
-github.com/Scalingo/go-utils/errors v1.0.0 h1:9+1zBmT+d0kpAReChheUDX0AmT0/OtrDtHdwRymRufA=
-github.com/Scalingo/go-utils/errors v1.0.0/go.mod h1:X1v0A4DBs4exBWGjYsGLo6nsC49vqf2hEVtigTRv7iY=
+github.com/Scalingo/go-utils/errors v1.1.0 h1:azPy6iHKJ/BkCSDsPAcUcQSQl+HNaz4CZqTw2rqbsg4=
+github.com/Scalingo/go-utils/errors v1.1.0/go.mod h1:bJP50Ic+y5KafDFBSFRkELufB+F9j9f4S2N/1LG3Z6I=
 github.com/Scalingo/go-utils/logger v1.1.0 h1:wloM9dNhPntCr8W7FicBE4SHx6JHrC/3r/bcbJaSlpo=
 github.com/Scalingo/go-utils/logger v1.1.0/go.mod h1:ZJLfkPJ4kfTAliBBAka0IH06+SS+LmRetKuw00WAe+s=
 github.com/Scalingo/logrus-rollbar v1.4.0/go.mod h1:NDlGhdrfltVSLjElDxRjpqSDzu91zK5jJH4KHNcgf7g=
@@ -9,8 +9,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/frankban/quicktest v1.2.2 h1:xfmOhhoH5fGPgbEAlhLpJH9p0z/0Qizio9osmvn9IUY=
 github.com/frankban/quicktest v1.2.2/go.mod h1:Qh/WofXFeiAFII1aEBu529AtJo6Zg2VHscnEsbBnJ20=
-github.com/gofrs/uuid v4.1.0+incompatible h1:sIa2eCvUTwgjbqXrPLfNwUf9S3i3mpH1O1atV+iL/Wk=
-github.com/gofrs/uuid v4.1.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
+github.com/gofrs/uuid v4.2.0+incompatible h1:yyYWMnhkhrKwwr8gAOcOCYxOOscHgDS9yZgBrnJfGa0=
+github.com/gofrs/uuid v4.2.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/google/go-cmp v0.2.1-0.20190312032427-6f77996f0c42 h1:q3pnF5JFBNRz8sRD+IRj7Y6DMyYGTNqnZ9axTbSfoNI=
 github.com/google/go-cmp v0.2.1-0.20190312032427-6f77996f0c42/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
