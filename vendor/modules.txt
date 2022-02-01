@@ -43,7 +43,7 @@ github.com/Scalingo/go-utils/errors
 github.com/Scalingo/go-utils/logger
 # github.com/containerd/cgroups v1.0.1
 github.com/containerd/cgroups/stats/v1
-# github.com/containerd/containerd v1.5.8
+# github.com/containerd/containerd v1.5.9
 github.com/containerd/containerd/log
 github.com/containerd/containerd/pkg/userns
 github.com/containerd/containerd/sys
@@ -95,7 +95,7 @@ github.com/facebookgo/httpdown
 github.com/facebookgo/stats
 # github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4
 ## explicit
-# github.com/fsouza/go-dockerclient v1.7.6
+# github.com/fsouza/go-dockerclient v1.7.7
 ## explicit
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid v4.1.0+incompatible
