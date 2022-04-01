@@ -85,7 +85,7 @@ func (l *LoggingMiddleware) Apply(next HandlerFunc) HandlerFunc {
 			"user_agent": r.UserAgent(),
 		}
 		for k, v := range fields {
-			if len(v.(string)) == 0 {
+			if v.(string) == "" {
 				delete(fields, k)
 			}
 		}

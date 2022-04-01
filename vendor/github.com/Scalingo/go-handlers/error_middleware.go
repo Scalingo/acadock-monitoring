@@ -15,7 +15,7 @@ import (
 	"github.com/Scalingo/go-utils/logger"
 )
 
-var ErrorMiddleware MiddlewareFunc = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
+var ErrorMiddleware = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, vars map[string]string) error {
 		log, ok := r.Context().Value("logger").(logrus.FieldLogger)
 		if !ok {
@@ -61,11 +61,14 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 		log.Info("Request validation error")
 		w.WriteHeader(422)
 	} else if w.Status() == 0 {
-		log.Error("Request error")
 		// If the status is 0, it means WriteHeader has not been called and we've to
 		// write it, otherwise it has been done in the handler with another response
 		// code.
 		w.WriteHeader(500)
+	}
+
+	if w.Status()/100 == 5 {
+		log.Error("Request error")
 	}
 
 	// If the body has already been partially written, do not write anything else
@@ -73,14 +76,18 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 		return
 	}
 
-	if isContentTypeJSON(w.Header().Get("Content-Type")) {
-		if isCauseValidationErrors {
-			json.NewEncoder(w).Encode(errors.RootCause(err))
-		} else {
-			json.NewEncoder(w).Encode(&(map[string]string{"error": err.Error()}))
-		}
-	} else {
+	if !isContentTypeJSON(w.Header().Get("Content-Type")) {
 		fmt.Fprintln(w, err)
+		return
+	}
+	if !isCauseValidationErrors {
+		json.NewEncoder(w).Encode(&(map[string]string{"error": err.Error()}))
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(errors.RootCause(err))
+	if err != nil {
+		log.WithError(err).Error("Fail to encode the validation error root cause to JSON")
 	}
 }
 
