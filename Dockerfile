@@ -1,7 +1,7 @@
-FROM golang:1.16
-LABEL maintainer="leo@scalingo.com"
+FROM golang:1.17
+LABEL maintainer="Léo Unbekandt <leo@scalingo.com>"
 
-RUN go get github.com/cespare/reflex
+RUN go install github.com/cespare/reflex@latest
 
 ADD . /go/src/github.com/Scalingo/acadock-monitoring
 WORKDIR /go/src/github.com/Scalingo/acadock-monitoring
