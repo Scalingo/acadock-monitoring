@@ -1,4 +1,4 @@
-# Acadock Monitoring - Docker container monitoring v1.0.0
+# Acadock Monitoring - Docker container monitoring v1.0.1
 
 This webservice provides live data on Docker containers. It takes
 data from the Linux kernel control groups and from the namespace of
@@ -91,10 +91,10 @@ Commit, tag and create a new release:
 
 ```sh
 git add CHANGELOG.md README.md
-git commit -m "Bump v1.0.0"
-git tag v1.0.0
-git push origin master v1.0.0
-hub release create v1.0.0
+git commit -m "Bump v1.0.1"
+git tag v1.0.1
+git push origin master v1.0.1
+hub release create v1.0.1
 ```
 
 The project is using [goreleaser](https://goreleaser.com) to build its archives.
