@@ -94,8 +94,8 @@ github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbt
 github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/Scalingo/errgo-rollbar v0.2.0/go.mod h1:InPX+PbaicLpePiWdmay2bJ4gtF4anm2L8T6rITx41A=
-github.com/Scalingo/go-handlers v1.4.3 h1:z/HPM5KUNKodLY/ajJo+yJ84DO3jhfre1JpsWluuImY=
-github.com/Scalingo/go-handlers v1.4.3/go.mod h1:pe2LKzpbNJPxOozE2nsbHAkSE4NbRMUWuP3FgOlMdAA=
+github.com/Scalingo/go-handlers v1.4.4 h1:NRwrdrDU/NJMPm6Plst5wkI6NQEFedp2q1/+Orssjx0=
+github.com/Scalingo/go-handlers v1.4.4/go.mod h1:FHIIC8HsIVsaSO0IPJW1abXkch4WuDWqn/vfQlyYM9w=
 github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5 h1:dKaQRrVQqsmJLM4x4ZeFf3qh61dBdQMx14aI84x2V4I=
 github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5/go.mod h1:gnEERa/gBWBvqduiMEIoIFJqruCwDVn8tlM43x2CKFE=
 github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090 h1:HmqjIWvUXH7O7GiTEzmvWfIWCTs4qqWIEXne79kHuo4=
