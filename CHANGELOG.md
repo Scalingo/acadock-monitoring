@@ -2,6 +2,11 @@
 
 ## To be Released
 
+* Bump github.com/stretchr/testify from v1.7.1 to v1.8.0
+* Bump github.com/fsouza/go-dockerclient from v1.7.11 to v1.8.1
+* Bump github.com/Scalingo/go-utils/logger from v1.1.0 to v1.1.1
+* Bump github.com/sirupsen/logrus from 1.8.1 to 1.9.0
+
 ## v1.0.1
 
 * chore(go): use go 1.17
