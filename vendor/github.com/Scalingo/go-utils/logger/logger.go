@@ -72,6 +72,18 @@ func Get(ctx context.Context) logrus.FieldLogger {
 	return Default().WithField("invalid_context", true)
 }
 
+// WithFieldToCtx adds the field to the logger and adds the logger to the context
+func WithFieldToCtx(ctx context.Context, key string, value interface{}) (context.Context, logrus.FieldLogger) {
+	return WithFieldsToCtx(ctx, logrus.Fields{key: value})
+}
+
+// WithFieldsToCtx adds fields to the logger and adds the logger back to the context
+func WithFieldsToCtx(ctx context.Context, fields logrus.Fields) (context.Context, logrus.FieldLogger) {
+	log := Get(ctx).WithFields(fields)
+
+	return ToCtx(ctx, log), log
+}
+
 // ToCtx add a logger to a context
 func ToCtx(ctx context.Context, logger logrus.FieldLogger) context.Context {
 	return context.WithValue(ctx, "logger", logger)

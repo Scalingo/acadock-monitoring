@@ -6,7 +6,7 @@ require (
 	github.com/Scalingo/go-handlers v1.4.4
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
-	github.com/Scalingo/go-utils/logger v1.1.1
+	github.com/Scalingo/go-utils/logger v1.2.0
 	github.com/facebookgo/grace v0.0.0-20180706040059-75cf19382434
 	github.com/fsouza/go-dockerclient v1.8.1
 	github.com/golang/mock v1.6.0
