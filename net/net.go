@@ -1,15 +1,15 @@
 package net
 
 import (
-	"fmt"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/go-netstat"
-	log "github.com/sirupsen/logrus"
 )
 
 type Usage client.NetUsage
@@ -35,14 +35,15 @@ func NewNetMonitor() *NetMonitor {
 	return monitor
 }
 
-func (monitor *NetMonitor) Start() error {
+func (monitor *NetMonitor) Start() {
 	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
 	defer tick.Stop()
 	for {
 		<-tick.C
 		stats, err := netstat.Stats()
 		if err != nil {
-			return fmt.Errorf("fail to get network stats: %v", err)
+			log.WithError(err).Warn("Fail to get network stats")
+			continue
 		}
 		for _, stat := range stats {
 			monitor.containerIfacesMutex.Lock()

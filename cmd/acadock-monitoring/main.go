@@ -8,6 +8,10 @@ import (
 	"net/http/pprof"
 	"os"
 
+	"github.com/facebookgo/grace/gracehttp"
+	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
+
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
 	"github.com/Scalingo/acadock-monitoring/filters"
@@ -17,9 +21,6 @@ import (
 	"github.com/Scalingo/acadock-monitoring/webserver"
 	"github.com/Scalingo/go-handlers"
 	"github.com/Scalingo/go-utils/logger"
-	"github.com/facebookgo/grace/gracehttp"
-	"github.com/gorilla/mux"
-	"github.com/urfave/negroni"
 )
 
 type JSONContentTypeMiddleware struct{}
@@ -62,13 +63,13 @@ func main() {
 	}
 
 	go queueLength.Start(ctx)
-	cpu := cpu.NewCPUUsageMonitor(hostCPU)
-	go cpu.Start(ctx)
-	net := net.NewNetMonitor()
-	go net.Start()
-	mem := mem.NewMemoryUsageGetter()
+	cpuMonitor := cpu.NewCPUUsageMonitor(hostCPU)
+	go cpuMonitor.Start(ctx)
+	netMonitor := net.NewNetMonitor()
+	go netMonitor.Start()
+	memMonitor := mem.NewMemoryUsageGetter()
 
-	controller := webserver.NewController(mem, cpu, net, queueLength, hostMemory)
+	controller := webserver.NewController(memMonitor, cpuMonitor, netMonitor, queueLength, hostMemory)
 
 	globalRouter := mux.NewRouter()
 	r := handlers.NewRouter(log)
@@ -77,6 +78,8 @@ func main() {
 			return user == config.ENV["HTTP_USERNAME"] && password == config.ENV["HTTP_PASSWORD"]
 		}))
 	}
+	r.Use(handlers.ErrorMiddleware)
+
 	r.HandleFunc("/containers/{id}/mem", controller.ContainerMemUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/cpu", controller.ContainerCpuUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/net", controller.ContainerNetUsageHandler).Methods("GET")
