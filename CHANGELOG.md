@@ -1,7 +1,14 @@
 # Changelog
 
-## To be Released
+## To Be Released
 
+## v1.1.0 - 2022-10-18
+
+* Add Error Middleware to the router
+* Bump github.com/Scalingo/go-handlers from 1.4.4 to 1.4.5
+* Bump github.com/fsouza/go-dockerclient from 1.8.1 to 1.8.3
+* Bump github.com/Scalingo/go-utils/logger from 1.1.1 to 1.2.0
+* Bump github.com/Scalingo/go-handlers from 1.4.3 to 1.4.4
 * Bump github.com/stretchr/testify from v1.7.1 to v1.8.0
 * Bump github.com/fsouza/go-dockerclient from v1.7.11 to v1.8.1
 * Bump github.com/Scalingo/go-utils/logger from v1.1.0 to v1.1.1
