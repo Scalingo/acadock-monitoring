@@ -2,6 +2,13 @@
 
 ## To be Released
 
+## v1.4.5
+
+* feat(error_middleware): log at info level for all non-5xx errors
+* chore(deps): bump github.com/gofrs/uuid from 4.2.0+incompatible to 4.3.0+incompatible
+* chore(deps): bump github.com/Scalingo/go-utils/logger
+* chore(deps): bump github.com/sirupsen/logrus from 1.8.1 to 1.9.0
+
 ## v1.4.4
 
 * chore(go): use go 1.17
