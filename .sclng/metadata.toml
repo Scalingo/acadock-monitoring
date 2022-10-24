@@ -1,0 +1,8 @@
+dependencies = []
+description = "Service monitoring actively containers running on a server"
+destination_server = ["app-hosting-node"]
+flags = ["deployed-by-chef", "tools"]
+languages = ["go"]
+owner = "leo@scalingo.com"
+team = "IST"
+version = "1.1.0"
