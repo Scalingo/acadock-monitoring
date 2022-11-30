@@ -3,9 +3,10 @@ package docker
 import (
 	"sync"
 
-	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/fsouza/go-dockerclient"
-	"gopkg.in/errgo.v1"
+	"github.com/pkg/errors"
+
+	"github.com/Scalingo/acadock-monitoring/config"
 )
 
 var (
@@ -15,12 +16,13 @@ var (
 
 func Client() (*docker.Client, error) {
 	var err error
+
 	_clientOnce.Do(func() {
 		_client, err = docker.NewClient(config.ENV["DOCKER_URL"])
 	})
-
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(err, "fail to create docker client")
 	}
+
 	return _client, nil
 }

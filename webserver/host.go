@@ -5,9 +5,14 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+
+	"github.com/Scalingo/acadock-monitoring/client"
+	"github.com/Scalingo/acadock-monitoring/docker"
+	"github.com/Scalingo/acadock-monitoring/filters"
+	"github.com/Scalingo/go-utils/logger"
 )
 
-func (c Controller) HostResources(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Request, _ map[string]string) error {
 	ctx := req.Context()
 	log := logger.Get(ctx)
 
@@ -67,6 +72,9 @@ func (c Controller) HostResources(res http.ResponseWriter, req *http.Request, pa
 		Memory: memory,
 	}
 
-	json.NewEncoder(res).Encode(&result)
+	err = json.NewEncoder(res).Encode(&result)
+	if err != nil {
+		return errors.Wrap(err, "fail to encode host usage payload")
+	}
 	return nil
 }
