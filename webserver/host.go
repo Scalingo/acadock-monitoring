@@ -55,7 +55,7 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 
 		usage, err := c.mem.GetMemoryUsage(container.ID)
 		if err != nil {
-			log.WithError(err).Warnf("Fail to get memory usage for %s", container.ID)
+			log.WithError(err).Infof("Fail to get memory usage for %s", container.ID)
 			continue
 		}
 
@@ -72,9 +72,10 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 		Memory: memory,
 	}
 
+	res.WriteHeader(200)
 	err = json.NewEncoder(res).Encode(&result)
 	if err != nil {
-		return errors.Wrap(err, "fail to encode host usage payload")
+		log.WithError(err).Error("Fail to encode host usage payload")
 	}
 	return nil
 }

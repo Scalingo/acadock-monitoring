@@ -16,7 +16,6 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/tklauser/go-sysconf v0.3.10
 	github.com/urfave/negroni v1.0.0
-	gopkg.in/errgo.v1 v1.0.1
 )
 
 require (
@@ -52,5 +51,6 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

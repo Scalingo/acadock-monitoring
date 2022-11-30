@@ -42,7 +42,7 @@ func (monitor *NetMonitor) Start() {
 		<-tick.C
 		stats, err := netstat.Stats()
 		if err != nil {
-			log.WithError(err).Warn("Fail to get network stats")
+			log.WithError(err).Info("Fail to get network stats")
 			continue
 		}
 		for _, stat := range stats {

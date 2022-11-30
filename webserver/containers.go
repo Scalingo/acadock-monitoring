@@ -11,7 +11,8 @@ import (
 	"github.com/Scalingo/go-utils/logger"
 )
 
-func (c Controller) ContainerUsageHandler(res http.ResponseWriter, _ *http.Request, params map[string]string) error {
+func (c Controller) ContainerUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+	log := logger.Get(req.Context())
 	id := params["id"]
 	usage := client.Usage{}
 
@@ -36,12 +37,13 @@ func (c Controller) ContainerUsageHandler(res http.ResponseWriter, _ *http.Reque
 	res.WriteHeader(200)
 	err = json.NewEncoder(res).Encode(&usage)
 	if err != nil {
-		return errors.Wrapf(err, "fail to encode container usage payload")
+		log.WithError(err).Error("Fail to encode container usage payload")
 	}
 	return nil
 }
 
-func (c Controller) ContainerMemUsageHandler(res http.ResponseWriter, _ *http.Request, params map[string]string) error {
+func (c Controller) ContainerMemUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+	log := logger.Get(req.Context())
 	id := params["id"]
 
 	containerMemoryUsage, err := c.mem.GetMemoryUsage(id)
@@ -52,12 +54,13 @@ func (c Controller) ContainerMemUsageHandler(res http.ResponseWriter, _ *http.Re
 	res.WriteHeader(200)
 	err = json.NewEncoder(res).Encode(&containerMemoryUsage)
 	if err != nil {
-		return errors.Wrapf(err, "fail to encode container memory usage payload")
+		log.WithError(err).Error("Fail to encode container memory usage payload")
 	}
 	return nil
 }
 
-func (c Controller) ContainerCPUUsageHandler(res http.ResponseWriter, _ *http.Request, params map[string]string) error {
+func (c Controller) ContainerCPUUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+	log := logger.Get(req.Context())
 	id := params["id"]
 
 	containerCpuUsage, err := c.cpu.GetContainerUsage(id)
@@ -68,12 +71,13 @@ func (c Controller) ContainerCPUUsageHandler(res http.ResponseWriter, _ *http.Re
 	res.WriteHeader(200)
 	err = json.NewEncoder(res).Encode(&containerCpuUsage)
 	if err != nil {
-		return errors.Wrapf(err, "fail to encode container cpu usage payload")
+		log.WithError(err).Error("Fail to encode container cpu usage payload")
 	}
 	return nil
 }
 
 func (c Controller) ContainerNetUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+	log := logger.Get(req.Context())
 	id := params["id"]
 
 	containerNet, err := c.net.GetUsage(id)
@@ -84,24 +88,24 @@ func (c Controller) ContainerNetUsageHandler(res http.ResponseWriter, req *http.
 	res.WriteHeader(200)
 	err = json.NewEncoder(res).Encode(&containerNet)
 	if err != nil {
-		return errors.Wrapf(err, "fail to encode container network usage payload")
+		log.WithError(err).Error("Fail to encode container network usage payload")
 	}
 	return nil
 }
 
-func (c Controller) ContainersUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+func (c Controller) ContainersUsageHandler(res http.ResponseWriter, req *http.Request, _ map[string]string) error {
 	log := logger.Get(req.Context())
 
 	usage := client.NewContainersUsage()
 	containers, err := docker.ListContainers()
 	if err != nil {
-		res.WriteHeader(500)
 		log.WithError(err).Error("Fail to list containers")
 
+		res.WriteHeader(500)
 		errs := map[string]string{"message": "fail to list containers", "error": err.Error()}
 		err := json.NewEncoder(res).Encode(&errs)
 		if err != nil {
-			return errors.Wrapf(err, "fail to encode containers usage error payload")
+			log.WithError(err).Error("Fail to encode containers usage error payload")
 		}
 		return nil
 	}
@@ -109,19 +113,19 @@ func (c Controller) ContainersUsageHandler(res http.ResponseWriter, req *http.Re
 	for _, container := range containers {
 		cpuUsage, err := c.cpu.GetContainerUsage(container.ID)
 		if err != nil {
-			log.WithError(err).Warnf("Fail to get CPU usage of '%v'", container.ID)
+			log.WithError(err).Infof("Fail to get CPU usage of '%v'", container.ID)
 			continue
 		}
 
 		memUsage, err := c.mem.GetMemoryUsage(container.ID)
 		if err != nil {
-			log.WithError(err).Warnf("Fail to get Memory usage of '%v'", container.ID)
+			log.WithError(err).Infof("Fail to get Memory usage of '%v'", container.ID)
 			continue
 		}
 
 		netUsage, err := c.net.GetUsage(container.ID)
 		if err != nil {
-			log.WithError(err).Warnf("Fail to get Network usage of '%v'", container.ID)
+			log.WithError(err).Infof("Fail to get Network usage of '%v'", container.ID)
 			continue
 		}
 
@@ -133,9 +137,10 @@ func (c Controller) ContainersUsageHandler(res http.ResponseWriter, req *http.Re
 		}
 	}
 
+	res.WriteHeader(200)
 	err = json.NewEncoder(res).Encode(&usage)
 	if err != nil {
-		return errors.Wrapf(err, "fail to encode containers usage payload")
+		log.WithError(err).Error("Fail to encode containers usage payload")
 	}
 	return nil
 }
