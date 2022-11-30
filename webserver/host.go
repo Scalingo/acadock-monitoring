@@ -4,26 +4,24 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Scalingo/acadock-monitoring/filters"
-
-	"github.com/Scalingo/acadock-monitoring/docker"
-
-	"github.com/Scalingo/acadock-monitoring/client"
-
 	"github.com/pkg/errors"
 )
 
 func (c Controller) HostResources(res http.ResponseWriter, req *http.Request, params map[string]string) error {
 	ctx := req.Context()
+	log := logger.Get(ctx)
+
 	cpu, err := c.cpu.GetHostUsage()
 	if err != nil {
 		return errors.Wrap(err, "fail to get host cpu usage")
 	}
+
 	queueLength, err := c.queue.Read(ctx)
 	if err != nil && err != filters.ErrNotEnoughMetrics {
 		return errors.Wrap(err, "fail to get current queue length")
 	}
 	cpu.QueueLengthExponentiallySmoothed = queueLength
+
 	hostMemory, err := c.procfsMemory.Read(ctx)
 	if err != nil {
 		return errors.Wrap(err, "fail to get host memory usage")
@@ -33,6 +31,7 @@ func (c Controller) HostResources(res http.ResponseWriter, req *http.Request, pa
 	if err != nil {
 		return errors.Wrap(err, "fail to list docker containers")
 	}
+
 	labelFilter := req.URL.Query().Get("include_container_if_label")
 
 	memory := client.HostMemoryUsage{
@@ -51,7 +50,8 @@ func (c Controller) HostResources(res http.ResponseWriter, req *http.Request, pa
 
 		usage, err := c.mem.GetMemoryUsage(container.ID)
 		if err != nil {
-			return errors.Wrapf(err, "fail to get memory for %s", container.ID)
+			log.WithError(err).Warnf("Fail to get memory usage for %s", container.ID)
+			continue
 		}
 
 		memory.MemoryUsage += uint64(usage.MemoryUsage.MemoryUsage)
