@@ -2,6 +2,16 @@
 
 ## To Be Released
 
+## v1.2.0 - 2022-12-01
+
+* Bump github.com/fsouza/go-dockerclient from 1.8.3 to 1.9.0
+* Bump github.com/Scalingo/go-handlers from 1.4.5 to 1.5.0
+* Bump github.com/tklauser/go-sysconf from 0.3.10 to 0.3.11
+* Wrap all errors of the project
+* Replace `errgo` package by `pkg/errors` for errors handling
+* Don't return an error when memory can't be fetched for one container,
+  just skip the container and return normally metrics at the end
+
 ## v1.1.0 - 2022-10-18
 
 * Add Error Middleware to the router

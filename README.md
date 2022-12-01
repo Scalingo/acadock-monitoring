@@ -1,10 +1,10 @@
-# Acadock Monitoring - Docker container monitoring v1.1.0
+# Acadock Monitoring - Docker container monitoring v1.2.0
 
 This webservice provides live data on Docker containers. It takes
 data from the Linux kernel control groups and from the namespace of
 the container and expose them through a HTTP API.
 
-> The solution is still a work in progress.
+> This software is currently used in production.
 
 ## Configuration
 
@@ -24,7 +24,7 @@ From environment
 
 Run from docker:
 
-```
+```bash
 docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup \
            -v /proc:/host/proc:ro                    -e PROC_DIR=/host/proc \
            -v /var/run/docker.sock:/host/docker.sock -e DOCKER_URL=unix:///host/docker.sock \
@@ -32,9 +32,9 @@ docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup 
            -d scalingo/acadock-monitoring
 ```
 
-`--pid=host`: The daemon has to find the real /proc/#{pid}/ns directory to enter a namespace
-`--network=host`: Acadock should in the host namespace to access other containers network namespaces (for network metrics)
-`--privileged`: Acadock has to enter the other containers namespaces
+- `--pid=host`: The daemon has to find the real /proc/#{pid}/ns directory to enter a namespace
+- `--network=host`: Acadock should in the host namespace to access other containers network namespaces (for network metrics)
+- `--privileged`: Acadock has to enter the other containers namespaces
 
 ## API
 
@@ -91,10 +91,10 @@ Commit, tag and create a new release:
 
 ```sh
 git add CHANGELOG.md README.md
-git commit -m "Bump v1.1.0"
-git tag v1.1.0
-git push origin master v1.1.0
-hub release create v1.1.0
+git commit -m "release: Bump v1.2.0"
+git tag v1.2.0
+git push origin master v1.2.0
+hub release create v1.2.0
 ```
 
 The project is using [GoReleaser](https://goreleaser.com) to build its archives.
