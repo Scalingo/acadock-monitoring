@@ -2,19 +2,19 @@ package docker
 
 import (
 	"github.com/fsouza/go-dockerclient"
-	"gopkg.in/errgo.v1"
+	"github.com/pkg/errors"
 )
 
 func ListenNewContainers(ids chan string) error {
 	client, err := Client()
 	if err != nil {
-		return errgo.Mask(err)
+		return errors.Wrap(err, "fail to get docker client")
 	}
 
 	listener := make(chan *docker.APIEvents)
 	err = client.AddEventListener(listener)
 	if err != nil {
-		return errgo.Mask(err)
+		return errors.Wrap(err, "fail to add event listener")
 	}
 
 	for event := range listener {

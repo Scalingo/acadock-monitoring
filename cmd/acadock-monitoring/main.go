@@ -81,11 +81,11 @@ func main() {
 	r.Use(handlers.ErrorMiddleware)
 
 	r.HandleFunc("/containers/{id}/mem", controller.ContainerMemUsageHandler).Methods("GET")
-	r.HandleFunc("/containers/{id}/cpu", controller.ContainerCpuUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/{id}/cpu", controller.ContainerCPUUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/net", controller.ContainerNetUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/usage", controller.ContainerUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/usage", controller.ContainersUsageHandler).Methods("GET")
-	r.HandleFunc("/host/usage", controller.HostResources)
+	r.HandleFunc("/host/usage", controller.HostResourcesHandler).Methods("GET")
 
 	if *doProfile {
 		pprofRouter := mux.NewRouter()

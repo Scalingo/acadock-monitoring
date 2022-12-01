@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/pkg/errors"
+
 	"github.com/Scalingo/go-netstat"
-	"gopkg.in/errgo.v1"
 )
 
 var _ AcadockClient = &Client{}
@@ -94,7 +95,7 @@ func WithAuthentication(user, pass string) ClientOpts {
 func NewClient(endpoint string, opts ...ClientOpts) (*Client, error) {
 	_, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrapf(err, "fail to parse endpoint '%s'", endpoint)
 	}
 
 	c := &Client{Endpoint: endpoint}
@@ -108,7 +109,7 @@ func (c *Client) Memory(dockerId string) (*MemoryUsage, error) {
 	var mem *MemoryUsage
 	err := c.getResource(dockerId, "mem", mem)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(err, "fail to get container memory usage")
 	}
 	return mem, nil
 }
@@ -117,7 +118,7 @@ func (c *Client) CpuUsage(dockerId string) (*CpuUsage, error) {
 	var cpu *CpuUsage
 	err := c.getResource(dockerId, "cpu", cpu)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(err, "fail to get container cpu usage")
 	}
 	return cpu, nil
 }
@@ -126,7 +127,7 @@ func (c *Client) NetUsage(dockerId string) (*NetUsage, error) {
 	var net *NetUsage
 	err := c.getResource(dockerId, "net", net)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(err, "fail to get container network usage")
 	}
 
 	return net, nil
@@ -136,7 +137,7 @@ func (c *Client) Usage(dockerId string, net bool) (*Usage, error) {
 	usage := &Usage{}
 	err := c.getResourceWithQuery(dockerId, "usage", fmt.Sprintf("net=%v", net), usage)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(err, "fail to get container usage")
 	}
 	return usage, nil
 }
@@ -145,7 +146,7 @@ func (c *Client) AllContainersUsage() (ContainersUsage, error) {
 	var usage ContainersUsage
 	err := c.getResource("", "usage", &usage)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(err, "fail to get all containers usage")
 	}
 	return usage, nil
 }
@@ -162,7 +163,7 @@ func (c *Client) HostUsage(opts HostUsageOpts) (HostUsage, error) {
 	var res HostUsage
 	err := c.getPathWithQuery("/host/usage", query, &res)
 	if err != nil {
-		return res, errgo.Notef(err, "fail to get host usage")
+		return res, errors.Wrap(err, "fail to get host usage")
 	}
 	return res, nil
 }
@@ -190,19 +191,18 @@ func (c *Client) getPathWithQuery(path, query string, data interface{}) error {
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		return errgo.Mask(err)
+		return errors.Wrap(err, "fail to create new http request")
 	}
 
 	res, err := c.do(req)
 	if err != nil {
-		return errgo.Mask(err)
+		return errors.Wrap(err, "fail to execute http request")
 	}
-
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
-		return errgo.Mask(err)
+		return errors.Wrap(err, "fail to decode response body payload")
 	}
 
 	return nil
