@@ -32,7 +32,7 @@ github.com/Microsoft/hcsshim/internal/vmcompute
 github.com/Microsoft/hcsshim/internal/wclayer
 github.com/Microsoft/hcsshim/internal/winapi
 github.com/Microsoft/hcsshim/osversion
-# github.com/Scalingo/go-handlers v1.4.5
+# github.com/Scalingo/go-handlers v1.5.0
 ## explicit; go 1.17
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
@@ -41,12 +41,18 @@ github.com/Scalingo/go-netns
 # github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
 ## explicit
 github.com/Scalingo/go-netstat
+# github.com/Scalingo/go-utils/crypto v1.0.0
+## explicit; go 1.17
+github.com/Scalingo/go-utils/crypto
 # github.com/Scalingo/go-utils/errors v1.1.1
 ## explicit; go 1.17
 github.com/Scalingo/go-utils/errors
 # github.com/Scalingo/go-utils/logger v1.2.0
 ## explicit; go 1.17
 github.com/Scalingo/go-utils/logger
+# github.com/Scalingo/go-utils/security v1.0.0
+## explicit; go 1.19
+github.com/Scalingo/go-utils/security
 # github.com/containerd/cgroups v1.0.4
 ## explicit; go 1.17
 github.com/containerd/cgroups/stats/v1
@@ -158,7 +164,7 @@ github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.9.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.8.0
+# github.com/stretchr/testify v1.8.1
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require

@@ -1,4 +1,4 @@
-# Custom Router and Handler v1.4.5
+# Custom Router and Handler v1.5.0
 
 [ ![Codeship Status for Scalingo/go-handlers](https://app.codeship.com/projects/9bd8e5d0-d609-0135-e8d1-2aadb9628cc1/status?branch=master)](https://app.codeship.com/projects/263154)
 
@@ -103,10 +103,10 @@ Commit, tag and create a new release:
 
 ```sh
 git add CHANGELOG.md README.md
-git commit -m "Bump v1.4.5"
-git tag v1.4.5
-git push origin master v1.4.5
-gh release create v1.4.5
+git commit -m "Bump v1.5.0"
+git tag v1.5.0
+git push origin master v1.5.0
+gh release create v1.5.0
 ```
 
 The title of the release should be the version number and the text of the release is the same as the changelog.

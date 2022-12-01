@@ -1,0 +1,13 @@
+{
+  "base_package": "github.com/Scalingo/go-utils/security",
+  "mocks": [
+    {
+      "src_package": ".",
+      "interface": "TokenGenerator"
+    },
+    {
+      "src_package": ".",
+      "interface": "TokenChecker"
+    }
+  ]
+}
