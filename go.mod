@@ -3,7 +3,7 @@ module github.com/Scalingo/acadock-monitoring
 go 1.17
 
 require (
-	github.com/Scalingo/go-handlers v1.4.5
+	github.com/Scalingo/go-handlers v1.5.0
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
 	github.com/Scalingo/go-utils/logger v1.2.0
@@ -13,7 +13,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/tklauser/go-sysconf v0.3.11
 	github.com/urfave/negroni v1.0.0
 )
@@ -22,7 +22,9 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
+	github.com/Scalingo/go-utils/crypto v1.0.0 // indirect
 	github.com/Scalingo/go-utils/errors v1.1.1 // indirect
+	github.com/Scalingo/go-utils/security v1.0.0 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

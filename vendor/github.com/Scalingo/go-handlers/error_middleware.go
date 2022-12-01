@@ -13,6 +13,7 @@ import (
 
 	"github.com/Scalingo/go-utils/errors"
 	"github.com/Scalingo/go-utils/logger"
+	"github.com/Scalingo/go-utils/security"
 )
 
 var ErrorMiddleware = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
@@ -61,9 +62,14 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 		w.WriteHeader(422)
 	} else if w.Status() == 0 {
 		// If the status is 0, it means WriteHeader has not been called and we've to
-		// write it, otherwise it has been done in the handler with another response
+		// write it. Otherwise it has been done in the handler with another response
 		// code.
-		w.WriteHeader(500)
+		// In this case, we want to return a 401 error if it's an invalid token error and 500 in other cases.
+		if isInvalidTokenError(err) {
+			w.WriteHeader(401)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 
 	// We log at error level for all 5xx errors as it means there has been an internal service error. With this logging level, we send a Rollbar error.
@@ -103,4 +109,11 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 //     (https://datatracker.ietf.org/doc/html/rfc6839#page-4)
 func isContentTypeJSON(contentType string) bool {
 	return contentType == "application/json" || strings.HasSuffix(contentType, "+json")
+}
+
+func isInvalidTokenError(err error) bool {
+	rootCause := errors.RootCause(err)
+	return rootCause == security.ErrFutureTimestamp ||
+		rootCause == security.ErrInvalidTimestamp ||
+		rootCause == security.ErrTokenExpired
 }
