@@ -33,7 +33,7 @@ github.com/Microsoft/hcsshim/internal/vmcompute
 github.com/Microsoft/hcsshim/internal/wclayer
 github.com/Microsoft/hcsshim/internal/winapi
 github.com/Microsoft/hcsshim/osversion
-# github.com/Scalingo/go-handlers v1.5.0
+# github.com/Scalingo/go-handlers v1.7.0
 ## explicit; go 1.17
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
@@ -45,9 +45,9 @@ github.com/Scalingo/go-netstat
 # github.com/Scalingo/go-utils/crypto v1.0.0
 ## explicit; go 1.17
 github.com/Scalingo/go-utils/crypto
-# github.com/Scalingo/go-utils/errors v1.1.1
+# github.com/Scalingo/go-utils/errors/v2 v2.2.0
 ## explicit; go 1.17
-github.com/Scalingo/go-utils/errors
+github.com/Scalingo/go-utils/errors/v2
 # github.com/Scalingo/go-utils/logger v1.2.0
 ## explicit; go 1.17
 github.com/Scalingo/go-utils/logger
@@ -116,7 +116,7 @@ github.com/facebookgo/stats
 # github.com/fsouza/go-dockerclient v1.9.0
 ## explicit; go 1.18
 github.com/fsouza/go-dockerclient
-# github.com/gofrs/uuid v4.3.0+incompatible
+# github.com/gofrs/uuid v4.3.1+incompatible
 ## explicit
 github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.2
