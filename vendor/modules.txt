@@ -64,7 +64,7 @@ github.com/containerd/containerd/sys
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v20.10.19+incompatible
+# github.com/docker/docker v20.10.22+incompatible
 ## explicit
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/container
@@ -113,7 +113,7 @@ github.com/facebookgo/httpdown
 github.com/facebookgo/stats
 # github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4
 ## explicit
-# github.com/fsouza/go-dockerclient v1.9.0
+# github.com/fsouza/go-dockerclient v1.9.1
 ## explicit; go 1.18
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid v4.3.0+incompatible
