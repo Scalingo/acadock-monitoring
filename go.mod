@@ -3,7 +3,7 @@ module github.com/Scalingo/acadock-monitoring
 go 1.17
 
 require (
-	github.com/Scalingo/go-handlers v1.5.0
+	github.com/Scalingo/go-handlers v1.7.0
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
 	github.com/Scalingo/go-utils/logger v1.2.0
@@ -23,7 +23,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/Scalingo/go-utils/crypto v1.0.0 // indirect
-	github.com/Scalingo/go-utils/errors v1.1.1 // indirect
+	github.com/Scalingo/go-utils/errors/v2 v2.2.0 // indirect
 	github.com/Scalingo/go-utils/security v1.0.0 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
@@ -38,7 +38,7 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
-	github.com/gofrs/uuid v4.3.0+incompatible // indirect
+	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/moby/sys/mount v0.3.3 // indirect

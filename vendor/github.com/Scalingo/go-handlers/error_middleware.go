@@ -11,14 +11,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 
-	"github.com/Scalingo/go-utils/errors"
+	"github.com/Scalingo/go-utils/errors/v2"
 	"github.com/Scalingo/go-utils/logger"
 	"github.com/Scalingo/go-utils/security"
 )
 
 var ErrorMiddleware = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, vars map[string]string) error {
-		log, ok := r.Context().Value("logger").(logrus.FieldLogger)
+		ctx := r.Context()
+		log, ok := ctx.Value("logger").(logrus.FieldLogger)
 		if !ok {
 			log = logrus.New()
 		}
@@ -39,9 +40,8 @@ var ErrorMiddleware = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
 		rw := negroni.NewResponseWriter(w)
 		err := handler(rw, r, vars)
 
-		if ctxerr, ok := err.(errors.ErrCtx); ok {
-			log = logger.Get(ctxerr.Ctx())
-		}
+		ctx = errors.RootCtxOrFallback(ctx, err)
+		log = logger.Get(ctx)
 
 		if err != nil {
 			log = log.WithError(err)

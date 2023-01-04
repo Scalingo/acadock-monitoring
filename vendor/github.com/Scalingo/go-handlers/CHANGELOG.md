@@ -2,6 +2,15 @@
 
 ## To be Released
 
+## v1.7.0
+
+* feat(router): add profiling router using pprof
+
+## v1.6.0
+
+* chore(deps): bump github.com/gofrs/uuid from 4.3.0+incompatible to 4.3.1+incompatible
+* feat(error_middleware): use RootCtxOrFallback to retrieve ctx and get its logger
+
 ## v1.5.0
 
 * feat(error_middleware): return 401 for invalid token errors
