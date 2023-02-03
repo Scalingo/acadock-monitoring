@@ -83,7 +83,7 @@ github.com/facebookgo/httpdown
 github.com/facebookgo/stats
 # github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4
 ## explicit
-# github.com/fsouza/go-dockerclient v1.9.1
+# github.com/fsouza/go-dockerclient v1.9.3
 ## explicit; go 1.18
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid v4.4.0+incompatible
