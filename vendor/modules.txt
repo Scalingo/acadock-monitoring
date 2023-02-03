@@ -116,7 +116,7 @@ github.com/facebookgo/stats
 # github.com/fsouza/go-dockerclient v1.9.1
 ## explicit; go 1.18
 github.com/fsouza/go-dockerclient
-# github.com/gofrs/uuid v4.3.1+incompatible
+# github.com/gofrs/uuid v4.4.0+incompatible
 ## explicit
 github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.2
