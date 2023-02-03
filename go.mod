@@ -21,7 +21,7 @@ require (
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/Microsoft/hcsshim v0.9.3 // indirect
+	github.com/Microsoft/hcsshim v0.9.6 // indirect
 	github.com/Scalingo/go-utils/crypto v1.0.0 // indirect
 	github.com/Scalingo/go-utils/errors/v2 v2.2.0 // indirect
 	github.com/Scalingo/go-utils/security v1.0.0 // indirect
