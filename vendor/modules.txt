@@ -47,7 +47,6 @@ github.com/docker/docker/api/types/swarm
 github.com/docker/docker/api/types/swarm/runtime
 github.com/docker/docker/api/types/versions
 github.com/docker/docker/pkg/archive
-github.com/docker/docker/pkg/fileutils
 github.com/docker/docker/pkg/homedir
 github.com/docker/docker/pkg/idtools
 github.com/docker/docker/pkg/ioutils
@@ -83,8 +82,8 @@ github.com/facebookgo/httpdown
 github.com/facebookgo/stats
 # github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4
 ## explicit
-# github.com/fsouza/go-dockerclient v1.9.1
-## explicit; go 1.18
+# github.com/fsouza/go-dockerclient v1.9.4
+## explicit; go 1.19
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid v4.4.0+incompatible
 ## explicit
