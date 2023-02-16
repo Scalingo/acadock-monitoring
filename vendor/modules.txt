@@ -28,7 +28,7 @@ github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.0.0
 ## explicit; go 1.19
 github.com/Scalingo/go-utils/security
-# github.com/containerd/containerd v1.6.16
+# github.com/containerd/containerd v1.6.18
 ## explicit; go 1.17
 github.com/containerd/containerd/pkg/userns
 # github.com/davecgh/go-spew v1.1.1
@@ -163,6 +163,8 @@ golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+# golang.org/x/term v0.4.0
+## explicit; go 1.17
 # golang.org/x/tools v0.5.0
 ## explicit; go 1.18
 golang.org/x/tools/cmd/stringer
