@@ -28,7 +28,7 @@ github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.0.0
 ## explicit; go 1.19
 github.com/Scalingo/go-utils/security
-# github.com/containerd/containerd v1.6.18
+# github.com/containerd/containerd v1.6.19
 ## explicit; go 1.17
 github.com/containerd/containerd/pkg/userns
 # github.com/davecgh/go-spew v1.1.1
