@@ -8,7 +8,7 @@ require (
 	github.com/Scalingo/go-netstat v0.0.0-20150424143005-000351307090
 	github.com/Scalingo/go-utils/logger v1.2.0
 	github.com/facebookgo/grace v0.0.0-20180706040059-75cf19382434
-	github.com/fsouza/go-dockerclient v1.9.1
+	github.com/fsouza/go-dockerclient v1.9.5
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
@@ -26,7 +26,7 @@ require (
 	github.com/Scalingo/go-utils/security v1.0.0 // indirect
 	github.com/containerd/containerd v1.6.19 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/docker v23.0.0+incompatible // indirect
+	github.com/docker/docker v23.0.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
@@ -51,7 +51,6 @@ require (
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
