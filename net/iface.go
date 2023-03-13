@@ -7,9 +7,10 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
-	"github.com/pkg/errors"
 )
 
 func getContainerIface(id string) (string, error) {

@@ -3,7 +3,7 @@ package docker
 import (
 	"sync"
 
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 
 	"github.com/Scalingo/acadock-monitoring/config"

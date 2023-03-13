@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/pkg/errors"
 
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/Scalingo/go-utils/logger"
 )
 
 const (
@@ -70,7 +70,10 @@ func (m *CPUUsageMonitor) cpuacctUsage(container string) (time.Duration, error) 
 }
 
 func (m *CPUUsageMonitor) Start(ctx context.Context) {
+	log := logger.Get(ctx)
+
 	go m.monitorHostUsage(ctx)
+
 	containers := docker.RegisterToContainersStream()
 	for c := range containers {
 		log.Infof("Monitoring CPU of %v", c)
@@ -79,7 +82,8 @@ func (m *CPUUsageMonitor) Start(ctx context.Context) {
 }
 
 func (m *CPUUsageMonitor) monitorHostUsage(ctx context.Context) {
-	//tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
+	log := logger.Get(ctx)
+
 	tick := time.NewTicker(time.Second)
 	for {
 		<-tick.C
@@ -97,6 +101,8 @@ func (m *CPUUsageMonitor) monitorHostUsage(ctx context.Context) {
 }
 
 func (m *CPUUsageMonitor) monitorContainer(ctx context.Context, id string) {
+	log := logger.Get(ctx)
+
 	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
 	for {
 		<-tick.C
