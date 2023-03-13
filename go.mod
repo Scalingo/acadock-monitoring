@@ -1,6 +1,6 @@
 module github.com/Scalingo/acadock-monitoring
 
-go 1.17
+go 1.20
 
 require (
 	github.com/Scalingo/go-handlers v1.7.0
