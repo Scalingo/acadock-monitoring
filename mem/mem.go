@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/pkg/errors"
+
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
-	"github.com/pkg/errors"
 )
 
 const (

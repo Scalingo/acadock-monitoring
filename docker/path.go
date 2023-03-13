@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/pkg/errors"
+
+	"github.com/Scalingo/acadock-monitoring/config"
 )
 
 func ExpandId(id string) (string, error) {
