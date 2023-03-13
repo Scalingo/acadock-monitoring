@@ -5,7 +5,7 @@ RUN go install github.com/cespare/reflex@latest
 
 ADD . /go/src/github.com/Scalingo/acadock-monitoring
 WORKDIR /go/src/github.com/Scalingo/acadock-monitoring
-RUN go install github.com/Scalingo/acadock-monitoring/cmd/acadock-monitoring
+RUN go install -buildvcs=false github.com/Scalingo/acadock-monitoring/cmd/acadock-monitoring
 
 CMD ["/go/bin/acadock-monitoring"]
 
