@@ -2,6 +2,11 @@
 
 ## To be Released
 
+## v1.8.0
+
+* feat(middleware): add a middleware to reject HTTP request
+* feat(middleware): Add secure headers middleware
+
 ## v1.7.0
 
 * feat(router): add profiling router using pprof

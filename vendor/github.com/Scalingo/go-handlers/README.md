@@ -1,4 +1,4 @@
-# Custom Router and Handler v1.7.0
+# Custom Router and Handler v1.8.0
 
 [ ![Codeship Status for Scalingo/go-handlers](https://app.codeship.com/projects/9bd8e5d0-d609-0135-e8d1-2aadb9628cc1/status?branch=master)](https://app.codeship.com/projects/263154)
 
@@ -102,7 +102,7 @@ Bump new version number in `CHANGELOG.md` and `README.md`.
 Commit, tag and create a new release:
 
 ```sh
-version="1.7.0"
+version="1.8.0"
 
 git switch --create release/${version}
 git add CHANGELOG.md README.md
@@ -118,6 +118,7 @@ Once the pull request merged, you can tag the new release.
 ```bash
 git tag v${version}
 git push origin master v${version}
+gh release create v${version}
 ```
 
 The title of the release should be the version number and the text of the release is the same as the changelog.

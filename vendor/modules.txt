@@ -7,7 +7,7 @@ github.com/Azure/go-ansiterm/winterm
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Scalingo/go-handlers v1.7.0
+# github.com/Scalingo/go-handlers v1.8.0
 ## explicit; go 1.17
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
