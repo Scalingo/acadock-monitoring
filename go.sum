@@ -50,8 +50,8 @@ github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4/go.mod h1:5tD+ne
 github.com/frankban/quicktest v1.2.2/go.mod h1:Qh/WofXFeiAFII1aEBu529AtJo6Zg2VHscnEsbBnJ20=
 github.com/frankban/quicktest v1.14.5 h1:dfYrrRyLtiqT9GyKXgdh+k4inNeTvmGbuSgZ3lx3GhA=
 github.com/frankban/quicktest v1.14.5/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
-github.com/fsouza/go-dockerclient v1.9.6 h1:6yTc8oTLHjz4H3AXAAdO4R+Nh5B7s9Uf5R4oQUtZ9Mg=
-github.com/fsouza/go-dockerclient v1.9.6/go.mod h1:Z0GysXoBlysCsdUO2tMK/13R2tvpehDns08Mih0XvKg=
+github.com/fsouza/go-dockerclient v1.9.7 h1:FlIrT71E62zwKgRvCvWGdxRD+a/pIy+miY/n3MXgfuw=
+github.com/fsouza/go-dockerclient v1.9.7/go.mod h1:vx9C32kE2D15yDSOMCDaAEIARZpDQDFBHeqL3MgQy/U=
 github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=
 github.com/gofrs/uuid v4.4.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
