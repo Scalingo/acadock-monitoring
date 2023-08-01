@@ -53,13 +53,19 @@ var ErrorMiddleware = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
 })
 
 func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
+	var validationErrors *errors.ValidationErrors
+	var badRequestError *BadRequestError
+
 	if w.Header().Get("Content-Type") == "" {
 		w.Header().Set("Content-Type", "text/plain")
 	}
 
-	isCauseValidationErrors := errors.IsRootCause(err, &errors.ValidationErrors{})
+	isCauseValidationErrors := errors.As(err, &validationErrors)
+	isCauseBadRequestError := errors.As(err, &badRequestError)
 	if isCauseValidationErrors {
 		w.WriteHeader(422)
+	} else if isCauseBadRequestError {
+		w.WriteHeader(400)
 	} else if w.Status() == 0 {
 		// If the status is 0, it means WriteHeader has not been called and we've to
 		// write it. Otherwise it has been done in the handler with another response

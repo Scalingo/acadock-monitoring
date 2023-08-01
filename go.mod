@@ -3,7 +3,7 @@ module github.com/Scalingo/acadock-monitoring
 go 1.20
 
 require (
-	github.com/Scalingo/go-handlers v1.8.0
+	github.com/Scalingo/go-handlers v1.8.1
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
 	github.com/Scalingo/go-utils/logger v1.2.0
@@ -37,7 +37,7 @@ require (
 	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/frankban/quicktest v1.14.5 // indirect
-	github.com/gofrs/uuid v4.4.0+incompatible // indirect
+	github.com/gofrs/uuid/v5 v5.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/moby/patternmatcher v0.5.0 // indirect
