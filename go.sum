@@ -18,8 +18,8 @@ github.com/Scalingo/go-utils/logger v1.2.0 h1:E3jtaoRxpIsFcZu/jsvWew8ttUAwKUYQuf
 github.com/Scalingo/go-utils/logger v1.2.0/go.mod h1:JArjD1gHdB/vwnlcVG7rYxuIY0tk8/VG4MtirnRwn8k=
 github.com/Scalingo/go-utils/security v1.0.0 h1:BW4FeZKmqW9nmDb/hdm49w4bhznQ8j7cVNxMxknGz3A=
 github.com/Scalingo/go-utils/security v1.0.0/go.mod h1:vCgqjBdIBSYKxZhFBMT9koEH2MEbzuwmNZyLhmKcnV0=
-github.com/containerd/containerd v1.7.2 h1:UF2gdONnxO8I6byZXDi5sXWiWvlW3D/sci7dTQimEJo=
-github.com/containerd/containerd v1.7.2/go.mod h1:afcz74+K10M/+cjGHIVQrCt3RAQhUSCAjJ9iMYhhkuI=
+github.com/containerd/containerd v1.7.3 h1:cKwYKkP1eTj54bP3wCdXXBymmKRQMrWjkLSWZZJDa8o=
+github.com/containerd/containerd v1.7.3/go.mod h1:32FOM4/O0RkNg7AjQj3hDzN9cUGtu+HMvaKUNiqCZB8=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/creack/pty v1.1.18 h1:n56/Zwd5o6whRC5PMGretI4IdRLlmBXYNjScPaBgsbY=
 github.com/cyphar/filepath-securejoin v0.2.3 h1:YX6ebbZCZP7VkM3scTTokDgBL2TY741X51MTk3ycuNI=
