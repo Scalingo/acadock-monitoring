@@ -9,8 +9,8 @@ github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/internal/stringbuffer
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Scalingo/go-handlers v1.8.0
-## explicit; go 1.17
+# github.com/Scalingo/go-handlers v1.8.1
+## explicit; go 1.20
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 ## explicit
@@ -91,9 +91,9 @@ github.com/facebookgo/stats
 # github.com/fsouza/go-dockerclient v1.9.7
 ## explicit; go 1.19
 github.com/fsouza/go-dockerclient
-# github.com/gofrs/uuid v4.4.0+incompatible
-## explicit
-github.com/gofrs/uuid
+# github.com/gofrs/uuid/v5 v5.0.0
+## explicit; go 1.19
+github.com/gofrs/uuid/v5
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
@@ -141,7 +141,7 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/sirupsen/logrus v1.9.0
+# github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.8.4
