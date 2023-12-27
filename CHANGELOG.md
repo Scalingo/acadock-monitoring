@@ -2,6 +2,10 @@
 
 ## To Be Released
 
+## v1.2.1 - 2023-12-27
+
+* chore(deps): various updates
+
 ## v1.2.0 - 2022-12-01
 
 * Bump github.com/fsouza/go-dockerclient from 1.8.3 to 1.9.0

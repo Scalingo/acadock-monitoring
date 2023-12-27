@@ -1,4 +1,4 @@
-# Acadock Monitoring - Docker container monitoring v1.2.0
+# Acadock Monitoring - Docker container monitoring v1.2.1
 
 This webservice provides live data on Docker containers. It takes
 data from the Linux kernel control groups and from the namespace of
@@ -90,22 +90,30 @@ Bump new version number in:
 Commit, tag and create a new release:
 
 ```sh
+version="1.2.1"
+
+git switch --create release/${version}
 git add CHANGELOG.md README.md
-git commit -m "release: Bump v1.2.0"
-git tag v1.2.0
-git push origin master v1.2.0
-hub release create v1.2.0
+git commit -m "Bump v${version}"
+git push --set-upstream origin release/${version}
+gh pr create --reviewer=EtienneM --fill-first
 ```
 
-The project is using [GoReleaser](https://goreleaser.com) to build its archives.
+Once the pull request merged, you can tag the new release.
 
-To build locally the archives, you can use the following command, it will
-automatically use the version of the last tag created.
-
+```sh
+git tag v${version}
+git push origin master v${version}
+gh release create v${version} --generate-notes --prerelease
+gh release view v${version} --web
 ```
+
+Build locally the archives. You can use the following command, it will automatically use the version of the last tag created.
+
+```sh
 goreleaser release --skip-publish --skip-announce --skip-sign --rm-dist
 ```
 
-Add the builds to the newly created release.
+On the web interface, unset the pre-release checkbox, check the "Set as the latest release" checkbox, and upload the archives in the `dist` folder.
 
 Last, update the default version installed in the [cookbook](https://github.com/Scalingo/cookbook-acadock).
