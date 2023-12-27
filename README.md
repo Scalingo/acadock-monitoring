@@ -111,7 +111,7 @@ gh release view v${version} --web
 Build locally the archives. You can use the following command, it will automatically use the version of the last tag created.
 
 ```sh
-goreleaser release --skip-publish --skip-announce --skip-sign --rm-dist
+goreleaser release --skip=publish,announce,sign --clean
 ```
 
 On the web interface, unset the pre-release checkbox, check the "Set as the latest release" checkbox, and upload the archives in the `dist` folder.
