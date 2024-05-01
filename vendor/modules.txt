@@ -2,8 +2,8 @@
 ## explicit; go 1.16
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
-# github.com/Microsoft/go-winio v0.6.1
-## explicit; go 1.17
+# github.com/Microsoft/go-winio v0.6.2
+## explicit; go 1.21
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
@@ -30,7 +30,7 @@ github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.0.0
 ## explicit; go 1.19
 github.com/Scalingo/go-utils/security
-# github.com/containerd/containerd v1.7.14
+# github.com/containerd/containerd v1.7.16
 ## explicit; go 1.21
 github.com/containerd/containerd/pkg/userns
 # github.com/containerd/log v0.1.0
@@ -39,7 +39,7 @@ github.com/containerd/log
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v26.0.2+incompatible
+# github.com/docker/docker v26.1.1+incompatible
 ## explicit
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/container
@@ -93,7 +93,7 @@ github.com/facebookgo/stats
 # github.com/fsouza/go-dockerclient v1.11.0
 ## explicit; go 1.21
 github.com/fsouza/go-dockerclient
-# github.com/gofrs/uuid/v5 v5.0.0
+# github.com/gofrs/uuid/v5 v5.1.0
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5
 # github.com/gogo/protobuf v1.3.2
@@ -105,7 +105,7 @@ github.com/golang/mock/gomock
 # github.com/gorilla/mux v1.8.1
 ## explicit; go 1.20
 github.com/gorilla/mux
-# github.com/klauspost/compress v1.17.7
+# github.com/klauspost/compress v1.17.8
 ## explicit; go 1.20
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
@@ -153,43 +153,19 @@ github.com/sirupsen/logrus
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/tklauser/go-sysconf v0.3.13
+# github.com/tklauser/go-sysconf v0.3.14
 ## explicit; go 1.18
 github.com/tklauser/go-sysconf
-# github.com/tklauser/numcpus v0.7.0
+# github.com/tklauser/numcpus v0.8.0
 ## explicit; go 1.18
 github.com/tklauser/numcpus
 # github.com/urfave/negroni v1.0.0
 ## explicit
 github.com/urfave/negroni
-# golang.org/x/mod v0.16.0
-## explicit; go 1.18
-golang.org/x/mod/semver
-# golang.org/x/sys v0.18.0
+# golang.org/x/sys v0.19.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/tools v0.19.0
-## explicit; go 1.19
-golang.org/x/tools/cmd/stringer
-golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/packagesdriver
-golang.org/x/tools/go/packages
-golang.org/x/tools/go/types/objectpath
-golang.org/x/tools/internal/aliases
-golang.org/x/tools/internal/event
-golang.org/x/tools/internal/event/core
-golang.org/x/tools/internal/event/keys
-golang.org/x/tools/internal/event/label
-golang.org/x/tools/internal/event/tag
-golang.org/x/tools/internal/gcimporter
-golang.org/x/tools/internal/gocommand
-golang.org/x/tools/internal/packagesinternal
-golang.org/x/tools/internal/pkgbits
-golang.org/x/tools/internal/tokeninternal
-golang.org/x/tools/internal/typeparams
-golang.org/x/tools/internal/typesinternal
-golang.org/x/tools/internal/versions
 # gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 ## explicit; go 1.11
 # gopkg.in/errgo.v1 v1.0.1
