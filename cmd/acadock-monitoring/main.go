@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/facebookgo/grace/gracehttp"
+	"github.com/cloudflare/tableflip"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
@@ -20,6 +23,7 @@ import (
 	"github.com/Scalingo/acadock-monitoring/procfs"
 	"github.com/Scalingo/acadock-monitoring/webserver"
 	"github.com/Scalingo/go-handlers"
+	"github.com/Scalingo/go-utils/errors/v2"
 	"github.com/Scalingo/go-utils/logger"
 )
 
@@ -32,7 +36,7 @@ func (m *JSONContentTypeMiddleware) ServeHTTP(res http.ResponseWriter, req *http
 
 func main() {
 	if config.Debug {
-		os.Setenv("LOGGER_LEVEL", "debug")
+		_ = os.Setenv("LOGGER_LEVEL", "debug")
 	}
 
 	log := logger.Default()
@@ -59,7 +63,7 @@ func main() {
 		filters.WithAverageConfig(config.QueueLengthPointsPerSample, config.QueueLengthSamplingInterval),
 	)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	go queueLength.Start(ctx)
@@ -105,7 +109,7 @@ func main() {
 
 	r.HandleFunc("/{any:.*}", func(res http.ResponseWriter, req *http.Request, params map[string]string) error {
 		res.WriteHeader(404)
-		res.Write([]byte(`{"error": "not found"}`))
+		_, _ = res.Write([]byte(`{"error": "not found"}`))
 		return nil
 	})
 
@@ -114,8 +118,79 @@ func main() {
 	n := negroni.New(negroni.NewRecovery(), &JSONContentTypeMiddleware{})
 	n.UseHandler(globalRouter)
 
-	log.Info("Listening on :" + config.ENV["PORT"])
-	log.Fatal(gracehttp.Serve(&http.Server{
-		Addr: ":" + config.ENV["PORT"], Handler: n,
-	}))
+	// Use tableflip to handle graceful restart requests
+	upg, err := tableflip.New(tableflip.Options{
+		UpgradeTimeout: config.GracefulUpgradeTimeout,
+		PIDFile:        config.GracefulPidFile,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Handle SIGHUP and SIGINT signals
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT /*, syscall.SIGTERM*/)
+		for s := range sig {
+			switch s {
+			case syscall.SIGHUP:
+				log.Infoln("upgrade requested")
+				err := upg.Upgrade()
+				if err != nil {
+					log.Error("upgrade failed:", err)
+					continue
+				}
+			case syscall.SIGINT:
+				upg.Stop()
+				log.Infoln("stopping")
+				return
+			}
+		}
+	}()
+
+	// Listen must be called before Ready
+	ln, err := upg.Listen("tcp", ":"+config.ENV["PORT"])
+	if err != nil {
+		upg.Stop()
+		log.Fatalln("cannot listen:", err)
+	}
+	log.Info("listening on :" + config.ENV["PORT"])
+
+	server := http.Server{
+		Handler: n,
+	}
+
+	go func() {
+		err := server.Serve(ln)
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Println("HTTP server:", err)
+		}
+	}()
+
+	log.Printf("ready")
+	if err := upg.Ready(); err != nil {
+		upg.Stop()
+		log.Fatalln(err)
+	}
+
+	err = upg.WaitForParent(ctx)
+	log.Printf("parent exited: %v", err)
+	if err != nil {
+		upg.Stop()
+		log.Fatalln(err)
+	}
+
+	defer upg.Stop()
+	<-upg.Exit()
+
+	// Make sure to set a deadline on exiting the process
+	// after upg.Exit() is closed. No new upgrades can be
+	// performed if the parent doesn't exit.
+	time.AfterFunc(config.GracefulShutdownTimeout, func() {
+		log.Println("Graceful shutdown timed out")
+		os.Exit(1)
+	})
+
+	// Wait for connections to drain.
+	_ = server.Shutdown(context.Background())
 }
