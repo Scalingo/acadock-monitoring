@@ -62,7 +62,7 @@ func TestService_Shutdown(t *testing.T) {
 			isGraceful.IsStoppedAfter(shutdownTimeout)
 
 			// Check the output
-			output := isGraceful.Output.String()
+			output := isGraceful.GetOutput()
 			t.Log(output)
 			require.Equal(t, 1, strings.Count(output, "parent exited"))
 			require.Zero(t, strings.Count(output, "upgrade requested"))
@@ -104,7 +104,7 @@ func TestService_Restart(t *testing.T) {
 	isGraceful.IsRunningAfter(upgradeTimeout)
 
 	// Check the output
-	output := isGraceful.Output.String()
+	output := isGraceful.GetOutput()
 	t.Log(output)
 	require.Equal(t, 1, strings.Count(output, "upgrade requested"))
 	require.Zero(t, strings.Count(output, "upgrade failed"))
@@ -143,7 +143,7 @@ func TestService_Restart_Twice(t *testing.T) {
 	isGraceful.IsRunningAfter(upgradeTimeout)
 
 	// Check the output
-	output := isGraceful.Output.String()
+	output := isGraceful.GetOutput()
 	t.Log(output)
 	require.Equal(t, 1, strings.Count(output, "upgrade requested"))
 	require.Zero(t, strings.Count(output, "upgrade failed"))
@@ -153,7 +153,7 @@ func TestService_Restart_Twice(t *testing.T) {
 	isGraceful.IsRunningAfter(upgradeTimeout)
 
 	// Check the output
-	output = isGraceful.Output.String()
+	output = isGraceful.GetOutput()
 	t.Log(output)
 	require.Equal(t, 2, strings.Count(output, "upgrade requested"))
 	require.Zero(t, strings.Count(output, "upgrade failed"))
