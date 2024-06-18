@@ -1,6 +1,6 @@
 module github.com/Scalingo/acadock-monitoring
 
-go 1.22.4
+go 1.21
 
 require (
 	github.com/Scalingo/go-handlers v1.8.1
@@ -8,7 +8,7 @@ require (
 	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
 	github.com/Scalingo/go-utils/errors/v2 v2.4.0
 	github.com/Scalingo/go-utils/logger v1.2.0
-	github.com/cloudflare/tableflip v1.2.3
+	github.com/cloudflare/tableflip v1.1.0
 	github.com/fsouza/go-dockerclient v1.11.0
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
