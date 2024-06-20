@@ -21,6 +21,8 @@ type CmdAndOutput struct {
 	Cmd *exec.Cmd
 	pid int
 
+	waitGroup sync.WaitGroup
+
 	output    *bytes.Buffer
 	outputMu  sync.Mutex
 	oldStdout io.Writer
@@ -142,74 +144,115 @@ func (c *CmdAndOutput) Start() {
 	// Get the pid
 	c.pid = c.Cmd.Process.Pid
 
+	// Write the pid to the pid file
+	if c.pidFile != "" {
+		err := os.WriteFile(c.pidFile, []byte(strconv.Itoa(c.pid)), 0600)
+		require.NoError(c.t, err)
+	}
+
 	// Wait for a short duration to allow the child process to start
-	c.IsRunningAfter(c.startWaitDuration)
+	time.Sleep(c.startWaitDuration)
 }
 
 // Stop stops the process
 func (c *CmdAndOutput) Stop() {
-	// Wait for the command (this must be called after start)
-	go func() {
-		_ = c.Cmd.Wait()
-	}()
+	// Wait for all (isRunningAfter / isStoppedAfter) operations to finish
+	c.waitGroup.Wait()
 
-	p := c.findProcess()
-
-	// send signal to pid process
-	err := syscall.Kill(p.Pid, syscall.SIGINT)
+	// send signal to parent process
+	err := syscall.Kill(c.Cmd.Process.Pid, syscall.SIGTERM)
 	if err != nil && !errors.Is(err, syscall.ESRCH) {
 		c.t.Logf("kill process: %v", err)
 	}
 
+	// send signal to pid process
+	err = syscall.Kill(c.pid, syscall.SIGTERM)
+	if err != nil && !errors.Is(err, syscall.ESRCH) {
+		c.t.Logf("kill process: %v", err)
+	}
+
+	// Wait for the parent or child processes to finish
 	c.IsStoppedAfter(c.shutdownWaitDuration)
-}
-
-// IsStoppedAfter checks if the process is stopped after a certain duration
-func (c *CmdAndOutput) IsStoppedAfter(timeout time.Duration) {
-	// c.t.Helper()
-
-	// Has any process started
-	require.NotNilf(c.t, c.Cmd.Process, "process %v hasn't started", c.Cmd)
-
-	time.Sleep(timeout)
-
-	// Nil if the process running
-	require.NotNilf(c.t, c.findProcess(), "process %v was up after %v", c.Cmd, timeout)
 }
 
 // IsRunningAfter checks if the process is running after a certain duration
 func (c *CmdAndOutput) IsRunningAfter(timeout time.Duration) {
 	c.t.Helper()
+	c.CheckProcessAfter(timeout, true)
+}
+
+// IsRunningAfterAsync checks if the process is running after a certain duration, asynchronously
+func (c *CmdAndOutput) IsRunningAfterAsync(timeout time.Duration) {
+	c.t.Helper()
+	c.waitGroup.Add(1)
+	go func() {
+		defer c.waitGroup.Done()
+		c.CheckProcessAfter(timeout, true)
+	}()
+}
+
+// IsStoppedAfter checks if the process is stopped after a certain duration
+func (c *CmdAndOutput) IsStoppedAfter(timeout time.Duration) {
+	c.t.Helper()
+	c.CheckProcessAfter(timeout, false)
+}
+
+// IsStoppedAfterAsync checks if the process is stopped after a certain duration, asynchronously
+func (c *CmdAndOutput) IsStoppedAfterAsync(timeout time.Duration) {
+	c.t.Helper()
+	c.waitGroup.Add(1)
+	go func() {
+		defer c.waitGroup.Done()
+		c.CheckProcessAfter(timeout, false)
+	}()
+}
+
+// CheckProcessAfter checks the process is running after a certain duration
+func (c *CmdAndOutput) CheckProcessAfter(timeout time.Duration, shouldBeAlive bool) {
+	c.t.Helper()
 
 	// Has any process started
 	require.NotNilf(c.t, c.Cmd.Process, "process %v hasn't started", c.Cmd)
 
-	time.Sleep(timeout)
+	if shouldBeAlive {
+		// Wait and then search for the process (parent or child)
+		time.Sleep(timeout)
+		p := c.findProcess()
+		require.NoErrorf(c.t, p.Signal(syscall.Signal(0)), "process %v is dead after %v", c.pid, timeout)
+	} else {
+		// Race between the timer and the process
+		w := make(chan *os.ProcessState)
+		go func() {
+			processState, _ := c.findProcess().Wait()
+			w <- processState
+			close(w)
+		}()
 
-	var processState bool
-	if c.Cmd.ProcessState != nil {
-		processState = c.Cmd.ProcessState.Success()
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+			c.t.Errorf("process %v was up after %v", c.pid, timeout)
+		case <-w:
+		}
 	}
-
-	// Nil if the process running
-	require.NoErrorf(c.t, c.findProcess().Signal(syscall.Signal(0)),
-		"process %v is dead after %v, status: %v", c.Cmd.Args, timeout, processState)
 }
 
 // GetOutput returns the output of the process
 func (c *CmdAndOutput) GetOutput() string {
+	c.waitGroup.Wait()
+
 	c.outputMu.Lock()
 	defer c.outputMu.Unlock()
 	return c.output.String()
 }
 
 func (c *CmdAndOutput) readPidFile() int {
-	// c.t.Helper()
+	c.t.Helper()
 	data, err := os.ReadFile(c.pidFile)
 	require.NoError(c.t, err)
 	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
 	require.NoError(c.t, err)
-	c.t.Logf("pid: %v", pid)
 	return pid
 }
 

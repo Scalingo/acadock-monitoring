@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -106,7 +107,7 @@ func TestService_Restart(t *testing.T) {
 
 		// Check the output
 		output := isGraceful.GetOutput()
-		t.Log(output)
+		fmt.Print(output)
 		require.Equal(t, 1, strings.Count(output, "upgrade requested"))
 		require.Zero(t, strings.Count(output, "upgrade failed"))
 	})
@@ -139,9 +140,11 @@ func TestService_Restart(t *testing.T) {
 
 		// Check the output
 		output := isGraceful.GetOutput()
-		t.Log(output)
+		fmt.Print(output)
 		require.Equal(t, 1, strings.Count(output, "upgrade requested"))
 		require.Zero(t, strings.Count(output, "upgrade failed"))
+
+		time.Sleep(upgradeTimeout)
 
 		// Send restart signal
 		isGraceful.Signal(syscall.SIGHUP)
@@ -149,7 +152,7 @@ func TestService_Restart(t *testing.T) {
 
 		// Check the output
 		output = isGraceful.GetOutput()
-		t.Log(output)
+		fmt.Print(output)
 		require.Equal(t, 2, strings.Count(output, "upgrade requested"))
 		require.Zero(t, strings.Count(output, "upgrade failed"))
 	})
