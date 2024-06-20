@@ -35,7 +35,7 @@ func TestService_Shutdown(t *testing.T) {
 	t.Setenv("GRACEFUL_SHUTDOWN_TIMEOUT", shutdownTimeout.String())
 
 	for _, s := range []os.Signal{syscall.SIGINT, syscall.SIGTERM} {
-		t.Run("Signal "+s.String(), func(t *testing.T) {
+		t.Run("Send Signal "+s.String()+" and expect service to stop", func(t *testing.T) {
 			// Create a temporary directory for the built command
 			tmpdir, err := os.MkdirTemp(t.TempDir(), "")
 			require.NoError(t, err)
@@ -78,83 +78,79 @@ func TestService_Restart(t *testing.T) {
 	t.Setenv("GRACEFUL_UPGRADE_TIMEOUT", upgradeTimeout.String())
 	t.Setenv("GRACEFUL_SHUTDOWN_TIMEOUT", shutdownTimeout.String())
 
-	// Create a temporary directory for the built command
-	tmpdir, err := os.MkdirTemp(t.TempDir(), "")
-	require.NoError(t, err)
-	defer require.NoError(t, os.RemoveAll(tmpdir))
+	t.Run("Send SIGHUP and expect service to restart", func(t *testing.T) {
+		// Create a temporary directory for the built command
+		tmpdir, err := os.MkdirTemp(t.TempDir(), "")
+		require.NoError(t, err)
+		defer require.NoError(t, os.RemoveAll(tmpdir))
 
-	// Pid environment variable is test specific
-	pidFile := tmpdir + "/main.pid"
-	t.Setenv("GRACEFUL_PID_FILE", pidFile)
+		// Pid environment variable is test specific
+		pidFile := tmpdir + "/main.pid"
+		t.Setenv("GRACEFUL_PID_FILE", pidFile)
 
-	// Configure isGraceful
-	isGraceful := isgraceful.NewCmdAndOutput(t,
-		isgraceful.WithCmd(getCmd(t, tmpdir)),
-		isgraceful.WithUpgradeWaitDuration(upgradeTimeout),
-		isgraceful.WithShutdownWaitDuration(shutdownTimeout),
-		isgraceful.WithPidFile(pidFile),
-	)
+		// Configure isGraceful
+		isGraceful := isgraceful.NewCmdAndOutput(t,
+			isgraceful.WithCmd(getCmd(t, tmpdir)),
+			isgraceful.WithUpgradeWaitDuration(upgradeTimeout),
+			isgraceful.WithShutdownWaitDuration(shutdownTimeout),
+			isgraceful.WithPidFile(pidFile),
+		)
 
-	// Start the command
-	isGraceful.Start()
-	defer isGraceful.Stop()
+		// Start the command
+		isGraceful.Start()
+		defer isGraceful.Stop()
 
-	// Send restart signal
-	isGraceful.Signal(syscall.SIGHUP)
-	isGraceful.IsRunningAfter(upgradeTimeout)
+		// Send restart signal
+		isGraceful.Signal(syscall.SIGHUP)
+		isGraceful.IsRunningAfter(upgradeTimeout)
 
-	// Check the output
-	output := isGraceful.GetOutput()
-	t.Log(output)
-	require.Equal(t, 1, strings.Count(output, "upgrade requested"))
-	require.Zero(t, strings.Count(output, "upgrade failed"))
-}
+		// Check the output
+		output := isGraceful.GetOutput()
+		t.Log(output)
+		require.Equal(t, 1, strings.Count(output, "upgrade requested"))
+		require.Zero(t, strings.Count(output, "upgrade failed"))
+	})
 
-func TestService_Restart_Twice(t *testing.T) {
-	// Set some environment variables
-	upgradeTimeout := time.Millisecond * 200
-	shutdownTimeout := time.Millisecond * 100
-	t.Setenv("GRACEFUL_UPGRADE_TIMEOUT", upgradeTimeout.String())
-	t.Setenv("GRACEFUL_SHUTDOWN_TIMEOUT", shutdownTimeout.String())
+	t.Run("Send SIGHUP twice and expect service to restart twice", func(t *testing.T) {
+		// Create a temporary directory for the built command
+		tmpdir, err := os.MkdirTemp(t.TempDir(), "")
+		require.NoError(t, err)
+		defer require.NoError(t, os.RemoveAll(tmpdir))
 
-	// Create a temporary directory for the built command
-	tmpdir, err := os.MkdirTemp(t.TempDir(), "")
-	require.NoError(t, err)
-	defer require.NoError(t, os.RemoveAll(tmpdir))
+		// Pid environment variable is test specific
+		pidFile := tmpdir + "/main.pid"
+		t.Setenv("GRACEFUL_PID_FILE", pidFile)
 
-	// Pid environment variable is test specific
-	pidFile := tmpdir + "/main.pid"
-	t.Setenv("GRACEFUL_PID_FILE", pidFile)
+		// Configure isGraceful
+		isGraceful := isgraceful.NewCmdAndOutput(t,
+			isgraceful.WithCmd(getCmd(t, tmpdir)),
+			isgraceful.WithUpgradeWaitDuration(upgradeTimeout),
+			isgraceful.WithShutdownWaitDuration(shutdownTimeout),
+			isgraceful.WithPidFile(pidFile),
+		)
 
-	// Configure isGraceful
-	isGraceful := isgraceful.NewCmdAndOutput(t,
-		isgraceful.WithCmd(getCmd(t, tmpdir)),
-		isgraceful.WithUpgradeWaitDuration(upgradeTimeout),
-		isgraceful.WithShutdownWaitDuration(shutdownTimeout),
-		isgraceful.WithPidFile(pidFile),
-	)
+		// Start the command
+		isGraceful.Start()
+		defer isGraceful.Stop()
 
-	// Start the command
-	isGraceful.Start()
-	defer isGraceful.Stop()
+		// Send restart signal
+		isGraceful.Signal(syscall.SIGHUP)
+		isGraceful.IsRunningAfter(upgradeTimeout)
 
-	// Send restart signal
-	isGraceful.Signal(syscall.SIGHUP)
-	isGraceful.IsRunningAfter(upgradeTimeout)
+		// Check the output
+		output := isGraceful.GetOutput()
+		t.Log(output)
+		require.Equal(t, 1, strings.Count(output, "upgrade requested"))
+		require.Zero(t, strings.Count(output, "upgrade failed"))
 
-	// Check the output
-	output := isGraceful.GetOutput()
-	t.Log(output)
-	require.Equal(t, 1, strings.Count(output, "upgrade requested"))
-	require.Zero(t, strings.Count(output, "upgrade failed"))
+		// Send restart signal
+		isGraceful.Signal(syscall.SIGHUP)
+		isGraceful.IsRunningAfter(upgradeTimeout)
 
-	// Send restart signal
-	isGraceful.Signal(syscall.SIGHUP)
-	isGraceful.IsRunningAfter(upgradeTimeout)
-
-	// Check the output
-	output = isGraceful.GetOutput()
-	t.Log(output)
-	require.Equal(t, 2, strings.Count(output, "upgrade requested"))
-	require.Zero(t, strings.Count(output, "upgrade failed"))
+		// Check the output
+		output = isGraceful.GetOutput()
+		t.Log(output)
+		require.Equal(t, 2, strings.Count(output, "upgrade requested"))
+		require.Zero(t, strings.Count(output, "upgrade failed"))
+	})
 }
