@@ -1,14 +1,13 @@
 module github.com/Scalingo/acadock-monitoring
 
-go 1.22
+go 1.22.4
 
 require (
 	github.com/Scalingo/go-handlers v1.8.1
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
-	github.com/Scalingo/go-utils/errors/v2 v2.4.0
+	github.com/Scalingo/go-utils/graceful v1.1.2
 	github.com/Scalingo/go-utils/logger v1.2.0
-	github.com/cloudflare/tableflip v1.1.0
 	github.com/fsouza/go-dockerclient v1.11.0
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -23,7 +22,9 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Scalingo/go-utils/crypto v1.0.0 // indirect
+	github.com/Scalingo/go-utils/errors/v2 v2.4.0 // indirect
 	github.com/Scalingo/go-utils/security v1.0.0 // indirect
+	github.com/cloudflare/tableflip v1.2.3 // indirect
 	github.com/containerd/containerd v1.7.17 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

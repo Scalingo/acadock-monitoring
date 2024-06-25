@@ -16,12 +16,14 @@ github.com/Scalingo/go-utils/crypto v1.0.0 h1:aczJ3fXjdgL4Y0qIGJR4xAqNXorID5pjx3
 github.com/Scalingo/go-utils/crypto v1.0.0/go.mod h1:v7rhBLfCqVGWs7fn5M5Vr3anxIxufI3Lwu/5ThV8P6M=
 github.com/Scalingo/go-utils/errors/v2 v2.4.0 h1:vKG0Js3kzWG7+03LEvH7j8fw+picEcRhbjMm3i9Xbb8=
 github.com/Scalingo/go-utils/errors/v2 v2.4.0/go.mod h1:WU6Kzi19AlZyUfoxFkdvEeYkIa0W0f172hKPqkOeIpU=
+github.com/Scalingo/go-utils/graceful v1.1.2 h1:eATcDb3lIJca89nAPgcGyTZgd/rL5hCtoqvFl9Gf2h8=
+github.com/Scalingo/go-utils/graceful v1.1.2/go.mod h1:R6iABp2n7RIkTaf73GQ80j0n8w8yOep+dwkI1IvRx2M=
 github.com/Scalingo/go-utils/logger v1.2.0 h1:E3jtaoRxpIsFcZu/jsvWew8ttUAwKUYQufdPqGYp7EU=
 github.com/Scalingo/go-utils/logger v1.2.0/go.mod h1:JArjD1gHdB/vwnlcVG7rYxuIY0tk8/VG4MtirnRwn8k=
 github.com/Scalingo/go-utils/security v1.0.0 h1:BW4FeZKmqW9nmDb/hdm49w4bhznQ8j7cVNxMxknGz3A=
 github.com/Scalingo/go-utils/security v1.0.0/go.mod h1:vCgqjBdIBSYKxZhFBMT9koEH2MEbzuwmNZyLhmKcnV0=
-github.com/cloudflare/tableflip v1.1.0 h1:sofopE/RX02F0iJvBbbJHi/+F+8fdvrPUdd+uBkt4y0=
-github.com/cloudflare/tableflip v1.1.0/go.mod h1:vhhSlJqV8uUnxGkRSgyvGthfGlkAwJ4UuSV51fSrCQY=
+github.com/cloudflare/tableflip v1.2.3 h1:8I+B99QnnEWPHOY3fWipwVKxS70LGgUsslG7CSfmHMw=
+github.com/cloudflare/tableflip v1.2.3/go.mod h1:P4gRehmV6Z2bY5ao5ml9Pd8u6kuEnlB37pUFMmv7j2E=
 github.com/containerd/containerd v1.7.17 h1:KjNnn0+tAVQHAoaWRjmdak9WlvnFR/8rU1CHHy8Rm2A=
 github.com/containerd/containerd v1.7.17/go.mod h1:vK+hhT4TIv2uejlcDlbVIc8+h/BqtKLIyNrtCZol8lI=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
@@ -124,6 +126,7 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210510120138-977fb7262007/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210616094352-59db8d763f22/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

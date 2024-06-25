@@ -24,14 +24,17 @@ github.com/Scalingo/go-utils/crypto
 # github.com/Scalingo/go-utils/errors/v2 v2.4.0
 ## explicit; go 1.20
 github.com/Scalingo/go-utils/errors/v2
+# github.com/Scalingo/go-utils/graceful v1.1.2
+## explicit; go 1.22.4
+github.com/Scalingo/go-utils/graceful
 # github.com/Scalingo/go-utils/logger v1.2.0
 ## explicit; go 1.17
 github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.0.0
 ## explicit; go 1.19
 github.com/Scalingo/go-utils/security
-# github.com/cloudflare/tableflip v1.1.0
-## explicit; go 1.13
+# github.com/cloudflare/tableflip v1.2.3
+## explicit; go 1.14
 github.com/cloudflare/tableflip
 # github.com/containerd/containerd v1.7.17
 ## explicit; go 1.21
