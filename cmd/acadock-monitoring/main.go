@@ -114,7 +114,7 @@ func main() {
 	n := negroni.New(negroni.NewRecovery(), &JSONContentTypeMiddleware{})
 	n.UseHandler(globalRouter)
 
-	s := graceful.NewService(graceful.WithPIDFile(config.GracefulPidFile))
+	s := graceful.NewService()
 
 	err = s.ListenAndServe(ctx, "tcp",
 		":"+config.ENV["PORT"], n)

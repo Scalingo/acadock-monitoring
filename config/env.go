@@ -21,9 +21,6 @@ var ENV = map[string]string{
 	"QUEUE_LENGTH_ELEMENTS_NEEDED":   "6",
 	"HTTP_USERNAME":                  "",
 	"HTTP_PASSWORD":                  "",
-	"GRACEFUL_UPGRADE_TIMEOUT":       "60s",
-	"GRACEFUL_SHUTDOWN_TIMEOUT":      "30s",
-	"GRACEFUL_PID_FILE":              "main.pid",
 }
 
 var (
@@ -32,9 +29,6 @@ var (
 	QueueLengthSamplingInterval time.Duration
 	QueueLengthPointsPerSample  int
 	QueueLengthElementsNeeded   int
-	GracefulUpgradeTimeout      time.Duration
-	GracefulShutdownTimeout     time.Duration
-	GracefulPidFile             string
 )
 
 func init() {
@@ -42,7 +36,7 @@ func init() {
 		if os.Getenv(k) != "" {
 			ENV[k] = os.Getenv(k)
 		} else {
-			os.Setenv(k, v)
+			_ = os.Setenv(k, v)
 		}
 	}
 
@@ -71,17 +65,6 @@ func init() {
 		panic(err)
 	}
 
-	GracefulUpgradeTimeout, err = time.ParseDuration(ENV["GRACEFUL_UPGRADE_TIMEOUT"])
-	if err != nil {
-		panic(err)
-	}
-
-	GracefulShutdownTimeout, err = time.ParseDuration(ENV["GRACEFUL_SHUTDOWN_TIMEOUT"])
-	if err != nil {
-		panic(err)
-	}
-
-	GracefulPidFile = ENV["GRACEFUL_PID_FILE"]
 }
 
 func CgroupPath(cgroup string, id string) string {
