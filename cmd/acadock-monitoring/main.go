@@ -8,7 +8,6 @@ import (
 	"net/http/pprof"
 	"os"
 
-	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/Scalingo/acadock-monitoring/procfs"
 	"github.com/Scalingo/acadock-monitoring/webserver"
 	"github.com/Scalingo/go-handlers"
+	"github.com/Scalingo/go-utils/graceful"
 	"github.com/Scalingo/go-utils/logger"
 )
 
@@ -32,7 +32,7 @@ func (m *JSONContentTypeMiddleware) ServeHTTP(res http.ResponseWriter, req *http
 
 func main() {
 	if config.Debug {
-		os.Setenv("LOGGER_LEVEL", "debug")
+		_ = os.Setenv("LOGGER_LEVEL", "debug")
 	}
 
 	log := logger.Default()
@@ -59,7 +59,7 @@ func main() {
 		filters.WithAverageConfig(config.QueueLengthPointsPerSample, config.QueueLengthSamplingInterval),
 	)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	go queueLength.Start(ctx)
@@ -105,7 +105,7 @@ func main() {
 
 	r.HandleFunc("/{any:.*}", func(res http.ResponseWriter, req *http.Request, params map[string]string) error {
 		res.WriteHeader(404)
-		res.Write([]byte(`{"error": "not found"}`))
+		_, _ = res.Write([]byte(`{"error": "not found"}`))
 		return nil
 	})
 
@@ -114,8 +114,12 @@ func main() {
 	n := negroni.New(negroni.NewRecovery(), &JSONContentTypeMiddleware{})
 	n.UseHandler(globalRouter)
 
-	log.Info("Listening on :" + config.ENV["PORT"])
-	log.Fatal(gracehttp.Serve(&http.Server{
-		Addr: ":" + config.ENV["PORT"], Handler: n,
-	}))
+	s := graceful.NewService()
+
+	err = s.ListenAndServe(ctx, "tcp",
+		":"+config.ENV["PORT"], n)
+	if err != nil {
+		log.WithError(err).Error("fail to stop http server")
+	}
+
 }

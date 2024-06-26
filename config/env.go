@@ -36,7 +36,7 @@ func init() {
 		if os.Getenv(k) != "" {
 			ENV[k] = os.Getenv(k)
 		} else {
-			os.Setenv(k, v)
+			_ = os.Setenv(k, v)
 		}
 	}
 
@@ -64,6 +64,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 func CgroupPath(cgroup string, id string) string {

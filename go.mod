@@ -1,13 +1,13 @@
 module github.com/Scalingo/acadock-monitoring
 
-go 1.20
+go 1.22.4
 
 require (
 	github.com/Scalingo/go-handlers v1.8.1
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
+	github.com/Scalingo/go-utils/graceful v1.1.2
 	github.com/Scalingo/go-utils/logger v1.2.0
-	github.com/facebookgo/grace v0.0.0-20180706040059-75cf19382434
 	github.com/fsouza/go-dockerclient v1.11.0
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -24,19 +24,13 @@ require (
 	github.com/Scalingo/go-utils/crypto v1.0.0 // indirect
 	github.com/Scalingo/go-utils/errors/v2 v2.4.0 // indirect
 	github.com/Scalingo/go-utils/security v1.0.0 // indirect
+	github.com/cloudflare/tableflip v1.2.3 // indirect
 	github.com/containerd/containerd v1.7.17 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/docker v26.1.3+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
-	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
-	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
-	github.com/facebookgo/httpdown v0.0.0-20180706035922-5979d39b15c2 // indirect
-	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
-	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
-	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/gofrs/uuid/v5 v5.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

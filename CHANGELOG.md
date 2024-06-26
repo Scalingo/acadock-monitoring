@@ -2,6 +2,9 @@
 
 ## To Be Released
 
+* chore(go): use go 1.22.4
+* use github.com/Scalingo/go-utils/graceful for graceful upgrades and shutdowns
+
 ## v1.2.1 - 2023-12-27
 
 * chore(deps): various updates
