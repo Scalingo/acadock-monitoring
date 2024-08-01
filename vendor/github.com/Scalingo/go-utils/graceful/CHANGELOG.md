@@ -1,5 +1,11 @@
 # Changelog
 
+## To be released
+
+## v1.1.3
+
+* build(deps): remove patch version number from go version 1.22.4 => 1.22
+
 ## v1.1.2
 
 * build(deps): bump github.com/Scalingo/go-utils/logger from 1.1.1 to 1.2.0

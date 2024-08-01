@@ -1,4 +1,4 @@
-## Package `graceful` v1.1.2
+## Package `graceful` v1.1.3
 
 ### Default settings
 
