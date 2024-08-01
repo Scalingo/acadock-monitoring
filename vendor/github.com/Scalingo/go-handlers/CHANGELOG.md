@@ -2,6 +2,10 @@
 
 ## To be Released
 
+## v1.8.2
+
+* feat(middleware): add a middleware to set the `Content-Type` to `application/json`
+
 ## v1.8.1
 
 * feat(errors): add bad request errors

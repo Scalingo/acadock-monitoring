@@ -9,7 +9,7 @@ github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/internal/stringbuffer
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Scalingo/go-handlers v1.8.1
+# github.com/Scalingo/go-handlers v1.8.2
 ## explicit; go 1.20
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
@@ -24,8 +24,8 @@ github.com/Scalingo/go-utils/crypto
 # github.com/Scalingo/go-utils/errors/v2 v2.4.0
 ## explicit; go 1.20
 github.com/Scalingo/go-utils/errors/v2
-# github.com/Scalingo/go-utils/graceful v1.1.2
-## explicit; go 1.22.4
+# github.com/Scalingo/go-utils/graceful v1.1.3
+## explicit; go 1.22
 github.com/Scalingo/go-utils/graceful
 # github.com/Scalingo/go-utils/logger v1.2.0
 ## explicit; go 1.17
@@ -36,7 +36,7 @@ github.com/Scalingo/go-utils/security
 # github.com/cloudflare/tableflip v1.2.3
 ## explicit; go 1.14
 github.com/cloudflare/tableflip
-# github.com/containerd/containerd v1.7.18
+# github.com/containerd/containerd v1.7.20
 ## explicit; go 1.21
 github.com/containerd/containerd/pkg/userns
 # github.com/containerd/log v0.1.0
@@ -45,7 +45,7 @@ github.com/containerd/log
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v27.1.0+incompatible
+# github.com/docker/docker v27.1.1+incompatible
 ## explicit
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/container
@@ -74,7 +74,7 @@ github.com/docker/go-connections/nat
 github.com/docker/go-units
 # github.com/frankban/quicktest v1.14.6
 ## explicit; go 1.13
-# github.com/fsouza/go-dockerclient v1.11.0
+# github.com/fsouza/go-dockerclient v1.11.2
 ## explicit; go 1.21
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid/v5 v5.2.0
@@ -104,11 +104,11 @@ github.com/moby/docker-image-spec/specs-go/v1
 # github.com/moby/patternmatcher v0.6.0
 ## explicit; go 1.19
 github.com/moby/patternmatcher
-# github.com/moby/sys/sequential v0.5.0
+# github.com/moby/sys/sequential v0.6.0
 ## explicit; go 1.17
 github.com/moby/sys/sequential
-# github.com/moby/sys/user v0.1.0
-## explicit; go 1.17
+# github.com/moby/sys/user v0.2.0
+## explicit; go 1.21
 github.com/moby/sys/user
 # github.com/moby/term v0.5.0
 ## explicit; go 1.18
@@ -146,7 +146,7 @@ github.com/tklauser/numcpus
 # github.com/urfave/negroni v1.0.0
 ## explicit
 github.com/urfave/negroni
-# golang.org/x/sys v0.21.0
+# golang.org/x/sys v0.22.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
