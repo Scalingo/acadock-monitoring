@@ -1,4 +1,4 @@
-## Package `graceful` v1.1.3
+## Package `graceful` v1.2.0
 
 ### Default settings
 
@@ -33,4 +33,18 @@ s := graceful.NewService(
 )
 
 err := s.ListenAndServe(ctx, "tcp", ":9000", handler)
+```
+
+### Configuration for multiple servers
+
+```
+s := graceful.NewService(
+	graceful.WithWaitDuration(30 * time.Second),
+	graceful.WithReloadWaitDuration(time.Hour),
+	graceful.WithPIDFile("/var/run/service.pid"),
+	graceful.WithNumServers(2),
+)
+
+err := s.ListenAndServe(ctx, "tcp", ":9000", handler)
+err := s.ListenAndServe(ctx, "tcp", ":9001", handler2)
 ```

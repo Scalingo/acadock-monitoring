@@ -21,13 +21,13 @@ func (s *Service) setupSignals(ctx context.Context) {
 		sig := <-ch
 		switch sig {
 		case syscall.SIGINT, syscall.SIGTERM:
-			s.graceful.Stop()
+			s.upg.Stop()
 			return
 		case syscall.SIGHUP:
-			log.Info("request graceful restart")
-			err := s.graceful.Upgrade()
+			log.Info("Request graceful restart")
+			err := s.upg.Upgrade()
 			if err != nil {
-				log.WithError(err).Error("fail to start new service")
+				log.WithError(err).Error("Fail to start new service")
 			}
 		}
 	}
