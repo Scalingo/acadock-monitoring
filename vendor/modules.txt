@@ -29,8 +29,8 @@ github.com/Scalingo/go-utils/errors/v2
 # github.com/Scalingo/go-utils/graceful v1.2.0
 ## explicit; go 1.22
 github.com/Scalingo/go-utils/graceful
-# github.com/Scalingo/go-utils/logger v1.2.0
-## explicit; go 1.17
+# github.com/Scalingo/go-utils/logger v1.3.0
+## explicit; go 1.22.5
 github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.0.0
 ## explicit; go 1.19
@@ -135,9 +135,10 @@ github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.9.0
+# github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
 # github.com/tklauser/go-sysconf v0.3.14
 ## explicit; go 1.18
@@ -148,7 +149,7 @@ github.com/tklauser/numcpus
 # github.com/urfave/negroni v1.0.0
 ## explicit
 github.com/urfave/negroni
-# golang.org/x/sys v0.26.0
+# golang.org/x/sys v0.27.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
