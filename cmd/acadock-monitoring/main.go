@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/urfave/negroni"
+	"github.com/urfave/negroni/v2"
 
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
