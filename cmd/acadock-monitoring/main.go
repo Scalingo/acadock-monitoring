@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/urfave/negroni/v2"
+	"github.com/urfave/negroni/v3"
 
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
@@ -116,8 +116,7 @@ func main() {
 
 	s := graceful.NewService()
 
-	err = s.ListenAndServe(ctx, "tcp",
-		":"+config.ENV["PORT"], n)
+	err = s.ListenAndServe(ctx, "tcp", ":"+config.ENV["PORT"], n)
 	if err != nil {
 		log.WithError(err).Error("fail to stop http server")
 	}

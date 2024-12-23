@@ -151,7 +151,9 @@ github.com/tklauser/numcpus
 github.com/urfave/negroni
 # github.com/urfave/negroni/v2 v2.0.2
 ## explicit
-github.com/urfave/negroni/v2
+# github.com/urfave/negroni/v3 v3.1.1
+## explicit; go 1.17
+github.com/urfave/negroni/v3
 # golang.org/x/sys v0.27.0
 ## explicit; go 1.18
 golang.org/x/sys/unix

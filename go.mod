@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/tklauser/go-sysconf v0.3.14
-	github.com/urfave/negroni/v2 v2.0.2
+	github.com/urfave/negroni/v3 v3.1.1
 )
 
 require (
