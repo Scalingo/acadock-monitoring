@@ -2,7 +2,8 @@
 
 ## To Be Released
 
-* chore(go): use go 1.22.4
+* build(go.mod): update `github.com/urfave/negroni` from v1 to v3
+* chore(go): use Go 1.22.10
 * use github.com/Scalingo/go-utils/graceful for graceful upgrades and shutdowns
 
 ## v1.2.1 - 2023-12-27
