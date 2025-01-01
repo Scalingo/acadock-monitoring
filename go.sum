@@ -16,8 +16,8 @@ github.com/Scalingo/go-utils/errors/v2 v2.4.0 h1:vKG0Js3kzWG7+03LEvH7j8fw+picEcR
 github.com/Scalingo/go-utils/errors/v2 v2.4.0/go.mod h1:WU6Kzi19AlZyUfoxFkdvEeYkIa0W0f172hKPqkOeIpU=
 github.com/Scalingo/go-utils/graceful v1.2.0 h1:4oRF2euZyenUXerJLo1Cjiqe9I8lIRLMXv0v+6p2c7A=
 github.com/Scalingo/go-utils/graceful v1.2.0/go.mod h1:ANPe9nIdemnVGvOzfHYROak4ZZCoolP3kfwidDiBq0k=
-github.com/Scalingo/go-utils/logger v1.3.0 h1:wvSYZzj5w9S1fks9w7My1IL4J5wAWYi8f+ZXU5VwUvM=
-github.com/Scalingo/go-utils/logger v1.3.0/go.mod h1:+8zQonYRYmdA1wlwDdxaXVGEYHIF7P7qjDfODiASP2Y=
+github.com/Scalingo/go-utils/logger v1.3.1 h1:WX3egcryPlkfyLDsYBpdlrqs9gT7t+DD2LQgurBLPGQ=
+github.com/Scalingo/go-utils/logger v1.3.1/go.mod h1:CKroacEtqxLRdCVXZYKoyOzADCRTbjI56qcPELeDl9s=
 github.com/Scalingo/go-utils/security v1.0.0 h1:BW4FeZKmqW9nmDb/hdm49w4bhznQ8j7cVNxMxknGz3A=
 github.com/Scalingo/go-utils/security v1.0.0/go.mod h1:vCgqjBdIBSYKxZhFBMT9koEH2MEbzuwmNZyLhmKcnV0=
 github.com/cloudflare/tableflip v1.2.3 h1:8I+B99QnnEWPHOY3fWipwVKxS70LGgUsslG7CSfmHMw=
@@ -30,8 +30,8 @@ github.com/creack/pty v1.1.18/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/docker/docker v27.3.1+incompatible h1:KttF0XoteNTicmUtBO0L2tP+J7FGRFTjaEF4k6WdhfI=
-github.com/docker/docker v27.3.1+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker v27.4.1+incompatible h1:ZJvcY7gfwHn1JF48PfbyXg7Jyt9ZCWDW+GGXOIxEwp4=
+github.com/docker/docker v27.4.1+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-connections v0.5.0 h1:USnMq7hx7gwdVZq1L49hLXaFtUdTADjXGp+uj1Br63c=
 github.com/docker/go-connections v0.5.0/go.mod h1:ov60Kzw0kKElRwhNs9UlUHAE/F9Fe6GLaXnqyDdmEXc=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
@@ -131,8 +131,8 @@ golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210510120138-977fb7262007/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210616094352-59db8d763f22/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.27.0 h1:wBqf8DvsY9Y/2P8gAfPDEYNuS30J4lPHJxXSb/nJZ+s=
-golang.org/x/sys v0.27.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/sys v0.28.0 h1:Fksou7UEQUWlKvIdsqzJmUmCX3cZuD2+P3XyyzwMhlA=
+golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.23.0 h1:F6D4vR+EHoL9/sWAWgAR1H2DcHr4PareCbAaCo1RpuU=
 golang.org/x/term v0.23.0/go.mod h1:DgV24QBUrK6jhZXl+20l6UWznPlwAHm1Q1mGHtydmSk=
