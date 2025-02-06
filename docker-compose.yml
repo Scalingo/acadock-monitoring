@@ -1,4 +1,3 @@
-version: '3'
 services:
   acadock:
     build: .
@@ -7,13 +6,8 @@ services:
       - /proc:/host/proc:ro
       - /var/run/docker.sock:/host/docker.sock
       - .:/go/src/github.com/Scalingo/acadock-monitoring
-    environment:
-      HTTP_USERNAME: acadock-monitoring
-      HTTP_PASSWORD: p1p0m0l0
-      CGROUP_DIR: /host/cgroup
-      PROC_DIR: /host/proc
-      DOCKER_URL: unix:///host/docker.sock
-      PORT: 4244
+    env_file:
+      - .env
     command: reflex -r '\.go$$' -s -- sh -c 'go build -buildvcs=false ./cmd/acadock-monitoring && ./acadock-monitoring'
     privileged: true
     pid: host
