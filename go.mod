@@ -1,6 +1,7 @@
 module github.com/Scalingo/acadock-monitoring
 
 go 1.22.10
+toolchain go1.23.6
 
 require (
 	github.com/Scalingo/go-handlers v1.8.2
@@ -8,7 +9,7 @@ require (
 	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
 	github.com/Scalingo/go-utils/graceful v1.2.0
 	github.com/Scalingo/go-utils/logger v1.4.0
-	github.com/fsouza/go-dockerclient v1.12.0
+	github.com/fsouza/go-dockerclient v1.12.1
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/pkg/errors v0.9.1
@@ -28,13 +29,13 @@ require (
 	github.com/cloudflare/tableflip v1.2.3 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/docker v27.5.1+incompatible // indirect
+	github.com/docker/docker v28.0.1+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
-	github.com/gofrs/uuid/v5 v5.3.0 // indirect
+	github.com/gofrs/uuid/v5 v5.3.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/patternmatcher v0.6.0 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
@@ -47,9 +48,9 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tklauser/numcpus v0.9.0 // indirect
 	github.com/urfave/negroni v1.0.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.5.1 // indirect
+	gotest.tools/v3 v3.5.2 // indirect
 )
