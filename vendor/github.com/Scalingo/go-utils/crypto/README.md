@@ -1,4 +1,4 @@
-# Crypto Tooling
+# Crypto Tooling v1.1.0
 
 This package `github.com/Scalingo/go-utils/crypto` aims at providing common crypto primitive helpers.
 

@@ -77,6 +77,7 @@ func WithNumServers(n int) Option {
 func (s *Service) initTableflipUpgrader(ctx context.Context) error {
 	var err error
 	s.mx.Lock()
+	defer s.mx.Unlock()
 	if s.upg == nil {
 		s.upg, err = tableflip.New(tableflip.Options{
 			UpgradeTimeout: s.reloadWaitDuration,
@@ -86,7 +87,6 @@ func (s *Service) initTableflipUpgrader(ctx context.Context) error {
 			return errors.Wrap(ctx, err, "create tableflip upgrader")
 		}
 	}
-	s.mx.Unlock()
 	return nil
 }
 

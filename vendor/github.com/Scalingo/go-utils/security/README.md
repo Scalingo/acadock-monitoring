@@ -1,4 +1,4 @@
-# Security Tooling v1.0.0
+# Security Tooling v1.1.0
 
 The package `github.com/Scalingo/go-utils/security` aims at providing common security helpers (e.g. token generation).
 
