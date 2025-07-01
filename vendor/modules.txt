@@ -18,20 +18,20 @@ github.com/Scalingo/go-netns
 # github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
 ## explicit
 github.com/Scalingo/go-netstat
-# github.com/Scalingo/go-utils/crypto v1.1.0
-## explicit; go 1.24.3
+# github.com/Scalingo/go-utils/crypto v1.1.1
+## explicit; go 1.24
 github.com/Scalingo/go-utils/crypto
-# github.com/Scalingo/go-utils/errors/v2 v2.5.0
-## explicit; go 1.24.3
+# github.com/Scalingo/go-utils/errors/v2 v2.5.1
+## explicit; go 1.24
 github.com/Scalingo/go-utils/errors/v2
-# github.com/Scalingo/go-utils/graceful v1.3.0
-## explicit; go 1.24.3
+# github.com/Scalingo/go-utils/graceful v1.3.1
+## explicit; go 1.24
 github.com/Scalingo/go-utils/graceful
-# github.com/Scalingo/go-utils/logger v1.5.0
-## explicit; go 1.22.5
-github.com/Scalingo/go-utils/logger
-# github.com/Scalingo/go-utils/security v1.1.0
+# github.com/Scalingo/go-utils/logger v1.9.0
 ## explicit; go 1.24.3
+github.com/Scalingo/go-utils/logger
+# github.com/Scalingo/go-utils/security v1.1.1
+## explicit; go 1.24
 github.com/Scalingo/go-utils/security
 # github.com/cloudflare/tableflip v1.2.3
 ## explicit; go 1.14
@@ -42,7 +42,7 @@ github.com/containerd/log
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v28.2.2+incompatible
+# github.com/docker/docker v28.3.0+incompatible
 ## explicit
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/common
