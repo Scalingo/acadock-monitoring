@@ -27,8 +27,8 @@ github.com/Scalingo/go-utils/errors/v2
 # github.com/Scalingo/go-utils/graceful v1.3.1
 ## explicit; go 1.24
 github.com/Scalingo/go-utils/graceful
-# github.com/Scalingo/go-utils/logger v1.9.0
-## explicit; go 1.24.3
+# github.com/Scalingo/go-utils/logger v1.9.1
+## explicit; go 1.24
 github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.1.1
 ## explicit; go 1.24
@@ -42,7 +42,7 @@ github.com/containerd/log
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v28.3.0+incompatible
+# github.com/docker/docker v28.3.3+incompatible
 ## explicit
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/common
@@ -155,7 +155,7 @@ github.com/urfave/negroni
 # github.com/urfave/negroni/v3 v3.1.1
 ## explicit; go 1.17
 github.com/urfave/negroni/v3
-# golang.org/x/sys v0.33.0
+# golang.org/x/sys v0.34.0
 ## explicit; go 1.23.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
