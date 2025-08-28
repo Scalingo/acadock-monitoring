@@ -2,14 +2,11 @@ package cpu
 
 import (
 	"context"
-	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
+	"github.com/Scalingo/acadock-monitoring/cgroup"
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
@@ -17,56 +14,32 @@ import (
 	"github.com/Scalingo/go-utils/logger"
 )
 
-const (
-	LXC_CPUACCT_USAGE_FILE = "cpuacct.usage"
-)
-
 type Usage client.CpuUsage
 
 type CPUUsageMonitor struct {
-	numCPU              int
-	currentHostUsage    *procfs.SingleCPUStat
-	previousHostUsage   *procfs.SingleCPUStat
-	currentSystemUsage  map[string]time.Duration
-	previousSystemUsage map[string]time.Duration
-	previousCPUUsages   map[string]time.Duration
-	cpuUsages           map[string]time.Duration
-	cpuUsagesMutex      *sync.Mutex
-	cpuStatReader       procfs.CPUStat
+	numCPU                 int
+	currentHostUsage       *procfs.SingleCPUStat
+	previousHostUsage      *procfs.SingleCPUStat
+	currentSystemUsage     map[string]time.Duration
+	previousSystemUsage    map[string]time.Duration
+	currentContainerStats  map[string]cgroup.Stats
+	previousContainerStats map[string]cgroup.Stats
+	cpuUsagesMutex         *sync.Mutex
+	cpuStatReader          procfs.CPUStat
+	cgroupStatsReader      *cgroup.StatsReader
 }
 
 func NewCPUUsageMonitor(cpustat procfs.CPUStat) *CPUUsageMonitor {
 	return &CPUUsageMonitor{
-		numCPU:              runtime.NumCPU(),
-		currentSystemUsage:  make(map[string]time.Duration),
-		previousSystemUsage: make(map[string]time.Duration),
-		previousCPUUsages:   make(map[string]time.Duration),
-		cpuUsages:           make(map[string]time.Duration),
-		cpuUsagesMutex:      &sync.Mutex{},
-		cpuStatReader:       cpustat,
+		numCPU:                 runtime.NumCPU(),
+		currentSystemUsage:     make(map[string]time.Duration),
+		previousSystemUsage:    make(map[string]time.Duration),
+		previousContainerStats: make(map[string]cgroup.Stats),
+		currentContainerStats:  make(map[string]cgroup.Stats),
+		cpuUsagesMutex:         &sync.Mutex{},
+		cpuStatReader:          cpustat,
+		cgroupStatsReader:      cgroup.NewStatsReader(),
 	}
-}
-
-func (m *CPUUsageMonitor) cpuacctUsage(container string) (time.Duration, error) {
-	file := config.CgroupPath("cpuacct", container) + "/" + LXC_CPUACCT_USAGE_FILE
-	f, err := os.Open(file)
-	if err != nil {
-		return 0, err
-	}
-	defer f.Close()
-
-	buffer := make([]byte, 64)
-	n, err := f.Read(buffer)
-	buffer = buffer[:n]
-
-	bufferStr := string(buffer)
-	bufferStr = bufferStr[:len(bufferStr)-1]
-
-	res, err := strconv.ParseInt(bufferStr, 10, 64)
-	if err != nil {
-		return 0, errors.Wrapf(err, "fail to parse '%v'", file)
-	}
-	return time.Duration(res) * time.Nanosecond, nil
 }
 
 func (m *CPUUsageMonitor) Start(ctx context.Context) {
@@ -74,7 +47,7 @@ func (m *CPUUsageMonitor) Start(ctx context.Context) {
 
 	go m.monitorHostUsage(ctx)
 
-	containers := docker.RegisterToContainersStream()
+	containers := docker.RegisterToContainersStream(ctx)
 	for c := range containers {
 		log.Infof("Monitoring CPU of %v", c)
 		go m.monitorContainer(ctx, c)
@@ -107,22 +80,18 @@ func (m *CPUUsageMonitor) monitorContainer(ctx context.Context, id string) {
 	for {
 		<-tick.C
 		var err error
-		usage, err := m.cpuacctUsage(id)
+		stats, err := m.cgroupStatsReader.GetStats(ctx, id)
 		m.cpuUsagesMutex.Lock()
 		if err != nil {
-			if _, ok := m.cpuUsages[id]; ok {
-				delete(m.cpuUsages, id)
-			}
-			if _, ok := m.previousCPUUsages[id]; ok {
-				delete(m.previousCPUUsages, id)
-			}
+			delete(m.currentContainerStats, id)
+			delete(m.previousContainerStats, id)
 			log.Infof("Stop monitoring CPU of '%v', reason: '%v'", id, err)
 			m.cpuUsagesMutex.Unlock()
 			return
 		}
 
-		m.previousCPUUsages[id] = m.cpuUsages[id]
-		m.cpuUsages[id] = usage
+		m.previousContainerStats[id] = m.currentContainerStats[id]
+		m.currentContainerStats[id] = stats
 
 		m.previousSystemUsage[id] = m.currentSystemUsage[id]
 		systemUsage, err := m.cpuStatReader.Read(ctx)
@@ -157,19 +126,14 @@ func (m CPUUsageMonitor) GetHostUsage() (client.HostCpuUsage, error) {
 }
 
 func (m CPUUsageMonitor) GetContainerUsage(id string) (Usage, error) {
-	id, err := docker.ExpandId(id)
-	if err != nil {
-		return Usage{}, errors.Wrapf(err, "fail to expand ID '%v'", id)
-	}
-
 	m.cpuUsagesMutex.Lock()
 	defer m.cpuUsagesMutex.Unlock()
 
-	if _, ok := m.previousCPUUsages[id]; !ok {
+	if _, ok := m.previousContainerStats[id]; !ok {
 		return Usage{}, nil
 	}
 
-	deltaCPUUsage := float64(m.cpuUsages[id] - m.previousCPUUsages[id])
+	deltaCPUUsage := float64(m.currentContainerStats[id].CPUUsage - m.previousContainerStats[id].CPUUsage)
 	deltaSystemCPUUsage := float64(m.currentSystemUsage[id] - m.previousSystemUsage[id])
 
 	var percents int

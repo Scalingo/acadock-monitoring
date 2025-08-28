@@ -59,7 +59,7 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 			continue
 		}
 
-		memory.MemoryUsage += uint64(usage.MemoryUsage.MemoryUsage)
+		memory.MemoryUsage += uint64(usage.MemoryUsage)
 		memory.MemoryCommitted += uint64(usage.MemoryLimit)
 		memory.MaxMemoryUsage += uint64(usage.MaxMemoryUsage)
 		memory.SwapCommitted += uint64(usage.SwapLimit)

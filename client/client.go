@@ -1,25 +1,25 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 
-	"github.com/pkg/errors"
-
 	"github.com/Scalingo/go-netstat"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 var _ AcadockClient = &Client{}
 
 type MemoryUsage struct {
-	MemoryUsage    int64 `json:"memory_usage"`
-	SwapUsage      int64 `json:"swap_usage"`
-	MemoryLimit    int64 `json:"memory_limit"`
-	SwapLimit      int64 `json:"swap_limit"`
-	MaxMemoryUsage int64 `json:"max_memory_usage"`
-	MaxSwapUsage   int64 `json:"max_swap_usage"`
+	MemoryUsage    uint64 `json:"memory_usage"`
+	SwapUsage      uint64 `json:"swap_usage"`
+	MemoryLimit    uint64 `json:"memory_limit"`
+	SwapLimit      uint64 `json:"swap_limit"`
+	MaxMemoryUsage uint64 `json:"max_memory_usage"`
+	MaxSwapUsage   uint64 `json:"max_swap_usage"`
 }
 
 type CpuUsage struct {

@@ -2,21 +2,22 @@ package net
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/pkg/errors"
-
+	"github.com/Scalingo/acadock-monitoring/cgroup"
 	"github.com/Scalingo/acadock-monitoring/config"
-	"github.com/Scalingo/acadock-monitoring/docker"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-func getContainerIface(id string) (string, error) {
-	ifaceID, err := getContainerIfaceID(id)
+func getContainerIface(ctx context.Context, id string) (string, error) {
+	ifaceID, err := getContainerIfaceID(ctx, id)
 	if err != nil {
-		return "", errors.Wrapf(err, "fail to get container '%v' interface", id)
+		return "", errors.Wrapf(ctx, err, "get container '%v' interface", id)
 	}
 
 	stdout := new(bytes.Buffer)
@@ -38,17 +39,25 @@ func getContainerIface(id string) (string, error) {
 		}
 	}
 
-	return "", errors.Errorf("interface not found for '%v', %v", id, ifaceID)
+	return "", errors.Errorf(ctx, "interface not found for '%v', %v", id, ifaceID)
 }
 
-func getContainerIfaceID(id string) (string, error) {
-	pid, err := docker.Pid(id)
+func getContainerIfaceID(ctx context.Context, id string) (string, error) {
+	manager, err := cgroup.NewManager(ctx, id)
 	if err != nil {
-		return "", errors.Wrapf(err, "fail to get pid of container '%v'", id)
+		return "", errors.Wrapf(ctx, err, "get cgroup manager for container '%v'", id)
 	}
+	pids, err := manager.Pids(ctx)
+	if err != nil {
+		return "", errors.Wrapf(ctx, err, "get pid of container '%v'", id)
+	}
+	if len(pids) == 0 {
+		return "", errors.Errorf(ctx, "no pid found for container '%v'", id)
+	}
+	pid := pids[0]
 
 	stdout := new(bytes.Buffer)
-	cmd := exec.Command(os.Args[0], "-ns-iface-id", pid)
+	cmd := exec.Command(os.Args[0], "-ns-iface-id", fmt.Sprintf("%d", pid))
 	cmd.Env = []string{"PROC_DIR=" + config.ENV["PROC_DIR"], "PATH=" + os.Getenv("PATH")}
 	cmd.Stdout = stdout
 	cmd.Stderr = stdout

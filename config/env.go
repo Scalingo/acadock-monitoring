@@ -4,6 +4,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/containerd/cgroups"
 )
 
 var ENV = map[string]string{
@@ -29,6 +31,7 @@ var (
 	QueueLengthSamplingInterval time.Duration
 	QueueLengthPointsPerSample  int
 	QueueLengthElementsNeeded   int
+	IsUsingCgroupV2             bool
 )
 
 func init() {
@@ -45,6 +48,11 @@ func init() {
 	}
 
 	var err error
+
+	if cgroups.Mode() == cgroups.Unified {
+		IsUsingCgroupV2 = true
+	}
+
 	RefreshTime, err = strconv.Atoi(ENV["REFRESH_TIME"])
 	if err != nil {
 		panic(err)

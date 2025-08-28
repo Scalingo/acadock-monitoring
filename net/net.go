@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/go-netstat"
+	"github.com/Scalingo/go-utils/logger"
 )
 
 type Usage client.NetUsage
@@ -82,10 +84,6 @@ func (monitor *NetMonitor) GetUsage(id string) (Usage, error) {
 	netUsages := monitor.netUsages
 	previousNetUsages := monitor.previousNetUsages
 
-	id, err := docker.ExpandId(id)
-	if err != nil {
-		return Usage{}, err
-	}
 	usage := Usage{}
 
 	// Actually for containers veth### are inversing Received, Transmit
