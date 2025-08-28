@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 var _ Meminfo = MemInfoReader{}
@@ -78,19 +78,19 @@ type MemInfoReader struct {
 	fs FS
 }
 
-func NewMemInfoReader() MemInfoReader {
+func NewMemInfoReader(ctx context.Context) MemInfoReader {
 	return MemInfoReader{
-		fs: NewFileSystem(),
+		fs: NewFileSystem(ctx),
 	}
 }
 
-func (m MemInfoReader) Read(context.Context) (MemInfo, error) {
+func (m MemInfoReader) Read(ctx context.Context) (MemInfo, error) {
 	res := MemInfo{}
 
 	// Open our file
 	file, err := m.fs.Open("/proc/meminfo")
 	if err != nil {
-		return res, errors.Wrap(err, "fail to open meminfo file")
+		return res, errors.Wrap(ctx, err, "open meminfo file")
 	}
 	defer file.Close()
 
@@ -105,7 +105,7 @@ func (m MemInfoReader) Read(context.Context) (MemInfo, error) {
 			if err == io.EOF { // If there is nothing to read, exit from the loop
 				break
 			}
-			return res, errors.Wrap(err, "fail to read a line from meminfo")
+			return res, errors.Wrap(ctx, err, "read a line from meminfo")
 		}
 
 		// Fields will convert a single line of the meminfo file which look like this:
@@ -114,20 +114,20 @@ func (m MemInfoReader) Read(context.Context) (MemInfo, error) {
 		// ["MemTotal:", "15996348", "kB"]
 		fields := strings.Fields(line)
 		if len(fields) < 2 { // A line should always have a header and a value (the unit is not mandatory)
-			return res, errors.Wrapf(err, "invalid meminfo line: %s", line)
+			return res, errors.Wrapf(ctx, err, "invalid meminfo line: %s", line)
 		}
 
 		fieldName := strings.TrimSuffix(fields[0], ":")    // The fieldName is the first member of the array (and remove the trailing colon)
 		value, err := strconv.ParseUint(fields[1], 10, 64) // The value should come second (always positive integer values)
 		if err != nil {
-			return res, errors.Wrapf(err, "invalid value for %s: %s", fieldName, fields[1])
+			return res, errors.Wrapf(ctx, err, "invalid value for %s: %s", fieldName, fields[1])
 		}
 
 		if len(fields) == 3 { // If there are a third member, it's the unit
 			if fields[2] == "kB" { // The only known unit on those kind of files is kB
 				value *= 1024
 			} else {
-				return res, errors.Wrapf(err, "invalid unit for line %s", line)
+				return res, errors.Wrapf(ctx, err, "invalid unit for line %s", line)
 			}
 		}
 		results[fieldName] = value // Store the value in the temporary map

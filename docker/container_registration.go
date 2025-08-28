@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -12,9 +13,11 @@ var (
 )
 
 func init() {
+	// Should be put into a struct and initialized in main
+	ctx := context.TODO()
 	registrationMutex = &sync.Mutex{}
 	containers := make(chan string)
-	go ListenNewContainers(containers)
+	go ListenNewContainers(ctx, containers)
 	go func() {
 		for c := range containers {
 			registrationMutex.Lock()
@@ -26,13 +29,13 @@ func init() {
 	}()
 }
 
-func RegisterToContainersStream() chan string {
+func RegisterToContainersStream(ctx context.Context) chan string {
 	c := make(chan string, 1)
 	registrationMutex.Lock()
 	defer registrationMutex.Unlock()
 	registeredChans = append(registeredChans, c)
 	go func(c chan string) {
-		containers, err := ListContainers()
+		containers, err := ListContainers(ctx)
 		if err != nil {
 			log.WithError(err).Warn("register-chan fail to list containers")
 			return

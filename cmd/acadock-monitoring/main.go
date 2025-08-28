@@ -51,9 +51,9 @@ func main() {
 		return
 	}
 
-	hostCPU := procfs.NewCPUStatReader()
-	hostMemory := procfs.NewMemInfoReader()
-	hostLoadAvg := procfs.NewLoadAvgReader()
+	hostCPU := procfs.NewCPUStatReader(ctx)
+	hostMemory := procfs.NewMemInfoReader(ctx)
+	hostLoadAvg := procfs.NewLoadAvgReader(ctx)
 	queueLength, err := filters.NewExponentialSmoothing(procfs.FilterWrap(hostLoadAvg),
 		filters.WithQueueLength(config.QueueLengthElementsNeeded),
 		filters.WithAverageConfig(config.QueueLengthPointsPerSample, config.QueueLengthSamplingInterval),
@@ -65,7 +65,7 @@ func main() {
 	go queueLength.Start(ctx)
 	cpuMonitor := cpu.NewCPUUsageMonitor(hostCPU)
 	go cpuMonitor.Start(ctx)
-	netMonitor := net.NewNetMonitor()
+	netMonitor := net.NewNetMonitor(ctx)
 	go netMonitor.Start()
 	memMonitor := mem.NewMemoryUsageGetter()
 

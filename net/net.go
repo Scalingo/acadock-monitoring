@@ -23,7 +23,7 @@ type NetMonitor struct {
 	containerIfacesMutex *sync.Mutex
 }
 
-func NewNetMonitor() *NetMonitor {
+func NewNetMonitor(ctx context.Context) *NetMonitor {
 	monitor := &NetMonitor{
 		netUsages:            map[string]netstat.NetworkStat{},
 		previousNetUsages:    map[string]netstat.NetworkStat{},
@@ -31,7 +31,7 @@ func NewNetMonitor() *NetMonitor {
 		containerIfaces:      map[string]string{},
 		containerIfacesMutex: &sync.Mutex{},
 	}
-	go monitor.listeningNewInterfaces()
+	go monitor.listeningNewInterfaces(ctx)
 	return monitor
 }
 
@@ -63,10 +63,11 @@ func (monitor *NetMonitor) Start() {
 	// unreachable code
 }
 
-func (monitor *NetMonitor) listeningNewInterfaces() {
-	containerIDs := docker.RegisterToContainersStream()
+func (monitor *NetMonitor) listeningNewInterfaces(ctx context.Context) {
+	containerIDs := docker.RegisterToContainersStream(ctx)
 	for containerID := range containerIDs {
-		iface, err := getContainerIface(containerID)
+		ctx, _ := logger.WithFieldToCtx(ctx, "container_id", containerID)
+		iface, err := getContainerIface(ctx, containerID)
 		if err != nil {
 			log.WithError(err).Errorf("Fail to get network interface of '%v'", containerID)
 			continue

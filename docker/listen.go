@@ -1,20 +1,23 @@
 package docker
 
 import (
+	"context"
+
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/pkg/errors"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-func ListenNewContainers(ids chan string) error {
-	client, err := Client()
+func ListenNewContainers(ctx context.Context, ids chan string) error {
+	client, err := Client(ctx)
 	if err != nil {
-		return errors.Wrap(err, "fail to get docker client")
+		return errors.Wrap(ctx, err, "get docker client")
 	}
 
 	listener := make(chan *docker.APIEvents)
 	err = client.AddEventListener(listener)
 	if err != nil {
-		return errors.Wrap(err, "fail to add event listener")
+		return errors.Wrap(ctx, err, "add event listener")
 	}
 
 	for event := range listener {

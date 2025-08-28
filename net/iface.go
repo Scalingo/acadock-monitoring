@@ -58,7 +58,7 @@ func getContainerIfaceID(id string) (string, error) {
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return "", errors.Wrapf(err, "'%v' failed with '%v'", cmd, stdout.String())
+		return "", errors.Wrapf(ctx, err, "'%v' failed with '%v'", cmd, stdout.String())
 	}
 
 	return stdout.String(), nil

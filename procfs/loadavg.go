@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 var _ LoadAvg = LoadAvgReader{}
@@ -27,9 +27,9 @@ type LoadAvgReader struct {
 	fs FS
 }
 
-func NewLoadAvgReader() LoadAvgReader {
+func NewLoadAvgReader(ctx context.Context) LoadAvgReader {
 	return LoadAvgReader{
-		fs: NewFileSystem(),
+		fs: NewFileSystem(ctx),
 	}
 }
 
@@ -38,7 +38,7 @@ func (l LoadAvgReader) Read(ctx context.Context) (LoadAverage, error) {
 	// First open the file
 	file, err := l.fs.Open("/proc/loadavg")
 	if err != nil {
-		return res, errors.Wrap(err, "fail to open loadavg file")
+		return res, errors.Wrap(ctx, err, "open loadavg file")
 	}
 	defer file.Close()
 
@@ -46,7 +46,7 @@ func (l LoadAvgReader) Read(ctx context.Context) (LoadAverage, error) {
 	reader := bufio.NewReader(file)
 	line, err := reader.ReadString('\n')
 	if err != nil {
-		return res, errors.Wrap(err, "fail to read loadavg")
+		return res, errors.Wrap(ctx, err, "read loadavg")
 	}
 
 	// This line looks like this:
@@ -59,7 +59,7 @@ func (l LoadAvgReader) Read(ctx context.Context) (LoadAverage, error) {
 	// - Last PID
 	n, err := fmt.Sscanf(line, "%f %f %f %d/%d %d", &res.Load1, &res.Load5, &res.Load10, &res.RunningProcess, &res.TotalProcess, &res.LastPID)
 	if err != nil {
-		return res, errors.Wrap(err, "fail to parse loadavg line")
+		return res, errors.Wrap(ctx, err, "parse loadavg line")
 	}
 	if n != 6 { // If this line did not have 6 fields there was an error
 		return res, fmt.Errorf("invalid loadavg line, parsed %d field expected 6", n)

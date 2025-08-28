@@ -137,7 +137,7 @@ func (m *CPUUsageMonitor) monitorContainer(ctx context.Context, id string) {
 func (m CPUUsageMonitor) GetHostUsage() (client.HostCpuUsage, error) {
 	m.cpuUsagesMutex.Lock()
 	defer m.cpuUsagesMutex.Unlock()
-	if m.previousCPUUsages == nil || m.currentHostUsage == nil {
+	if m.previousContainerStats == nil || m.currentHostUsage == nil {
 		return client.HostCpuUsage{}, nil
 	}
 
