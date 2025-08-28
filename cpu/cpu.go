@@ -17,6 +17,7 @@ import (
 type Usage client.CpuUsage
 
 type CPUUsageMonitor struct {
+	containerRepository    docker.ContainerRepository
 	numCPU                 int
 	currentHostUsage       *procfs.SingleCPUStat
 	previousHostUsage      *procfs.SingleCPUStat
@@ -29,8 +30,9 @@ type CPUUsageMonitor struct {
 	cgroupStatsReader      *cgroup.StatsReader
 }
 
-func NewCPUUsageMonitor(cpustat procfs.CPUStat) *CPUUsageMonitor {
+func NewCPUUsageMonitor(containerRepository docker.ContainerRepository, cpustat procfs.CPUStat) *CPUUsageMonitor {
 	return &CPUUsageMonitor{
+		containerRepository:    containerRepository,
 		numCPU:                 runtime.NumCPU(),
 		currentSystemUsage:     make(map[string]time.Duration),
 		previousSystemUsage:    make(map[string]time.Duration),
@@ -47,7 +49,7 @@ func (m *CPUUsageMonitor) Start(ctx context.Context) {
 
 	go m.monitorHostUsage(ctx)
 
-	containers := docker.RegisterToContainersStream(ctx)
+	containers := m.containerRepository.RegisterToContainersStream(ctx)
 	for c := range containers {
 		log.Infof("Monitoring CPU of %v", c)
 		go m.monitorContainer(ctx, c)
@@ -106,7 +108,7 @@ func (m *CPUUsageMonitor) monitorContainer(ctx context.Context, id string) {
 func (m CPUUsageMonitor) GetHostUsage() (client.HostCpuUsage, error) {
 	m.cpuUsagesMutex.Lock()
 	defer m.cpuUsagesMutex.Unlock()
-	if m.previousContainerStats == nil || m.currentHostUsage == nil {
+	if m.previousHostUsage == nil || m.currentHostUsage == nil {
 		return client.HostCpuUsage{}, nil
 	}
 

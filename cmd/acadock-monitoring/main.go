@@ -13,6 +13,7 @@ import (
 
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
+	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/acadock-monitoring/filters"
 	"github.com/Scalingo/acadock-monitoring/mem"
 	"github.com/Scalingo/acadock-monitoring/net"
@@ -61,11 +62,13 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	go queueLength.Start(ctx)
-	cpuMonitor := cpu.NewCPUUsageMonitor(hostCPU)
+
+	containerRepository := docker.NewContainerRepository()
+	go containerRepository.StartListeningToNewContainers(ctx)
+	cpuMonitor := cpu.NewCPUUsageMonitor(containerRepository, hostCPU)
 	go cpuMonitor.Start(ctx)
-	netMonitor := net.NewNetMonitor(ctx)
+	netMonitor := net.NewNetMonitor(ctx, containerRepository)
 	go netMonitor.Start()
 	memMonitor := mem.NewMemoryUsageGetter()
 

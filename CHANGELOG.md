@@ -2,12 +2,14 @@
 
 ## To Be Released
 
-* Compatibility with cgroup v2: use github.com/containerd/cgroup to read cgroup data for v1 and v2
+* feat(cgroup): Compatibility with cgroup v2: use github.com/containerd/cgroup to read cgroup data for v1 and v2
+* fix(resiliency): Make service resilient to docker restart
 * chore(go): use Go 1.24
 * build(go.mod): update `github.com/urfave/negroni` from v1 to v3
 * chore(go): use Go 1.22.10
 * use github.com/Scalingo/go-utils/graceful for graceful upgrades and shutdowns
 * use github.com/Scalingo/go-utils/errors/v3 for errors management
+* use github.com/docker/docker instead of github.com/fsouza/go-dockerclient
 
 ## v1.2.1 - 2023-12-27
 

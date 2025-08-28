@@ -17,16 +17,18 @@ import (
 type Usage client.NetUsage
 
 type NetMonitor struct {
-	netUsages         map[string]netstat.NetworkStat
-	previousNetUsages map[string]netstat.NetworkStat
-	netUsagesMutex    *sync.Mutex
+	containerRepository docker.ContainerRepository
+	netUsages           map[string]netstat.NetworkStat
+	previousNetUsages   map[string]netstat.NetworkStat
+	netUsagesMutex      *sync.Mutex
 
 	containerIfaces      map[string]string
 	containerIfacesMutex *sync.Mutex
 }
 
-func NewNetMonitor(ctx context.Context) *NetMonitor {
+func NewNetMonitor(ctx context.Context, containerRepository docker.ContainerRepository) *NetMonitor {
 	monitor := &NetMonitor{
+		containerRepository:  containerRepository,
 		netUsages:            map[string]netstat.NetworkStat{},
 		previousNetUsages:    map[string]netstat.NetworkStat{},
 		netUsagesMutex:       &sync.Mutex{},
@@ -66,7 +68,7 @@ func (monitor *NetMonitor) Start() {
 }
 
 func (monitor *NetMonitor) listeningNewInterfaces(ctx context.Context) {
-	containerIDs := docker.RegisterToContainersStream(ctx)
+	containerIDs := monitor.containerRepository.RegisterToContainersStream(ctx)
 	for containerID := range containerIDs {
 		ctx, _ := logger.WithFieldToCtx(ctx, "container_id", containerID)
 		iface, err := getContainerIface(ctx, containerID)
