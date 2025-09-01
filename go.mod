@@ -1,19 +1,19 @@
 module github.com/Scalingo/acadock-monitoring
 
-go 1.24
+go 1.24.3
 
 require (
-	github.com/Scalingo/go-handlers v1.8.2
+	github.com/Scalingo/go-handlers v1.9.0
 	github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
 	github.com/Scalingo/go-utils/graceful v1.3.1
-	github.com/Scalingo/go-utils/logger v1.9.0
-	github.com/fsouza/go-dockerclient v1.12.1
+	github.com/Scalingo/go-utils/logger v1.9.1
+	github.com/fsouza/go-dockerclient v1.12.2
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tklauser/go-sysconf v0.3.15
 	github.com/urfave/negroni/v3 v3.1.1
 )
@@ -23,12 +23,13 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Scalingo/go-utils/crypto v1.1.1 // indirect
 	github.com/Scalingo/go-utils/errors/v2 v2.5.1 // indirect
+	github.com/Scalingo/go-utils/errors/v3 v3.0.0 // indirect
 	github.com/Scalingo/go-utils/security v1.1.1 // indirect
 	github.com/cloudflare/tableflip v1.2.3 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/docker v28.3.0+incompatible // indirect
-	github.com/docker/go-connections v0.5.0 // indirect
+	github.com/docker/docker v28.3.3+incompatible // indirect
+	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/gofrs/uuid/v5 v5.3.2 // indirect
@@ -46,8 +47,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
-	github.com/urfave/negroni v1.0.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

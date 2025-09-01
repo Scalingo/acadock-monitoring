@@ -9,8 +9,8 @@ github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/internal/stringbuffer
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Scalingo/go-handlers v1.8.2
-## explicit; go 1.20
+# github.com/Scalingo/go-handlers v1.9.0
+## explicit; go 1.24
 github.com/Scalingo/go-handlers
 # github.com/Scalingo/go-netns v0.0.0-20150428122709-21a4d4829db5
 ## explicit
@@ -24,11 +24,14 @@ github.com/Scalingo/go-utils/crypto
 # github.com/Scalingo/go-utils/errors/v2 v2.5.1
 ## explicit; go 1.24
 github.com/Scalingo/go-utils/errors/v2
+# github.com/Scalingo/go-utils/errors/v3 v3.0.0
+## explicit; go 1.24
+github.com/Scalingo/go-utils/errors/v3
 # github.com/Scalingo/go-utils/graceful v1.3.1
 ## explicit; go 1.24
 github.com/Scalingo/go-utils/graceful
-# github.com/Scalingo/go-utils/logger v1.9.0
-## explicit; go 1.24.3
+# github.com/Scalingo/go-utils/logger v1.9.1
+## explicit; go 1.24
 github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.1.1
 ## explicit; go 1.24
@@ -42,7 +45,7 @@ github.com/containerd/log
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker v28.3.0+incompatible
+# github.com/docker/docker v28.3.3+incompatible
 ## explicit
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/common
@@ -57,12 +60,10 @@ github.com/docker/docker/api/types/swarm
 github.com/docker/docker/api/types/swarm/runtime
 github.com/docker/docker/api/types/versions
 github.com/docker/docker/internal/multierror
-github.com/docker/docker/pkg/archive
 github.com/docker/docker/pkg/homedir
-github.com/docker/docker/pkg/idtools
 github.com/docker/docker/pkg/jsonmessage
 github.com/docker/docker/pkg/stdcopy
-# github.com/docker/go-connections v0.5.0
+# github.com/docker/go-connections v0.6.0
 ## explicit; go 1.18
 github.com/docker/go-connections/nat
 # github.com/docker/go-units v0.5.0
@@ -70,8 +71,8 @@ github.com/docker/go-connections/nat
 github.com/docker/go-units
 # github.com/frankban/quicktest v1.14.6
 ## explicit; go 1.13
-# github.com/fsouza/go-dockerclient v1.12.1
-## explicit; go 1.23
+# github.com/fsouza/go-dockerclient v1.12.2
+## explicit; go 1.24.0
 github.com/fsouza/go-dockerclient
 # github.com/gofrs/uuid/v5 v5.3.2
 ## explicit; go 1.19
@@ -138,7 +139,7 @@ github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.10.0
+# github.com/stretchr/testify v1.11.1
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
@@ -149,13 +150,10 @@ github.com/tklauser/go-sysconf
 # github.com/tklauser/numcpus v0.10.0
 ## explicit; go 1.23.0
 github.com/tklauser/numcpus
-# github.com/urfave/negroni v1.0.0
-## explicit
-github.com/urfave/negroni
 # github.com/urfave/negroni/v3 v3.1.1
 ## explicit; go 1.17
 github.com/urfave/negroni/v3
-# golang.org/x/sys v0.33.0
+# golang.org/x/sys v0.35.0
 ## explicit; go 1.23.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows

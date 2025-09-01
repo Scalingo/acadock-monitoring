@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/negroni"
+	"github.com/urfave/negroni/v3"
 
-	"github.com/Scalingo/go-utils/errors/v2"
+	v2errors "github.com/Scalingo/go-utils/errors/v2"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 	"github.com/Scalingo/go-utils/security"
 )
@@ -45,22 +46,32 @@ var ErrorMiddleware = MiddlewareFunc(func(handler HandlerFunc) HandlerFunc {
 
 		if err != nil {
 			log = log.WithError(err)
-			writeError(log, rw, err)
+			writeError(log, r, rw, err)
 		}
 
 		return err
 	}
 })
 
-func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
+func writeError(log logrus.FieldLogger, req *http.Request, w negroni.ResponseWriter, err error) {
 	var validationErrors *errors.ValidationErrors
+	var v2validationErrors *v2errors.ValidationErrors
 	var badRequestError *BadRequestError
 
 	if w.Header().Get("Content-Type") == "" {
-		w.Header().Set("Content-Type", "text/plain")
+		if req != nil && req.Header != nil && isAcceptingJSON(req.Header.Get("Accept")) {
+			w.Header().Set("Content-Type", "application/json")
+		} else {
+			w.Header().Set("Content-Type", "text/plain")
+		}
 	}
 
 	isCauseValidationErrors := errors.As(err, &validationErrors)
+	// Keep backward compatibility
+	if errors.As(err, &v2validationErrors) {
+		isCauseValidationErrors = true
+	}
+
 	isCauseBadRequestError := errors.As(err, &badRequestError)
 	if isCauseValidationErrors {
 		w.WriteHeader(422)
@@ -97,15 +108,18 @@ func writeError(log logrus.FieldLogger, w negroni.ResponseWriter, err error) {
 		fmt.Fprintln(w, err)
 		return
 	}
-	if !isCauseValidationErrors {
-		json.NewEncoder(w).Encode(&(map[string]string{"error": err.Error()}))
+
+	if isCauseValidationErrors {
+		if v2validationErrors != nil {
+			json.NewEncoder(w).Encode(v2validationErrors)
+			return
+		}
+
+		json.NewEncoder(w).Encode(validationErrors)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(errors.RootCause(err))
-	if err != nil {
-		log.WithError(err).Error("Fail to encode the validation error root cause to JSON")
-	}
+	json.NewEncoder(w).Encode(&(map[string]string{"error": err.Error()}))
 }
 
 // isContentTypeJSON returns true if the given string is a valid JSON value for the HTTP Content-Type header. Various values can be used to state that a payload is a JSON:
@@ -117,9 +131,34 @@ func isContentTypeJSON(contentType string) bool {
 	return contentType == "application/json" || strings.HasSuffix(contentType, "+json")
 }
 
+// This is a crude way of knowing if the client is accepting JSON as the answer.
+// Content Negotiation algorithm doesn't exist in the golang standard lib (yet: https://github.com/golang/go/issues/19307)
+func isAcceptingJSON(accept string) bool {
+	// If the user did not specify an accept header, we assume they accept everything.
+	// However the old versions of this lib assumed that in case of no headers we'll fallback to plaintext.
+	// Hence to keep this backward compatibility if no headers are present, we return false.
+	if accept == "" {
+		return false
+	}
+
+	accepts := strings.Split(accept, ",")
+	for _, accept := range accepts {
+		accept = strings.TrimSpace(accept)
+		accept = strings.Split(accept, ";")[0] // Remove any parameters
+
+		if accept == "*" ||
+			accept == "*/*" ||
+			accept == "application/*" ||
+			accept == "application/json" ||
+			(strings.HasPrefix(accept, "application/") && strings.HasSuffix(accept, "+json")) {
+			return true
+		}
+	}
+	return false
+}
+
 func isInvalidTokenError(err error) bool {
-	rootCause := errors.RootCause(err)
-	return rootCause == security.ErrFutureTimestamp ||
-		rootCause == security.ErrInvalidTimestamp ||
-		rootCause == security.ErrTokenExpired
+	return errors.Is(err, security.ErrFutureTimestamp) ||
+		errors.Is(err, security.ErrInvalidTimestamp) ||
+		errors.Is(err, security.ErrTokenExpired)
 }
