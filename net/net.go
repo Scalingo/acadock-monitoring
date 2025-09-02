@@ -68,18 +68,40 @@ func (monitor *NetMonitor) Start() {
 }
 
 func (monitor *NetMonitor) listeningNewInterfaces(ctx context.Context) {
-	containerIDs := monitor.containerRepository.RegisterToContainersStream(ctx)
-	for containerID := range containerIDs {
-		ctx, _ := logger.WithFieldToCtx(ctx, "container_id", containerID)
-		iface, err := getContainerIface(ctx, containerID)
-		if err != nil {
-			log.WithError(err).Errorf("Fail to get network interface of '%v'", containerID)
-			continue
+	containerEvents := monitor.containerRepository.RegisterToContainersStream(ctx)
+	for event := range containerEvents {
+		ctx, _ := logger.WithFieldToCtx(ctx, "container_id", event.ContainerID)
+		switch event.Action {
+		case docker.ContainerActionStart:
+			monitor.startMonitoringContainer(ctx, event.ContainerID)
+		case docker.ContainerActionStop:
+			monitor.cleanMonitoringData(event.ContainerID)
+		default:
+			log.WithField("action", event.Action).Info("Unknown container action")
 		}
-		monitor.containerIfacesMutex.Lock()
-		monitor.containerIfaces[iface] = containerID
-		monitor.containerIfacesMutex.Unlock()
 	}
+}
+
+func (monitor *NetMonitor) startMonitoringContainer(ctx context.Context, containerID string) {
+	iface, err := getContainerIface(ctx, containerID)
+	if err != nil {
+		log.WithError(err).Errorf("Fail to get network interface of '%v'", containerID)
+		return
+	}
+	monitor.containerIfacesMutex.Lock()
+	monitor.containerIfaces[iface] = containerID
+	monitor.containerIfacesMutex.Unlock()
+}
+
+func (monitor *NetMonitor) cleanMonitoringData(containerID string) {
+	monitor.containerIfacesMutex.Lock()
+	for iface, id := range monitor.containerIfaces {
+		if id == containerID {
+			delete(monitor.containerIfaces, iface)
+			break
+		}
+	}
+	monitor.containerIfacesMutex.Unlock()
 }
 
 func (monitor *NetMonitor) GetUsage(id string) (Usage, error) {

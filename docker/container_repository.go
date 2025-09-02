@@ -6,34 +6,46 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/api/types/events"
+	dockerevents "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )
 
+type ContainerEvent struct {
+	ContainerID string
+	Action      ContainerAction
+}
+
+type ContainerAction = dockerevents.Action
+
+const (
+	ContainerActionStart = dockerevents.ActionStart
+	ContainerActionStop  = dockerevents.ActionStop
+)
+
 type ContainerRepository interface {
-	RegisterToContainersStream(ctx context.Context) <-chan string
+	RegisterToContainersStream(ctx context.Context) <-chan ContainerEvent
 }
 
 type ContainerRepositoryImpl struct {
-	registeredChans   []chan string
+	registeredChans   []chan ContainerEvent
 	registrationMutex *sync.Mutex
 }
 
 func NewContainerRepository() *ContainerRepositoryImpl {
 	return &ContainerRepositoryImpl{
-		registeredChans:   make([]chan string, 0),
+		registeredChans:   make([]chan ContainerEvent, 0),
 		registrationMutex: &sync.Mutex{},
 	}
 }
 
 func (r *ContainerRepositoryImpl) StartListeningToNewContainers(ctx context.Context) {
-	containers := make(chan string)
-	go r.listenNewContainers(ctx, containers)
+	eventsChan := make(chan ContainerEvent)
+	go r.listenToDockerEvents(ctx, eventsChan)
 	go func() {
-		for c := range containers {
+		for c := range eventsChan {
 			r.registrationMutex.Lock()
 			for _, registeredChan := range r.registeredChans {
 				registeredChan <- c
@@ -43,26 +55,29 @@ func (r *ContainerRepositoryImpl) StartListeningToNewContainers(ctx context.Cont
 	}()
 }
 
-func (r *ContainerRepositoryImpl) RegisterToContainersStream(ctx context.Context) <-chan string {
+func (r *ContainerRepositoryImpl) RegisterToContainersStream(ctx context.Context) <-chan ContainerEvent {
 	log := logger.Get(ctx)
-	c := make(chan string, 1)
+	registration := make(chan ContainerEvent, 1)
 	r.registrationMutex.Lock()
 	defer r.registrationMutex.Unlock()
-	r.registeredChans = append(r.registeredChans, c)
-	go func(c chan string) {
+	r.registeredChans = append(r.registeredChans, registration)
+	go func(registration chan ContainerEvent) {
 		containers, err := ListContainers(ctx)
 		if err != nil {
 			log.WithError(err).Warn("register-chan fail to list containers")
 			return
 		}
 		for _, container := range containers {
-			c <- container.ID
+			registration <- ContainerEvent{
+				ContainerID: container.ID,
+				Action:      ContainerActionStart,
+			}
 		}
-	}(c)
-	return c
+	}(registration)
+	return registration
 }
 
-func (r *ContainerRepositoryImpl) listenNewContainers(ctx context.Context, ids chan string) error {
+func (r *ContainerRepositoryImpl) listenToDockerEvents(ctx context.Context, events chan ContainerEvent) error {
 	log := logger.Get(ctx)
 	client, err := Client(ctx)
 	if err != nil {
@@ -72,10 +87,11 @@ func (r *ContainerRepositoryImpl) listenNewContainers(ctx context.Context, ids c
 
 	filters := filters.NewArgs()
 	filters.Add("type", "container")
-	filters.Add("event", "start")
+	filters.Add("event", string(ContainerActionStart))
+	filters.Add("event", string(ContainerActionStop))
 
 	for {
-		events, errs := client.Events(ctx, events.ListOptions{
+		dockerEventsReceiver, errs := client.Events(ctx, dockerevents.ListOptions{
 			Filters: filters,
 		})
 		if err != nil {
@@ -83,8 +99,11 @@ func (r *ContainerRepositoryImpl) listenNewContainers(ctx context.Context, ids c
 		}
 
 		go func() {
-			for event := range events {
-				ids <- event.ID
+			for event := range dockerEventsReceiver {
+				events <- ContainerEvent{
+					ContainerID: event.Actor.ID,
+					Action:      event.Action,
+				}
 			}
 		}()
 
