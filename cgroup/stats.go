@@ -77,8 +77,10 @@ func (r *StatsReader) getCgroupV1Stats(ctx context.Context, manager *Manager) (S
 		MemoryUsage:    stats.Memory.Usage.Usage,
 		MemoryMaxUsage: stats.Memory.Usage.Max,
 		MemoryLimit:    stats.Memory.Usage.Limit,
-		SwapUsage:      stats.Memory.Swap.Usage,
-		SwapMaxUsage:   stats.Memory.Swap.Max,
-		SwapLimit:      stats.Memory.Swap.Limit,
+		// In cgroupv1, swap metrics is the sum of memory + swap, here we make it
+		// independent them by making a difference
+		SwapUsage:    stats.Memory.Swap.Usage - stats.Memory.Usage.Usage,
+		SwapMaxUsage: stats.Memory.Swap.Max - stats.Memory.Usage.Max,
+		SwapLimit:    stats.Memory.Swap.Limit - stats.Memory.Usage.Limit,
 	}, nil
 }
