@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/Scalingo/acadock-monitoring/cgroup"
@@ -57,7 +58,20 @@ func getContainerIfaceID(ctx context.Context, id string) (string, error) {
 	pid := pids[0]
 
 	stdout := new(bytes.Buffer)
-	cmd := exec.Command(os.Args[0], "-ns-iface-id", fmt.Sprintf("%d", pid))
+
+	// Validate that pid contains only digits
+	pidStr := fmt.Sprintf("%d", pid)
+	if !regexp.MustCompile(`^\d+$`).MatchString(pidStr) {
+		return "", errors.New(ctx, "invalid pid")
+	}
+
+	// Use exec.LookPath to find the absolute path of the command
+	cmdPath, err := exec.LookPath(os.Args[0])
+	if err != nil {
+		return "", errors.Wrapf(ctx, err, "could not find executable path for %v", os.Args[0])
+	}
+
+	cmd := exec.Command(cmdPath, "-ns-iface-id", pidStr)
 	cmd.Env = []string{"PROC_DIR=" + config.ENV["PROC_DIR"], "PATH=" + os.Getenv("PATH")}
 	cmd.Stdout = stdout
 	cmd.Stderr = stdout
