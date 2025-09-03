@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni/v3"
 
+	"github.com/Scalingo/acadock-monitoring/cgroup"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
 	"github.com/Scalingo/acadock-monitoring/docker"
@@ -65,8 +66,9 @@ func main() {
 	go queueLength.Start(ctx)
 
 	containerRepository := docker.NewContainerRepository()
+	cgroupStatsReader := cgroup.NewStatsReader()
 	go containerRepository.StartListeningToNewContainers(ctx)
-	cpuMonitor := cpu.NewCPUUsageMonitor(containerRepository, hostCPU)
+	cpuMonitor := cpu.NewCPUUsageMonitor(containerRepository, hostCPU, cgroupStatsReader)
 	go cpuMonitor.Start(ctx)
 	netMonitor := net.NewNetMonitor(ctx, containerRepository)
 	go netMonitor.Start()

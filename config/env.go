@@ -11,7 +11,7 @@ import (
 var ENV = map[string]string{
 	"DOCKER_URL":                     "http://127.0.0.1:4243",
 	"PORT":                           "4244",
-	"REFRESH_TIME":                   "20",
+	"REFRESH_TIME":                   "20s",
 	"CGROUP_SOURCE":                  "docker",
 	"CGROUP_DIR":                     "/sys/fs/cgroup",
 	"PROC_DIR":                       "/proc",
@@ -26,7 +26,7 @@ var ENV = map[string]string{
 }
 
 var (
-	RefreshTime                 int
+	RefreshTime                 time.Duration
 	Debug                       bool
 	QueueLengthSamplingInterval time.Duration
 	QueueLengthPointsPerSample  int
@@ -53,7 +53,7 @@ func init() {
 		IsUsingCgroupV2 = true
 	}
 
-	RefreshTime, err = strconv.Atoi(ENV["REFRESH_TIME"])
+	RefreshTime, err = time.ParseDuration(ENV["REFRESH_TIME"])
 	if err != nil {
 		panic(err)
 	}

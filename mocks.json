@@ -4,6 +4,19 @@
     {
       "interface": "Sysconf",
       "src_package": "procfs"
+    },
+    {
+      "interface": "CPUStat",
+      "src_package": "procfs",
+      "mock_file": "procfs/procfs_mock.go"
+    },
+    {
+      "interface": "ContainerRepository",
+      "src_package": "docker"
+    },
+    {
+      "interface": "StatsReader",
+      "src_package": "cgroup"
     }
   ]
 }

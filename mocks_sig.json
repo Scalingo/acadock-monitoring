@@ -1,1 +1,6 @@
-{"github.com/Scalingo/acadock-monitoring/procfs.Sysconf":"NOFILE"}
+{
+  "github.com/Scalingo/acadock-monitoring/cgroup.StatsReader": "86 94 b9 36 e8 0f 0e 91 2b e6 5b e8 ad 3d 62 29 ea 01 c2 e3",
+  "github.com/Scalingo/acadock-monitoring/docker.ContainerRepository": "b2 72 2c 29 df 56 17 0e c8 6e cf 14 6c fc 6d 69 2d 5f 8c 93",
+  "github.com/Scalingo/acadock-monitoring/procfs.CPUStat": "a3 86 49 1c 48 5b 8d 52 cc 5a e2 e9 33 51 19 35 e0 d3 66 42",
+  "github.com/Scalingo/acadock-monitoring/procfs.Sysconf": "41 32 36 65 85 a1 8f be a9 06 09 27 56 50 80 94 9d df cb 83"
+}

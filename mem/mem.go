@@ -14,7 +14,7 @@ type Usage struct {
 }
 
 type MemoryUsageGetter struct {
-	cgroupStatsReader cgroup.StatsReader
+	cgroupStatsReader cgroup.StatsReaderImpl
 }
 
 func NewMemoryUsageGetter() MemoryUsageGetter {

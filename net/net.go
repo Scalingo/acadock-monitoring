@@ -40,7 +40,7 @@ func NewNetMonitor(ctx context.Context, containerRepository docker.ContainerRepo
 }
 
 func (monitor *NetMonitor) Start() {
-	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
+	tick := time.NewTicker(config.RefreshTime)
 	defer tick.Stop()
 	for {
 		<-tick.C
@@ -120,10 +120,10 @@ func (monitor *NetMonitor) GetUsage(id string) (Usage, error) {
 	previousRxBps := previousNetUsages[id].Received.Bytes
 	previousTxBps := previousNetUsages[id].Transmit.Bytes
 	if previousRxBps > 0 {
-		usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousRxBps) / float64(config.RefreshTime))
+		usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousRxBps) / config.RefreshTime.Seconds())
 	}
 	if previousTxBps > 0 {
-		usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousTxBps) / float64(config.RefreshTime))
+		usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousTxBps) / config.RefreshTime.Seconds())
 	}
 
 	monitor.netUsagesMutex.Unlock()

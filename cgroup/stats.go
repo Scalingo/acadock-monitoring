@@ -7,7 +7,11 @@ import (
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-type StatsReader struct{}
+type StatsReaderImpl struct{}
+
+type StatsReader interface {
+	GetStats(ctx context.Context, containerID string) (Stats, error)
+}
 
 type Stats struct {
 	CPUUsage       time.Duration
@@ -19,8 +23,8 @@ type Stats struct {
 	SwapLimit      uint64
 }
 
-func NewStatsReader() *StatsReader {
-	return &StatsReader{}
+func NewStatsReader() *StatsReaderImpl {
+	return &StatsReaderImpl{}
 }
 
 type StatsReaderError struct {
@@ -35,7 +39,7 @@ func (e StatsReaderError) Unwrap() error {
 	return e.err
 }
 
-func (r *StatsReader) GetStats(ctx context.Context, containerID string) (Stats, error) {
+func (r *StatsReaderImpl) GetStats(ctx context.Context, containerID string) (Stats, error) {
 	manager, err := NewManager(ctx, containerID)
 	if err != nil {
 		return Stats{}, errors.Wrap(ctx, err, "create cgroup manager")
@@ -52,7 +56,7 @@ func (r *StatsReader) GetStats(ctx context.Context, containerID string) (Stats, 
 	return stats, nil
 }
 
-func (r *StatsReader) getCgroupV2Stats(ctx context.Context, manager *Manager) (Stats, error) {
+func (r *StatsReaderImpl) getCgroupV2Stats(ctx context.Context, manager *Manager) (Stats, error) {
 	stats, err := manager.V2Manager().Stat()
 	if err != nil {
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v2 stats")
@@ -67,7 +71,7 @@ func (r *StatsReader) getCgroupV2Stats(ctx context.Context, manager *Manager) (S
 	}, nil
 }
 
-func (r *StatsReader) getCgroupV1Stats(ctx context.Context, manager *Manager) (Stats, error) {
+func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager) (Stats, error) {
 	stats, err := manager.V1Manager().Stat()
 	if err != nil {
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v1 stats")

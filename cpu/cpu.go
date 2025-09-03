@@ -28,10 +28,10 @@ type CPUUsageMonitor struct {
 	previousContainerStats map[string]cgroup.Stats
 	cpuUsagesMutex         *sync.Mutex
 	cpuStatReader          procfs.CPUStat
-	cgroupStatsReader      *cgroup.StatsReader
+	cgroupStatsReader      cgroup.StatsReader
 }
 
-func NewCPUUsageMonitor(containerRepository docker.ContainerRepository, cpustat procfs.CPUStat) *CPUUsageMonitor {
+func NewCPUUsageMonitor(containerRepository docker.ContainerRepository, cpustat procfs.CPUStat, cgroupStatsReader cgroup.StatsReader) *CPUUsageMonitor {
 	return &CPUUsageMonitor{
 		containerRepository:    containerRepository,
 		numCPU:                 runtime.NumCPU(),
@@ -41,7 +41,7 @@ func NewCPUUsageMonitor(containerRepository docker.ContainerRepository, cpustat 
 		currentContainerStats:  make(map[string]cgroup.Stats),
 		cpuUsagesMutex:         &sync.Mutex{},
 		cpuStatReader:          cpustat,
-		cgroupStatsReader:      cgroup.NewStatsReader(),
+		cgroupStatsReader:      cgroupStatsReader,
 	}
 }
 
@@ -107,7 +107,7 @@ func (m *CPUUsageMonitor) updateHostCPUUsage(ctx context.Context) error {
 func (m *CPUUsageMonitor) monitorContainerCPU(ctx context.Context, id string) {
 	log := logger.Get(ctx)
 
-	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
+	tick := time.NewTicker(config.RefreshTime)
 	defer tick.Stop()
 	for {
 		select {
@@ -117,6 +117,7 @@ func (m *CPUUsageMonitor) monitorContainerCPU(ctx context.Context, id string) {
 			return
 		case <-tick.C:
 			var cgroupStatsErr cgroup.StatsReaderError
+			log.Debug("Refresh CPU Usage")
 			err := m.updateContainerCPUUsage(ctx, id)
 			if errors.As(err, &cgroupStatsErr) {
 				log.WithError(err).Infof("Stop monitoring CPU with error")
