@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/Scalingo/go-netns"
 )
@@ -35,10 +35,14 @@ func NsIfaceIDByPID(pid string) (int, error) {
 	// 614: eth0@if615: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default
 	// We want the ID 615
 	out := stdout.String()
-	prevIfaceID, err := strconv.Atoi(strings.Split(out, ":")[0])
-	if err != nil {
-		return -1, err
+	matches := regexp.MustCompile(`@if(\d+):`).FindAllStringSubmatch(out, -1)
+	if len(matches) != 1 && len(matches[0]) != 2 {
+		return -1, fmt.Errorf("parsing iface ID: no match in '%v'", out)
 	}
-	ifaceID := prevIfaceID + 1
+
+	ifaceID, err := strconv.Atoi(matches[0][1])
+	if err != nil {
+		return -1, fmt.Errorf("parsing iface ID: %v", err)
+	}
 	return ifaceID, nil
 }
