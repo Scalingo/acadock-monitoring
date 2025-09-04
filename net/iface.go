@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
-	"regexp"
+	"strconv"
 	"strings"
 
-	"github.com/Scalingo/acadock-monitoring/cgroup"
-	"github.com/Scalingo/acadock-monitoring/config"
+	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netns"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 )
@@ -44,45 +43,26 @@ func getContainerIface(ctx context.Context, id string) (string, error) {
 }
 
 func getContainerIfaceID(ctx context.Context, id string) (string, error) {
-	manager, err := cgroup.NewManager(ctx, id)
+	nshandler, err := netns.GetFromDocker(id)
 	if err != nil {
-		return "", errors.Wrapf(ctx, err, "get cgroup manager for container '%v'", id)
+		return "", errors.Wrapf(ctx, err, "could not get network namespace")
 	}
-	pids, err := manager.Pids(ctx)
+	defer nshandler.Close()
+	nlhandler, err := netlink.NewHandleAt(nshandler)
 	if err != nil {
-		return "", errors.Wrapf(ctx, err, "get pid of container '%v'", id)
+		return "", errors.Wrapf(ctx, err, "could not create netlink handle")
 	}
-	if len(pids) == 0 {
-		return "", errors.Errorf(ctx, "no pid found for container '%v'", id)
-	}
-	pid := pids[0]
+	defer nlhandler.Close()
 
-	stdout := new(bytes.Buffer)
-
-	// Validate that pid contains only digits
-	pidStr := fmt.Sprintf("%d", pid)
-	if !regexp.MustCompile(`^\d+$`).MatchString(pidStr) {
-		return "", errors.New(ctx, "invalid pid")
+	containerVethLink, err := nlhandler.LinkByName("eth0")
+	if err != nil {
+		return "", errors.Wrapf(ctx, err, "could not get eth0 link")
 	}
 
-	// Use exec.LookPath to find the absolute path of the command
-	cmdPath, err := exec.LookPath(os.Args[0])
-	if err != nil {
-		return "", errors.Wrapf(ctx, err, "could not find executable path for %v", os.Args[0])
+	parentContainerVethLinkIndex := containerVethLink.Attrs().ParentIndex
+	if parentContainerVethLinkIndex == 0 {
+		return "", errors.Errorf(ctx, "could not get veth parent index")
 	}
 
-	cmd := exec.Command(cmdPath, "-ns-iface-id", pidStr)
-	cmd.Env = []string{"PROC_DIR=" + config.ENV["PROC_DIR"], "PATH=" + os.Getenv("PATH")}
-	cmd.Stdout = stdout
-	cmd.Stderr = stdout
-	err = cmd.Start()
-	if err != nil {
-		return "", err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return "", errors.Wrapf(ctx, err, "'%v' failed with '%v'", cmd, stdout.String())
-	}
-
-	return stdout.String(), nil
+	return strconv.Itoa(parentContainerVethLinkIndex), nil
 }

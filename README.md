@@ -13,7 +13,6 @@ From environment
 * `PORT`: port to bind (4244 by default)
 * `DOCKER_URL`: docker endpoint (http://127.0.0.1:4243 by default)
 * `REFRESH_TIME`: number of second between CPU/net refresh (1 by default)
-* `PROC_DIR`: mountpoint for procfs (default to /proc)
 * `CGROUP_DIR`: mountpoint of cgroups (default to /sys/fs/cgroup)
 * `CGROUP_SOURCE`: "docker" or "systemd" (docker by default)
   docker:  /sys/fs/cgroup/:cgroup/memory/docker
@@ -26,7 +25,6 @@ Run from docker:
 
 ```bash
 docker run -v /sys/fs/cgroup:/host/cgroup:ro         -e CGROUP_DIR=/host/cgroup \
-           -v /proc:/host/proc:ro                    -e PROC_DIR=/host/proc \
            -v /var/run/docker.sock:/host/docker.sock -e DOCKER_URL=unix:///host/docker.sock \
            -p 4244:4244 --privileged --pid=host --network=host \
            -d scalingo/acadock-monitoring

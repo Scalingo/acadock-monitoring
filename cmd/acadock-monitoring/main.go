@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -41,17 +40,7 @@ func main() {
 	ctx := logger.ToCtx(context.Background(), log)
 
 	doProfile := flag.Bool("profile", false, "profile app")
-	nsIfaceID := flag.String("ns-iface-id", "", "<pid>")
 	flag.Parse()
-
-	if *nsIfaceID != "" {
-		ifaceID, err := net.NsIfaceIDByPID(*nsIfaceID)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		fmt.Print(ifaceID)
-		return
-	}
 
 	hostCPU := procfs.NewCPUStatReader(ctx)
 	hostMemory := procfs.NewMemInfoReader(ctx)

@@ -17,6 +17,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tklauser/go-sysconf v0.3.15
 	github.com/urfave/negroni/v3 v3.1.1
+	github.com/vishvananda/netlink v1.3.1
 )
 
 require (
@@ -51,6 +52,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/urfave/negroni v1.0.0 // indirect
+	github.com/vishvananda/netns v0.0.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
