@@ -7,8 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"gopkg.in/errgo.v1"
-
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )
 
@@ -29,9 +28,9 @@ func NewProfilingRouter(ctx context.Context) (*Router, error) {
 
 	prof := new(profiling)
 
-	err := prof.initialize()
+	err := prof.initialize(ctx)
 	if err != nil {
-		return nil, errgo.Notef(err, "fail to initialize pprof profiling")
+		return nil, errors.Wrap(ctx, err, "initialize pprof profiling")
 	}
 
 	if !prof.isActivable() {
@@ -64,7 +63,7 @@ func NewProfilingRouter(ctx context.Context) (*Router, error) {
 	return r, nil
 }
 
-func (prof *profiling) initialize() error {
+func (prof *profiling) initialize(ctx context.Context) error {
 	pprofEnable := os.Getenv("PPROF_ENABLED")
 	if pprofEnable == "" {
 		return nil
@@ -73,7 +72,7 @@ func (prof *profiling) initialize() error {
 	var err error
 	prof.enable, err = strconv.ParseBool(pprofEnable)
 	if err != nil {
-		return errgo.Notef(err, "fail to parse environment variable PPROF_ENABLED")
+		return errors.Wrap(ctx, err, "parse environment variable PPROF_ENABLED")
 	}
 	prof.auth.username = os.Getenv("PPROF_USERNAME")
 	prof.auth.password = os.Getenv("PPROF_PASSWORD")

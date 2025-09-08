@@ -11,8 +11,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/internal/platform"
 	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
 )
 
 // InstructionSize is the size of a BPF instruction in bytes
@@ -43,10 +44,10 @@ type Instruction struct {
 }
 
 // Unmarshal decodes a BPF instruction.
-func (ins *Instruction) Unmarshal(r io.Reader, bo binary.ByteOrder) (uint64, error) {
+func (ins *Instruction) Unmarshal(r io.Reader, bo binary.ByteOrder, platform string) error {
 	data := make([]byte, InstructionSize)
 	if _, err := io.ReadFull(r, data); err != nil {
-		return 0, err
+		return err
 	}
 
 	ins.OpCode = OpCode(data[0])
@@ -60,31 +61,77 @@ func (ins *Instruction) Unmarshal(r io.Reader, bo binary.ByteOrder) (uint64, err
 	}
 
 	ins.Offset = int16(bo.Uint16(data[2:4]))
+
 	// Convert to int32 before widening to int64
 	// to ensure the signed bit is carried over.
 	ins.Constant = int64(int32(bo.Uint32(data[4:8])))
 
+	if ins.IsBuiltinCall() {
+		if ins.Constant >= 0 {
+			// Leave negative constants from the instruction stream
+			// unchanged. These are sometimes used as placeholders for later
+			// patching.
+			// This relies on not having a valid platform tag with a high bit set.
+			fn, err := BuiltinFuncForPlatform(platform, uint32(ins.Constant))
+			if err != nil {
+				return err
+			}
+			ins.Constant = int64(fn)
+		}
+	} else if ins.OpCode.Class().IsALU() {
+		switch ins.OpCode.ALUOp() {
+		case Div:
+			if ins.Offset == 1 {
+				ins.OpCode = ins.OpCode.SetALUOp(SDiv)
+				ins.Offset = 0
+			}
+		case Mod:
+			if ins.Offset == 1 {
+				ins.OpCode = ins.OpCode.SetALUOp(SMod)
+				ins.Offset = 0
+			}
+		case Mov:
+			switch ins.Offset {
+			case 8:
+				ins.OpCode = ins.OpCode.SetALUOp(MovSX8)
+				ins.Offset = 0
+			case 16:
+				ins.OpCode = ins.OpCode.SetALUOp(MovSX16)
+				ins.Offset = 0
+			case 32:
+				ins.OpCode = ins.OpCode.SetALUOp(MovSX32)
+				ins.Offset = 0
+			}
+		}
+	} else if ins.OpCode.Class() == StXClass &&
+		ins.OpCode.Mode() == AtomicMode {
+		// For atomic ops, part of the opcode is stored in the
+		// constant field. Shift over 8 bytes so we can OR with the actual opcode and
+		// apply `atomicMask` to avoid merging unknown bits that may be added in the future.
+		ins.OpCode |= (OpCode((ins.Constant << 8)) & atomicMask)
+	}
+
 	if !ins.OpCode.IsDWordLoad() {
-		return InstructionSize, nil
+		return nil
 	}
 
 	// Pull another instruction from the stream to retrieve the second
 	// half of the 64-bit immediate value.
 	if _, err := io.ReadFull(r, data); err != nil {
 		// No Wrap, to avoid io.EOF clash
-		return 0, errors.New("64bit immediate is missing second half")
+		return errors.New("64bit immediate is missing second half")
 	}
 
 	// Require that all fields other than the value are zero.
 	if bo.Uint32(data[0:4]) != 0 {
-		return 0, errors.New("64bit immediate has non-zero fields")
+		return errors.New("64bit immediate has non-zero fields")
 	}
 
 	cons1 := uint32(ins.Constant)
 	cons2 := int32(bo.Uint32(data[4:8]))
 	ins.Constant = int64(cons2)<<32 | int64(cons1)
 
-	return 2 * InstructionSize, nil
+	return nil
 }
 
 // Marshal encodes a BPF instruction.
@@ -106,8 +153,48 @@ func (ins Instruction) Marshal(w io.Writer, bo binary.ByteOrder) (uint64, error)
 		return 0, fmt.Errorf("can't marshal registers: %s", err)
 	}
 
+	if ins.IsBuiltinCall() {
+		fn := BuiltinFunc(ins.Constant)
+		plat, value := platform.DecodeConstant(fn)
+		if plat != platform.Native {
+			return 0, fmt.Errorf("function %s (%s): %w", fn, plat, internal.ErrNotSupportedOnOS)
+		}
+		cons = int32(value)
+	} else if ins.OpCode.Class().IsALU() {
+		newOffset := int16(0)
+		switch ins.OpCode.ALUOp() {
+		case SDiv:
+			ins.OpCode = ins.OpCode.SetALUOp(Div)
+			newOffset = 1
+		case SMod:
+			ins.OpCode = ins.OpCode.SetALUOp(Mod)
+			newOffset = 1
+		case MovSX8:
+			ins.OpCode = ins.OpCode.SetALUOp(Mov)
+			newOffset = 8
+		case MovSX16:
+			ins.OpCode = ins.OpCode.SetALUOp(Mov)
+			newOffset = 16
+		case MovSX32:
+			ins.OpCode = ins.OpCode.SetALUOp(Mov)
+			newOffset = 32
+		}
+		if newOffset != 0 && ins.Offset != 0 {
+			return 0, fmt.Errorf("extended ALU opcodes should have an .Offset of 0: %s", ins)
+		}
+		ins.Offset = newOffset
+	} else if atomic := ins.OpCode.AtomicOp(); atomic != InvalidAtomic {
+		ins.OpCode = ins.OpCode &^ atomicMask
+		ins.Constant = int64(atomic >> 8)
+	}
+
+	op, err := ins.OpCode.bpfOpCode()
+	if err != nil {
+		return 0, err
+	}
+
 	data := make([]byte, InstructionSize)
-	data[0] = byte(ins.OpCode)
+	data[0] = op
 	data[1] = byte(regs)
 	bo.PutUint16(data[2:4], uint16(ins.Offset))
 	bo.PutUint32(data[4:8], uint32(cons))
@@ -226,6 +313,13 @@ func (ins *Instruction) IsFunctionCall() bool {
 	return ins.OpCode.JumpOp() == Call && ins.Src == PseudoCall
 }
 
+// IsKfuncCall returns true if the instruction calls a kfunc.
+//
+// This is not the same thing as a BPF helper call.
+func (ins *Instruction) IsKfuncCall() bool {
+	return ins.OpCode.JumpOp() == Call && ins.Src == PseudoKfuncCall
+}
+
 // IsLoadOfFunctionPointer returns true if the instruction loads a function pointer.
 func (ins *Instruction) IsLoadOfFunctionPointer() bool {
 	return ins.OpCode.IsDWordLoad() && ins.Src == PseudoFunc
@@ -291,9 +385,9 @@ func (ins Instruction) Format(f fmt.State, c rune) {
 		goto ref
 	}
 
-	fmt.Fprintf(f, "%v ", op)
 	switch cls := op.Class(); {
 	case cls.isLoadOrStore():
+		fmt.Fprintf(f, "%v ", op)
 		switch op.Mode() {
 		case ImmMode:
 			fmt.Fprintf(f, "dst: %s imm: %d", ins.Dst, ins.Constant)
@@ -301,28 +395,48 @@ func (ins Instruction) Format(f fmt.State, c rune) {
 			fmt.Fprintf(f, "imm: %d", ins.Constant)
 		case IndMode:
 			fmt.Fprintf(f, "dst: %s src: %s imm: %d", ins.Dst, ins.Src, ins.Constant)
-		case MemMode:
+		case MemMode, MemSXMode:
 			fmt.Fprintf(f, "dst: %s src: %s off: %d imm: %d", ins.Dst, ins.Src, ins.Offset, ins.Constant)
-		case XAddMode:
-			fmt.Fprintf(f, "dst: %s src: %s", ins.Dst, ins.Src)
+		case AtomicMode:
+			fmt.Fprintf(f, "dst: %s src: %s off: %d", ins.Dst, ins.Src, ins.Offset)
 		}
 
 	case cls.IsALU():
-		fmt.Fprintf(f, "dst: %s ", ins.Dst)
-		if op.ALUOp() == Swap || op.Source() == ImmSource {
+		fmt.Fprintf(f, "%v", op)
+		if op == Swap.Op(ImmSource) {
+			fmt.Fprintf(f, "%d", ins.Constant)
+		}
+
+		fmt.Fprintf(f, " dst: %s ", ins.Dst)
+		switch {
+		case op.ALUOp() == Swap:
+			break
+		case op.Source() == ImmSource:
 			fmt.Fprintf(f, "imm: %d", ins.Constant)
-		} else {
+		default:
 			fmt.Fprintf(f, "src: %s", ins.Src)
 		}
 
 	case cls.IsJump():
+		fmt.Fprintf(f, "%v ", op)
 		switch jop := op.JumpOp(); jop {
 		case Call:
-			if ins.Src == PseudoCall {
+			switch ins.Src {
+			case PseudoCall:
 				// bpf-to-bpf call
 				fmt.Fprint(f, ins.Constant)
-			} else {
+			case PseudoKfuncCall:
+				// kfunc call
+				fmt.Fprintf(f, "Kfunc(%d)", ins.Constant)
+			default:
 				fmt.Fprint(f, BuiltinFunc(ins.Constant))
+			}
+
+		case Ja:
+			if ins.OpCode.Class() == Jump32Class {
+				fmt.Fprintf(f, "imm: %d", ins.Constant)
+			} else {
+				fmt.Fprintf(f, "off: %d", ins.Offset)
 			}
 
 		default:
@@ -333,6 +447,8 @@ func (ins Instruction) Format(f fmt.State, c rune) {
 				fmt.Fprintf(f, "src: %s", ins.Src)
 			}
 		}
+	default:
+		fmt.Fprintf(f, "%v ", op)
 	}
 
 ref:
@@ -352,6 +468,13 @@ func (ins Instruction) equal(other Instruction) bool {
 // Size returns the amount of bytes ins would occupy in binary form.
 func (ins Instruction) Size() uint64 {
 	return uint64(InstructionSize * ins.OpCode.rawInstructions())
+}
+
+// WithMetadata sets the given Metadata on the Instruction. e.g. to copy
+// Metadata from another Instruction when replacing it.
+func (ins Instruction) WithMetadata(meta Metadata) Instruction {
+	ins.Metadata = meta
+	return ins
 }
 
 type symbolMeta struct{}
@@ -436,29 +559,24 @@ type FDer interface {
 // Instructions is an eBPF program.
 type Instructions []Instruction
 
-// Unmarshal unmarshals an Instructions from a binary instruction stream.
-// All instructions in insns are replaced by instructions decoded from r.
-func (insns *Instructions) Unmarshal(r io.Reader, bo binary.ByteOrder) error {
-	if len(*insns) > 0 {
-		*insns = nil
-	}
-
+// AppendInstructions decodes [Instruction] from r and appends them to insns.
+func AppendInstructions(insns Instructions, r io.Reader, bo binary.ByteOrder, platform string) (Instructions, error) {
 	var offset uint64
 	for {
 		var ins Instruction
-		n, err := ins.Unmarshal(r, bo)
+		err := ins.Unmarshal(r, bo, platform)
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("offset %d: %w", offset, err)
+			return nil, fmt.Errorf("offset %d: %w", offset, err)
 		}
 
-		*insns = append(*insns, ins)
-		offset += n
+		insns = append(insns, ins)
+		offset += ins.Size()
 	}
 
-	return nil
+	return insns, nil
 }
 
 // Name returns the name of the function insns belongs to, if any.
@@ -710,7 +828,7 @@ func (insns Instructions) Tag(bo binary.ByteOrder) (string, error) {
 			return "", fmt.Errorf("instruction %d: %w", i, err)
 		}
 	}
-	return hex.EncodeToString(h.Sum(nil)[:unix.BPF_TAG_SIZE]), nil
+	return hex.EncodeToString(h.Sum(nil)[:sys.BPF_TAG_SIZE]), nil
 }
 
 // encodeFunctionReferences populates the Offset (or Constant, depending on
@@ -754,7 +872,8 @@ func (insns Instructions) encodeFunctionReferences() error {
 		}
 
 		switch {
-		case ins.IsFunctionReference() && ins.Constant == -1:
+		case ins.IsFunctionReference() && ins.Constant == -1,
+			ins.OpCode == Ja.opCode(Jump32Class, ImmSource) && ins.Constant == -1:
 			symOffset, ok := symbolOffsets[ins.Reference()]
 			if !ok {
 				return fmt.Errorf("%s at insn %d: symbol %q: %w", ins.OpCode, i, ins.Reference(), ErrUnsatisfiedProgramReference)
