@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/Scalingo/go-handlers v1.9.1
-	github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
+	github.com/Scalingo/go-netstat v0.0.0-20230914125908-9d8b87751191
 	github.com/Scalingo/go-utils/errors/v3 v3.1.1
 	github.com/Scalingo/go-utils/graceful v1.3.1
 	github.com/Scalingo/go-utils/logger v1.9.1

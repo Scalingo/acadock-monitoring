@@ -4,8 +4,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/Scalingo/go-handlers v1.9.1 h1:h6SF0RJMotu0d0Ab50/hIH9KX0JYvLxxYsiEEyGf428=
 github.com/Scalingo/go-handlers v1.9.1/go.mod h1:h2JCh/AEjOE84o3z9FxkA0u+XIt75v24VdzY6PmQej8=
-github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af h1:8Y0H/4TRG2f4FT8pBk2of8JTleTyJzSU71vuZkbk1Mg=
-github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af/go.mod h1:3pL3YQ5E5RB4vKY4vMxfuLnB9Hv8BXKtgUR1Nib92PU=
+github.com/Scalingo/go-netstat v0.0.0-20230914125908-9d8b87751191 h1:9nxZHxc1XNuEIltjq/Qu3UrzBBx5QPSjbqf9+DD2Ahg=
+github.com/Scalingo/go-netstat v0.0.0-20230914125908-9d8b87751191/go.mod h1:3pL3YQ5E5RB4vKY4vMxfuLnB9Hv8BXKtgUR1Nib92PU=
 github.com/Scalingo/go-utils/crypto v1.1.1 h1:+F4JqC/8Lu8b1MDJwdQjT19yzLhShWPk+K93cUv7KVg=
 github.com/Scalingo/go-utils/crypto v1.1.1/go.mod h1:29dsjRaXxNI6tUG2ZbNWs4A5pqmwCAztdgfudGQDuhY=
 github.com/Scalingo/go-utils/errors/v2 v2.5.1 h1:1tfJW6/ZxTgrRmFTlKQCOtArQquOW0/XdZQzx8wMHoM=

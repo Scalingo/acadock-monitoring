@@ -8,7 +8,7 @@ github.com/Microsoft/go-winio/pkg/guid
 # github.com/Scalingo/go-handlers v1.9.1
 ## explicit; go 1.24
 github.com/Scalingo/go-handlers
-# github.com/Scalingo/go-netstat v0.0.0-20180430114940-1063ff17a7af
+# github.com/Scalingo/go-netstat v0.0.0-20230914125908-9d8b87751191
 ## explicit
 github.com/Scalingo/go-netstat
 # github.com/Scalingo/go-utils/crypto v1.1.1
