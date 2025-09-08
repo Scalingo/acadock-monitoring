@@ -36,7 +36,8 @@ func As(receivedErr error, expectedType any) bool {
 	return false
 }
 
-// UnwrapError tries to unwrap `err`. It unwraps any causer type, errgo and ErrCtx errors.
+// UnwrapError tries to unwrap `err`. It unwraps any causer type, errgo and errors
+// implementing Unwrap() method.
 // It returns nil if no err found. This provide the possibility to loop on UnwrapError
 // by checking the return value.
 // E.g.:
@@ -49,9 +50,12 @@ func UnwrapError(err error) error {
 		return nil
 	}
 
-	// if err is type of `ErrCtx` unwrap it by getting errCtx.err
-	if ctxerr, ok := err.(ErrCtx); ok {
-		return ctxerr.err
+	// This also match errCtx from this package.
+	u, ok := err.(interface {
+		Unwrap() error
+	})
+	if ok {
+		return u.Unwrap()
 	}
 
 	// Check if the err is type of `*errgo.Err` to be able to call `Underlying()`
@@ -67,13 +71,6 @@ func UnwrapError(err error) error {
 	})
 	if ok {
 		return c.Cause()
-	}
-
-	u, ok := err.(interface {
-		Unwrap() error
-	})
-	if ok {
-		return u.Unwrap()
 	}
 
 	return nil

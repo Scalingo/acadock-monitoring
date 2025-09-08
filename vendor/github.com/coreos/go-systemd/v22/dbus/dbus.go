@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Integration with the systemd D-Bus API.  See http://www.freedesktop.org/wiki/Software/systemd/dbus/
+// Package dbus provides integration with the systemd D-Bus API.
+// See http://www.freedesktop.org/wiki/Software/systemd/dbus/
 package dbus
 
 import (
@@ -174,6 +175,11 @@ func NewSystemdConnectionContext(ctx context.Context) (*Conn, error) {
 func (c *Conn) Close() {
 	c.sysconn.Close()
 	c.sigconn.Close()
+}
+
+// Connected returns whether conn is connected
+func (c *Conn) Connected() bool {
+	return c.sysconn.Connected() && c.sigconn.Connected()
 }
 
 // NewConnection establishes a connection to a bus using a caller-supplied function.

@@ -50,10 +50,6 @@ func Errorf(ctx context.Context, format string, args ...interface{}) error {
 func RootCtxOrFallback(ctx context.Context, err error) context.Context {
 	var lastCtx context.Context
 
-	type causer interface {
-		Cause() error
-	}
-
 	// Unwrap each error to get the deepest context
 	for err != nil {
 		// First check if the err is type of `*errgo.Err` to be able to call `Underlying()`
@@ -66,18 +62,21 @@ func RootCtxOrFallback(ctx context.Context, err error) context.Context {
 			continue
 		}
 
-		cause, ok := err.(causer)
+		cause, ok := err.(interface{ Cause() error })
 		if ok {
 			err = cause.Cause()
 			continue
 		}
 
-		// if err is type of `ErrCtx` unwrap it by getting errCtx.err
-		ctxerr, ok := err.(ErrCtx)
+		// If err is matching the `ErrCtx` interface type, unwrap it and get its context.
+		// We compare with the interface to match different versions of ErrCtx package.
+		ctxerr, ok := err.(interface {
+			Ctx() context.Context
+			Unwrap() error
+		})
 		if ok {
-			err = ctxerr.err
+			err = ctxerr.Unwrap()
 			lastCtx = ctxerr.Ctx()
-
 			continue
 		}
 
