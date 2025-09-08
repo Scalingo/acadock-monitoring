@@ -2,6 +2,10 @@
 
 ## To Be Released
 
+## v2.0.0 - 2025-09-08
+
+* deps(dependabot) Various upgrades
+* improvement(net): Usage of netlink to read net metrics instead of forking into net namespace
 * feat(cgroup): Compatibility with cgroup v2: use github.com/containerd/cgroup to read cgroup data for v1 and v2
 * fix(resiliency): Make service resilient to docker restart
 * chore(go): use Go 1.24
