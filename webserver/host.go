@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/pkg/errors"
-
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/acadock-monitoring/filters"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )
 
@@ -18,23 +17,23 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 
 	cpu, err := c.cpu.GetHostUsage()
 	if err != nil {
-		return errors.Wrap(err, "fail to get host cpu usage")
+		return errors.Wrap(ctx, err, "get host cpu usage")
 	}
 
 	queueLength, err := c.queue.Read(ctx)
 	if err != nil && err != filters.ErrNotEnoughMetrics {
-		return errors.Wrap(err, "fail to get current queue length")
+		return errors.Wrap(ctx, err, "get current queue length")
 	}
 	cpu.QueueLengthExponentiallySmoothed = queueLength
 
 	hostMemory, err := c.procfsMemory.Read(ctx)
 	if err != nil {
-		return errors.Wrap(err, "fail to get host memory usage")
+		return errors.Wrap(ctx, err, "get host memory usage")
 	}
 
-	containers, err := docker.ListContainers()
+	containers, err := docker.ListContainers(ctx)
 	if err != nil {
-		return errors.Wrap(err, "fail to list docker containers")
+		return errors.Wrap(ctx, err, "list docker containers")
 	}
 
 	labelFilter := req.URL.Query().Get("include_container_if_label")
@@ -46,6 +45,7 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 	}
 
 	for _, container := range containers {
+		ctx, log := logger.WithFieldToCtx(ctx, "container_id", container.ID)
 		if labelFilter != "" {
 			_, ok := container.Labels[labelFilter]
 			if !ok {
@@ -53,13 +53,13 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 			}
 		}
 
-		usage, err := c.mem.GetMemoryUsage(container.ID)
+		usage, err := c.mem.GetMemoryUsage(ctx, container.ID)
 		if err != nil {
-			log.WithError(err).Infof("Fail to get memory usage for %s", container.ID)
+			log.WithError(err).Infof("Fail to get memory usage")
 			continue
 		}
 
-		memory.MemoryUsage += uint64(usage.MemoryUsage.MemoryUsage)
+		memory.MemoryUsage += uint64(usage.MemoryUsage)
 		memory.MemoryCommitted += uint64(usage.MemoryLimit)
 		memory.MaxMemoryUsage += uint64(usage.MaxMemoryUsage)
 		memory.SwapCommitted += uint64(usage.SwapLimit)

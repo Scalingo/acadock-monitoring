@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -10,33 +11,36 @@ import (
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/go-netstat"
+	"github.com/Scalingo/go-utils/logger"
 )
 
 type Usage client.NetUsage
 
 type NetMonitor struct {
-	netUsages         map[string]netstat.NetworkStat
-	previousNetUsages map[string]netstat.NetworkStat
-	netUsagesMutex    *sync.Mutex
+	containerRepository docker.ContainerRepository
+	netUsages           map[string]netstat.NetworkStat
+	previousNetUsages   map[string]netstat.NetworkStat
+	netUsagesMutex      *sync.Mutex
 
 	containerIfaces      map[string]string
 	containerIfacesMutex *sync.Mutex
 }
 
-func NewNetMonitor() *NetMonitor {
+func NewNetMonitor(ctx context.Context, containerRepository docker.ContainerRepository) *NetMonitor {
 	monitor := &NetMonitor{
+		containerRepository:  containerRepository,
 		netUsages:            map[string]netstat.NetworkStat{},
 		previousNetUsages:    map[string]netstat.NetworkStat{},
 		netUsagesMutex:       &sync.Mutex{},
 		containerIfaces:      map[string]string{},
 		containerIfacesMutex: &sync.Mutex{},
 	}
-	go monitor.listeningNewInterfaces()
+	go monitor.listeningNewInterfaces(ctx)
 	return monitor
 }
 
 func (monitor *NetMonitor) Start() {
-	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
+	tick := time.NewTicker(config.RefreshTime)
 	defer tick.Stop()
 	for {
 		<-tick.C
@@ -63,28 +67,47 @@ func (monitor *NetMonitor) Start() {
 	// unreachable code
 }
 
-func (monitor *NetMonitor) listeningNewInterfaces() {
-	containerIDs := docker.RegisterToContainersStream()
-	for containerID := range containerIDs {
-		iface, err := getContainerIface(containerID)
-		if err != nil {
-			log.WithError(err).Errorf("Fail to get network interface of '%v'", containerID)
-			continue
+func (monitor *NetMonitor) listeningNewInterfaces(ctx context.Context) {
+	containerEvents := monitor.containerRepository.RegisterToContainersStream(ctx)
+	for event := range containerEvents {
+		ctx, _ := logger.WithFieldToCtx(ctx, "container_id", event.ContainerID)
+		switch event.Action {
+		case docker.ContainerActionStart:
+			monitor.startMonitoringContainer(ctx, event.ContainerID)
+		case docker.ContainerActionStop:
+			monitor.cleanMonitoringData(event.ContainerID)
+		default:
+			log.WithField("action", event.Action).Info("Unknown container action")
 		}
-		monitor.containerIfacesMutex.Lock()
-		monitor.containerIfaces[iface] = containerID
-		monitor.containerIfacesMutex.Unlock()
 	}
+}
+
+func (monitor *NetMonitor) startMonitoringContainer(ctx context.Context, containerID string) {
+	iface, err := getContainerIface(ctx, containerID)
+	if err != nil {
+		log.WithError(err).Errorf("Fail to get network interface of '%v'", containerID)
+		return
+	}
+	monitor.containerIfacesMutex.Lock()
+	monitor.containerIfaces[iface] = containerID
+	monitor.containerIfacesMutex.Unlock()
+}
+
+func (monitor *NetMonitor) cleanMonitoringData(containerID string) {
+	monitor.containerIfacesMutex.Lock()
+	for iface, id := range monitor.containerIfaces {
+		if id == containerID {
+			delete(monitor.containerIfaces, iface)
+			break
+		}
+	}
+	monitor.containerIfacesMutex.Unlock()
 }
 
 func (monitor *NetMonitor) GetUsage(id string) (Usage, error) {
 	netUsages := monitor.netUsages
 	previousNetUsages := monitor.previousNetUsages
 
-	id, err := docker.ExpandId(id)
-	if err != nil {
-		return Usage{}, err
-	}
 	usage := Usage{}
 
 	// Actually for containers veth### are inversing Received, Transmit
@@ -97,10 +120,10 @@ func (monitor *NetMonitor) GetUsage(id string) (Usage, error) {
 	previousRxBps := previousNetUsages[id].Received.Bytes
 	previousTxBps := previousNetUsages[id].Transmit.Bytes
 	if previousRxBps > 0 {
-		usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousRxBps) / float64(config.RefreshTime))
+		usage.RxBps = int64(float64(netUsages[id].Received.Bytes-previousRxBps) / config.RefreshTime.Seconds())
 	}
 	if previousTxBps > 0 {
-		usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousTxBps) / float64(config.RefreshTime))
+		usage.TxBps = int64(float64(netUsages[id].Transmit.Bytes-previousTxBps) / config.RefreshTime.Seconds())
 	}
 
 	monitor.netUsagesMutex.Unlock()

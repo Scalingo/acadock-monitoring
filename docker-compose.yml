@@ -2,7 +2,7 @@ services:
   acadock:
     build: .
     volumes:
-      - /sys/fs/cgroup:/host/cgroup:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /proc:/host/proc:ro
       - /var/run/docker.sock:/host/docker.sock
       - .:/go/src/github.com/Scalingo/acadock-monitoring

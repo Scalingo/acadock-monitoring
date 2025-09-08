@@ -2,21 +2,22 @@ package net
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netns"
 
-	"github.com/Scalingo/acadock-monitoring/config"
-	"github.com/Scalingo/acadock-monitoring/docker"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-func getContainerIface(id string) (string, error) {
-	ifaceID, err := getContainerIfaceID(id)
+func getContainerIface(ctx context.Context, id string) (string, error) {
+	ifaceID, err := getContainerIfaceID(ctx, id)
 	if err != nil {
-		return "", errors.Wrapf(err, "fail to get container '%v' interface", id)
+		return "", errors.Wrapf(ctx, err, "get container '%v' interface", id)
 	}
 
 	stdout := new(bytes.Buffer)
@@ -38,28 +39,30 @@ func getContainerIface(id string) (string, error) {
 		}
 	}
 
-	return "", errors.Errorf("interface not found for '%v', %v", id, ifaceID)
+	return "", errors.Errorf(ctx, "interface not found for '%v', %v", id, ifaceID)
 }
 
-func getContainerIfaceID(id string) (string, error) {
-	pid, err := docker.Pid(id)
+func getContainerIfaceID(ctx context.Context, id string) (string, error) {
+	nshandler, err := netns.GetFromDocker(id)
 	if err != nil {
-		return "", errors.Wrapf(err, "fail to get pid of container '%v'", id)
+		return "", errors.Wrapf(ctx, err, "could not get network namespace")
+	}
+	defer nshandler.Close()
+	nlhandler, err := netlink.NewHandleAt(nshandler)
+	if err != nil {
+		return "", errors.Wrapf(ctx, err, "could not create netlink handle")
+	}
+	defer nlhandler.Close()
+
+	containerVethLink, err := nlhandler.LinkByName("eth0")
+	if err != nil {
+		return "", errors.Wrapf(ctx, err, "could not get eth0 link")
 	}
 
-	stdout := new(bytes.Buffer)
-	cmd := exec.Command(os.Args[0], "-ns-iface-id", pid)
-	cmd.Env = []string{"PROC_DIR=" + config.ENV["PROC_DIR"], "PATH=" + os.Getenv("PATH")}
-	cmd.Stdout = stdout
-	cmd.Stderr = stdout
-	err = cmd.Start()
-	if err != nil {
-		return "", err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return "", errors.Wrapf(err, "'%v' failed with '%v'", cmd, stdout.String())
+	parentContainerVethLinkIndex := containerVethLink.Attrs().ParentIndex
+	if parentContainerVethLinkIndex == 0 {
+		return "", errors.Errorf(ctx, "could not get veth parent index")
 	}
 
-	return stdout.String(), nil
+	return strconv.Itoa(parentContainerVethLinkIndex), nil
 }

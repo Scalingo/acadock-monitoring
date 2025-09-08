@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 type CPUStat interface {
@@ -46,9 +46,9 @@ type CPUStatReader struct {
 	sysconf Sysconf
 }
 
-func NewCPUStatReader() CPUStatReader {
+func NewCPUStatReader(ctx context.Context) CPUStatReader {
 	return CPUStatReader{
-		fs:      NewFileSystem(),
+		fs:      NewFileSystem(ctx),
 		sysconf: NewSysconf(),
 	}
 }
@@ -63,13 +63,13 @@ func (c CPUStatReader) Read(ctx context.Context) (CPUStats, error) {
 	// We first get the unit by getting a sysconf const named SC_CLK_TCK
 	clktck, err := c.sysconf.ClockTick()
 	if err != nil {
-		return result, errors.Wrap(err, "fail to get SC_CLK_TCK")
+		return result, errors.Wrap(ctx, err, "get SC_CLK_TCK")
 	}
 
 	// Open the /proc/stat file
 	file, err := c.fs.Open("/proc/stat")
 	if err != nil {
-		return result, errors.Wrap(err, "fail to open stat file")
+		return result, errors.Wrap(ctx, err, "open stat file")
 	}
 	defer file.Close()
 
@@ -80,7 +80,7 @@ func (c CPUStatReader) Read(ctx context.Context) (CPUStats, error) {
 			if err == io.EOF {
 				break
 			}
-			return result, errors.Wrap(err, "fail to read a line from stat file")
+			return result, errors.Wrap(ctx, err, "read a line from stat file")
 		}
 
 		// Currently this parser only cares about CPU lines There are many other things in this file but it's not supported yet
@@ -91,7 +91,7 @@ func (c CPUStatReader) Read(ctx context.Context) (CPUStats, error) {
 		// Parse and store that line
 		res, err := c.readOneCPULine(ctx, line, clktck)
 		if err != nil {
-			return result, errors.Wrap(err, "fail to parse one line of stat file")
+			return result, errors.Wrap(ctx, err, "parse one line of stat file")
 		}
 		result.CPUs[res.Name] = res
 	}
@@ -111,10 +111,10 @@ func (c CPUStatReader) readOneCPULine(ctx context.Context, line string, userHZ i
 	// Parse the line and store it in rawBuffer
 	n, err := fmt.Sscanf(line, "%s %d %d %d %d %d %d %d %d %d %d", &result.Name, &rawBuffer[0], &rawBuffer[1], &rawBuffer[2], &rawBuffer[3], &rawBuffer[4], &rawBuffer[5], &rawBuffer[6], &rawBuffer[7], &rawBuffer[8], &rawBuffer[9])
 	if err != nil {
-		return result, errors.Wrap(err, "fail to parse procstat line")
+		return result, errors.Wrap(ctx, err, "parse procstat line")
 	}
 	if n != 11 { // If we failed to parse enough value
-		return result, fmt.Errorf("invalid procstat line, parsed %d field expected 11", n)
+		return result, errors.Errorf(ctx, "invalid procstat line, parsed %d field expected 11", n)
 	}
 
 	scaleFactor := time.Second / time.Duration(userHZ) // The scale factor depends on the SC_CLK_TCK sysconf.

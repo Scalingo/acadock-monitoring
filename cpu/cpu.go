@@ -2,82 +2,72 @@ package cpu
 
 import (
 	"context"
-	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
+	"github.com/Scalingo/acadock-monitoring/cgroup"
 	"github.com/Scalingo/acadock-monitoring/client"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
-)
-
-const (
-	LXC_CPUACCT_USAGE_FILE = "cpuacct.usage"
 )
 
 type Usage client.CpuUsage
 
 type CPUUsageMonitor struct {
-	numCPU              int
-	currentHostUsage    *procfs.SingleCPUStat
-	previousHostUsage   *procfs.SingleCPUStat
-	currentSystemUsage  map[string]time.Duration
-	previousSystemUsage map[string]time.Duration
-	previousCPUUsages   map[string]time.Duration
-	cpuUsages           map[string]time.Duration
-	cpuUsagesMutex      *sync.Mutex
-	cpuStatReader       procfs.CPUStat
+	containerRepository    docker.ContainerRepository
+	numCPU                 int
+	currentHostUsage       *procfs.SingleCPUStat
+	previousHostUsage      *procfs.SingleCPUStat
+	currentSystemUsage     map[string]time.Duration
+	previousSystemUsage    map[string]time.Duration
+	currentContainerStats  map[string]cgroup.Stats
+	previousContainerStats map[string]cgroup.Stats
+	cpuUsagesMutex         *sync.Mutex
+	cpuStatReader          procfs.CPUStat
+	cgroupStatsReader      cgroup.StatsReader
 }
 
-func NewCPUUsageMonitor(cpustat procfs.CPUStat) *CPUUsageMonitor {
+func NewCPUUsageMonitor(containerRepository docker.ContainerRepository, cpustat procfs.CPUStat, cgroupStatsReader cgroup.StatsReader) *CPUUsageMonitor {
 	return &CPUUsageMonitor{
-		numCPU:              runtime.NumCPU(),
-		currentSystemUsage:  make(map[string]time.Duration),
-		previousSystemUsage: make(map[string]time.Duration),
-		previousCPUUsages:   make(map[string]time.Duration),
-		cpuUsages:           make(map[string]time.Duration),
-		cpuUsagesMutex:      &sync.Mutex{},
-		cpuStatReader:       cpustat,
+		containerRepository:    containerRepository,
+		numCPU:                 runtime.NumCPU(),
+		currentSystemUsage:     make(map[string]time.Duration),
+		previousSystemUsage:    make(map[string]time.Duration),
+		previousContainerStats: make(map[string]cgroup.Stats),
+		currentContainerStats:  make(map[string]cgroup.Stats),
+		cpuUsagesMutex:         &sync.Mutex{},
+		cpuStatReader:          cpustat,
+		cgroupStatsReader:      cgroupStatsReader,
 	}
-}
-
-func (m *CPUUsageMonitor) cpuacctUsage(container string) (time.Duration, error) {
-	file := config.CgroupPath("cpuacct", container) + "/" + LXC_CPUACCT_USAGE_FILE
-	f, err := os.Open(file)
-	if err != nil {
-		return 0, err
-	}
-	defer f.Close()
-
-	buffer := make([]byte, 64)
-	n, err := f.Read(buffer)
-	buffer = buffer[:n]
-
-	bufferStr := string(buffer)
-	bufferStr = bufferStr[:len(bufferStr)-1]
-
-	res, err := strconv.ParseInt(bufferStr, 10, 64)
-	if err != nil {
-		return 0, errors.Wrapf(err, "fail to parse '%v'", file)
-	}
-	return time.Duration(res) * time.Nanosecond, nil
 }
 
 func (m *CPUUsageMonitor) Start(ctx context.Context) {
-	log := logger.Get(ctx)
-
 	go m.monitorHostUsage(ctx)
 
-	containers := docker.RegisterToContainersStream()
-	for c := range containers {
-		log.Infof("Monitoring CPU of %v", c)
-		go m.monitorContainer(ctx, c)
+	cancels := map[string]context.CancelFunc{}
+	events := m.containerRepository.RegisterToContainersStream(ctx)
+	for event := range events {
+		ctx, log := logger.WithFieldToCtx(ctx, "container_id", event.ContainerID)
+		switch event.Action {
+		case docker.ContainerActionStart:
+			ctx, cancel := context.WithCancel(ctx)
+			cancels[event.ContainerID] = cancel
+			log.Infof("Start monitoring CPU")
+			go m.monitorContainerCPU(ctx, event.ContainerID)
+		case docker.ContainerActionStop:
+			log.Info("Stop monitoring CPU")
+			cancel, ok := cancels[event.ContainerID]
+			if ok {
+				cancel()
+				delete(cancels, event.ContainerID)
+			}
+		default:
+			log.WithField("action", event.Action).Info("Unknown container action")
+		}
 	}
 }
 
@@ -85,59 +75,92 @@ func (m *CPUUsageMonitor) monitorHostUsage(ctx context.Context) {
 	log := logger.Get(ctx)
 
 	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
 	for {
-		<-tick.C
-		current, err := m.cpuStatReader.Read(ctx)
-		if err != nil {
-			log.WithError(err).Error("fail to get container ")
-			continue
+		select {
+		case <-ctx.Done():
+			log.Info("Host CPU Monitoring done")
+			return
+		case <-tick.C:
+			err := m.updateHostCPUUsage(ctx)
+			if err != nil {
+				log.WithError(err).Error("Fail to update host CPU usage")
+			}
 		}
-		currentCPUUsage := current.All()
-		m.cpuUsagesMutex.Lock()
-		m.previousHostUsage = m.currentHostUsage
-		m.currentHostUsage = &currentCPUUsage
-		m.cpuUsagesMutex.Unlock()
 	}
 }
 
-func (m *CPUUsageMonitor) monitorContainer(ctx context.Context, id string) {
+func (m *CPUUsageMonitor) updateHostCPUUsage(ctx context.Context) error {
+	current, err := m.cpuStatReader.Read(ctx)
+	if err != nil {
+		return errors.Wrap(ctx, err, "get host CPU stats")
+	}
+	currentCPUUsage := current.All()
+	m.cpuUsagesMutex.Lock()
+	m.previousHostUsage = m.currentHostUsage
+	m.currentHostUsage = &currentCPUUsage
+	m.cpuUsagesMutex.Unlock()
+
+	return nil
+}
+
+func (m *CPUUsageMonitor) monitorContainerCPU(ctx context.Context, id string) {
 	log := logger.Get(ctx)
 
-	tick := time.NewTicker(time.Duration(config.RefreshTime) * time.Second)
+	tick := time.NewTicker(config.RefreshTime)
+	defer tick.Stop()
 	for {
-		<-tick.C
-		var err error
-		usage, err := m.cpuacctUsage(id)
-		m.cpuUsagesMutex.Lock()
-		if err != nil {
-			if _, ok := m.cpuUsages[id]; ok {
-				delete(m.cpuUsages, id)
-			}
-			if _, ok := m.previousCPUUsages[id]; ok {
-				delete(m.previousCPUUsages, id)
-			}
-			log.Infof("Stop monitoring CPU of '%v', reason: '%v'", id, err)
-			m.cpuUsagesMutex.Unlock()
+		select {
+		case <-ctx.Done():
+			m.cleanMonitoringData(id)
+			log.Info("CPU Monitoring stopped - Context done")
 			return
+		case <-tick.C:
+			var cgroupStatsErr cgroup.StatsReaderError
+			log.Debug("Refresh CPU Usage")
+			err := m.updateContainerCPUUsage(ctx, id)
+			if errors.As(err, &cgroupStatsErr) {
+				log.WithError(err).Infof("Stop monitoring CPU with error")
+				m.cleanMonitoringData(id)
+			} else if err != nil {
+				// No Error logging to prevent spamming
+				log.WithError(err).Info("Fail to update container CPU usage")
+			}
 		}
-
-		m.previousCPUUsages[id] = m.cpuUsages[id]
-		m.cpuUsages[id] = usage
-
-		m.previousSystemUsage[id] = m.currentSystemUsage[id]
-		systemUsage, err := m.cpuStatReader.Read(ctx)
-		if err != nil {
-			log.WithError(err).Warn("fail to read system CPU usage")
-		}
-		m.currentSystemUsage[id] = systemUsage.All().Sum()
-		m.cpuUsagesMutex.Unlock()
 	}
+}
+
+func (m *CPUUsageMonitor) updateContainerCPUUsage(ctx context.Context, id string) error {
+	stats, err := m.cgroupStatsReader.GetStats(ctx, id)
+	if err != nil {
+		return errors.Wrap(ctx, err, "get cgroup stats")
+	}
+	systemUsage, err := m.cpuStatReader.Read(ctx)
+	if err != nil {
+		return errors.Wrap(ctx, err, "read container CPU usage")
+	}
+
+	m.cpuUsagesMutex.Lock()
+	m.previousContainerStats[id] = m.currentContainerStats[id]
+	m.currentContainerStats[id] = stats
+	m.previousSystemUsage[id] = m.currentSystemUsage[id]
+	m.currentSystemUsage[id] = systemUsage.All().Sum()
+	m.cpuUsagesMutex.Unlock()
+
+	return nil
+}
+
+func (m *CPUUsageMonitor) cleanMonitoringData(id string) {
+	m.cpuUsagesMutex.Lock()
+	delete(m.currentContainerStats, id)
+	delete(m.previousContainerStats, id)
+	m.cpuUsagesMutex.Unlock()
 }
 
 func (m CPUUsageMonitor) GetHostUsage() (client.HostCpuUsage, error) {
 	m.cpuUsagesMutex.Lock()
 	defer m.cpuUsagesMutex.Unlock()
-	if m.previousCPUUsages == nil || m.currentHostUsage == nil {
+	if m.previousHostUsage == nil || m.currentHostUsage == nil {
 		return client.HostCpuUsage{}, nil
 	}
 
@@ -157,19 +180,14 @@ func (m CPUUsageMonitor) GetHostUsage() (client.HostCpuUsage, error) {
 }
 
 func (m CPUUsageMonitor) GetContainerUsage(id string) (Usage, error) {
-	id, err := docker.ExpandId(id)
-	if err != nil {
-		return Usage{}, errors.Wrapf(err, "fail to expand ID '%v'", id)
-	}
-
 	m.cpuUsagesMutex.Lock()
 	defer m.cpuUsagesMutex.Unlock()
 
-	if _, ok := m.previousCPUUsages[id]; !ok {
+	if _, ok := m.previousContainerStats[id]; !ok {
 		return Usage{}, nil
 	}
 
-	deltaCPUUsage := float64(m.cpuUsages[id] - m.previousCPUUsages[id])
+	deltaCPUUsage := float64(m.currentContainerStats[id].CPUUsage - m.previousContainerStats[id].CPUUsage)
 	deltaSystemCPUUsage := float64(m.currentSystemUsage[id] - m.previousSystemUsage[id])
 
 	var percents int

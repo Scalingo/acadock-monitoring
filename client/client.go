@@ -1,25 +1,25 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 
-	"github.com/pkg/errors"
-
 	"github.com/Scalingo/go-netstat"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 var _ AcadockClient = &Client{}
 
 type MemoryUsage struct {
-	MemoryUsage    int64 `json:"memory_usage"`
-	SwapUsage      int64 `json:"swap_usage"`
-	MemoryLimit    int64 `json:"memory_limit"`
-	SwapLimit      int64 `json:"swap_limit"`
-	MaxMemoryUsage int64 `json:"max_memory_usage"`
-	MaxSwapUsage   int64 `json:"max_swap_usage"`
+	MemoryUsage    uint64 `json:"memory_usage"`
+	SwapUsage      uint64 `json:"swap_usage"`
+	MemoryLimit    uint64 `json:"memory_limit"`
+	SwapLimit      uint64 `json:"swap_limit"`
+	MaxMemoryUsage uint64 `json:"max_memory_usage"`
+	MaxSwapUsage   uint64 `json:"max_swap_usage"`
 }
 
 type CpuUsage struct {
@@ -55,12 +55,12 @@ type NetUsage struct {
 }
 
 type AcadockClient interface {
-	AllContainersUsage() (ContainersUsage, error)
-	Memory(dockerId string) (*MemoryUsage, error)
-	CpuUsage(dockerId string) (*CpuUsage, error)
-	NetUsage(dockerId string) (*NetUsage, error)
-	Usage(dockerId string, net bool) (*Usage, error)
-	HostUsage(opts HostUsageOpts) (HostUsage, error)
+	AllContainersUsage(ctx context.Context) (ContainersUsage, error)
+	Memory(ctx context.Context, dockerId string) (*MemoryUsage, error)
+	CpuUsage(ctx context.Context, dockerId string) (*CpuUsage, error)
+	NetUsage(ctx context.Context, dockerId string) (*NetUsage, error)
+	Usage(ctx context.Context, dockerId string, net bool) (*Usage, error)
+	HostUsage(ctx context.Context, opts HostUsageOpts) (HostUsage, error)
 }
 
 type Client struct {
@@ -92,10 +92,10 @@ func WithAuthentication(user, pass string) ClientOpts {
 	}
 }
 
-func NewClient(endpoint string, opts ...ClientOpts) (*Client, error) {
+func NewClient(ctx context.Context, endpoint string, opts ...ClientOpts) (*Client, error) {
 	_, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, errors.Wrapf(err, "fail to parse endpoint '%s'", endpoint)
+		return nil, errors.Wrapf(ctx, err, "parse endpoint '%s'", endpoint)
 	}
 
 	c := &Client{Endpoint: endpoint}
@@ -105,48 +105,48 @@ func NewClient(endpoint string, opts ...ClientOpts) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) Memory(dockerId string) (*MemoryUsage, error) {
+func (c *Client) Memory(ctx context.Context, dockerId string) (*MemoryUsage, error) {
 	var mem *MemoryUsage
-	err := c.getResource(dockerId, "mem", mem)
+	err := c.getResource(ctx, dockerId, "mem", mem)
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to get container memory usage")
+		return nil, errors.Wrap(ctx, err, "get container memory usage")
 	}
 	return mem, nil
 }
 
-func (c *Client) CpuUsage(dockerId string) (*CpuUsage, error) {
+func (c *Client) CpuUsage(ctx context.Context, dockerId string) (*CpuUsage, error) {
 	var cpu *CpuUsage
-	err := c.getResource(dockerId, "cpu", cpu)
+	err := c.getResource(ctx, dockerId, "cpu", cpu)
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to get container cpu usage")
+		return nil, errors.Wrap(ctx, err, "get container cpu usage")
 	}
 	return cpu, nil
 }
 
-func (c *Client) NetUsage(dockerId string) (*NetUsage, error) {
+func (c *Client) NetUsage(ctx context.Context, dockerId string) (*NetUsage, error) {
 	var net *NetUsage
-	err := c.getResource(dockerId, "net", net)
+	err := c.getResource(ctx, dockerId, "net", net)
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to get container network usage")
+		return nil, errors.Wrap(ctx, err, "get container network usage")
 	}
 
 	return net, nil
 }
 
-func (c *Client) Usage(dockerId string, net bool) (*Usage, error) {
+func (c *Client) Usage(ctx context.Context, dockerId string, net bool) (*Usage, error) {
 	usage := &Usage{}
-	err := c.getResourceWithQuery(dockerId, "usage", fmt.Sprintf("net=%v", net), usage)
+	err := c.getResourceWithQuery(ctx, dockerId, "usage", fmt.Sprintf("net=%v", net), usage)
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to get container usage")
+		return nil, errors.Wrap(ctx, err, "get container usage")
 	}
 	return usage, nil
 }
 
-func (c *Client) AllContainersUsage() (ContainersUsage, error) {
+func (c *Client) AllContainersUsage(ctx context.Context) (ContainersUsage, error) {
 	var usage ContainersUsage
-	err := c.getResource("", "usage", &usage)
+	err := c.getResource(ctx, "", "usage", &usage)
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to get all containers usage")
+		return nil, errors.Wrap(ctx, err, "get all containers usage")
 	}
 	return usage, nil
 }
@@ -155,34 +155,34 @@ type HostUsageOpts struct {
 	IncludeContainerIfLabel string
 }
 
-func (c *Client) HostUsage(opts HostUsageOpts) (HostUsage, error) {
+func (c *Client) HostUsage(ctx context.Context, opts HostUsageOpts) (HostUsage, error) {
 	query := ""
 	if opts.IncludeContainerIfLabel != "" {
 		query = fmt.Sprintf("include_container_if_label=%s", opts.IncludeContainerIfLabel)
 	}
 	var res HostUsage
-	err := c.getPathWithQuery("/host/usage", query, &res)
+	err := c.getPathWithQuery(ctx, "/host/usage", query, &res)
 	if err != nil {
-		return res, errors.Wrap(err, "fail to get host usage")
+		return res, errors.Wrap(ctx, err, "get host usage")
 	}
 	return res, nil
 }
 
-func (c *Client) getResource(dockerId, resourceType string, data interface{}) error {
-	return c.getResourceWithQuery(dockerId, resourceType, "", data)
+func (c *Client) getResource(ctx context.Context, dockerId, resourceType string, data interface{}) error {
+	return c.getResourceWithQuery(ctx, dockerId, resourceType, "", data)
 }
 
-func (c *Client) getResourceWithQuery(dockerId, resourceType string, query string, data interface{}) error {
+func (c *Client) getResourceWithQuery(ctx context.Context, dockerId, resourceType string, query string, data interface{}) error {
 	var path string
 	if dockerId == "" {
 		path = "/containers/" + resourceType
 	} else {
 		path = "/containers/" + dockerId + "/" + resourceType
 	}
-	return c.getPathWithQuery(path, query, data)
+	return c.getPathWithQuery(ctx, path, query, data)
 }
 
-func (c *Client) getPathWithQuery(path, query string, data interface{}) error {
+func (c *Client) getPathWithQuery(ctx context.Context, path, query string, data interface{}) error {
 	endpoint := c.Endpoint + path
 
 	if query != "" {
@@ -191,18 +191,18 @@ func (c *Client) getPathWithQuery(path, query string, data interface{}) error {
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		return errors.Wrap(err, "fail to create new http request")
+		return errors.Wrap(ctx, err, "create new http request")
 	}
 
 	res, err := c.do(req)
 	if err != nil {
-		return errors.Wrap(err, "fail to execute http request")
+		return errors.Wrap(ctx, err, "execute http request")
 	}
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
-		return errors.Wrap(err, "fail to decode response body payload")
+		return errors.Wrap(ctx, err, "decode response body payload")
 	}
 
 	return nil

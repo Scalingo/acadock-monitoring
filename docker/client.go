@@ -1,28 +1,19 @@
 package docker
 
 import (
-	"sync"
+	"context"
 
-	docker "github.com/fsouza/go-dockerclient"
-	"github.com/pkg/errors"
+	docker "github.com/docker/docker/client"
 
 	"github.com/Scalingo/acadock-monitoring/config"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-var (
-	_client     *docker.Client
-	_clientOnce sync.Once
-)
-
-func Client() (*docker.Client, error) {
-	var err error
-
-	_clientOnce.Do(func() {
-		_client, err = docker.NewClient(config.ENV["DOCKER_URL"])
-	})
+func Client(ctx context.Context) (*docker.Client, error) {
+	client, err := docker.NewClientWithOpts(docker.WithHost(config.ENV["DOCKER_URL"]), docker.WithAPIVersionNegotiation())
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to create docker client")
+		return nil, errors.Wrap(ctx, err, "create docker client")
 	}
 
-	return _client, nil
+	return client, nil
 }

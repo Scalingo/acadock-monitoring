@@ -1,11 +1,13 @@
 package procfs
 
 import (
+	"context"
 	"io"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/tklauser/go-sysconf"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 // Collection of utils needed to mock real system interactions during tests.
@@ -30,16 +32,20 @@ type FS interface {
 	Open(string) (io.ReadCloser, error)
 }
 
-type FileSystem struct{}
-
-func NewFileSystem() FileSystem {
-	return FileSystem{}
+type FileSystem struct {
+	ctx context.Context
 }
 
-func (FileSystem) Open(filename string) (io.ReadCloser, error) {
+func NewFileSystem(ctx context.Context) FileSystem {
+	return FileSystem{
+		ctx: ctx,
+	}
+}
+
+func (fs FileSystem) Open(filename string) (io.ReadCloser, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, errors.Wrap(err, "fail to open file")
+		return nil, errors.Wrap(fs.ctx, err, "open file")
 	}
 	return file, nil
 }

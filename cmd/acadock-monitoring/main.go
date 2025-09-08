@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -11,8 +10,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni/v3"
 
+	"github.com/Scalingo/acadock-monitoring/cgroup"
 	"github.com/Scalingo/acadock-monitoring/config"
 	"github.com/Scalingo/acadock-monitoring/cpu"
+	"github.com/Scalingo/acadock-monitoring/docker"
 	"github.com/Scalingo/acadock-monitoring/filters"
 	"github.com/Scalingo/acadock-monitoring/mem"
 	"github.com/Scalingo/acadock-monitoring/net"
@@ -39,21 +40,11 @@ func main() {
 	ctx := logger.ToCtx(context.Background(), log)
 
 	doProfile := flag.Bool("profile", false, "profile app")
-	nsIfaceID := flag.String("ns-iface-id", "", "<pid>")
 	flag.Parse()
 
-	if *nsIfaceID != "" {
-		ifaceID, err := net.NsIfaceIDByPID(*nsIfaceID)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		fmt.Print(ifaceID)
-		return
-	}
-
-	hostCPU := procfs.NewCPUStatReader()
-	hostMemory := procfs.NewMemInfoReader()
-	hostLoadAvg := procfs.NewLoadAvgReader()
+	hostCPU := procfs.NewCPUStatReader(ctx)
+	hostMemory := procfs.NewMemInfoReader(ctx)
+	hostLoadAvg := procfs.NewLoadAvgReader(ctx)
 	queueLength, err := filters.NewExponentialSmoothing(procfs.FilterWrap(hostLoadAvg),
 		filters.WithQueueLength(config.QueueLengthElementsNeeded),
 		filters.WithAverageConfig(config.QueueLengthPointsPerSample, config.QueueLengthSamplingInterval),
@@ -61,11 +52,14 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	go queueLength.Start(ctx)
-	cpuMonitor := cpu.NewCPUUsageMonitor(hostCPU)
+
+	containerRepository := docker.NewContainerRepository()
+	cgroupStatsReader := cgroup.NewStatsReader()
+	go containerRepository.StartListeningToNewContainers(ctx)
+	cpuMonitor := cpu.NewCPUUsageMonitor(containerRepository, hostCPU, cgroupStatsReader)
 	go cpuMonitor.Start(ctx)
-	netMonitor := net.NewNetMonitor()
+	netMonitor := net.NewNetMonitor(ctx, containerRepository)
 	go netMonitor.Start()
 	memMonitor := mem.NewMemoryUsageGetter()
 
