@@ -2,6 +2,12 @@
 
 ## To Be Released
 
+## v2.0.1 - 2025-09-09
+
+* dist(cgo) Disable CGO to build binaries
+* dist(gorelease) Use new template for archive names
+* logging(debug) Remove debug output
+
 ## v2.0.0 - 2025-09-08
 
 * deps(dependabot) Various upgrades
