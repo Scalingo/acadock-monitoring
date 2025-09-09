@@ -119,7 +119,6 @@ func (e *ExponentialSmoothing) Read(ctx context.Context) (float64, error) {
 	if len(values) < e.queueLength {
 		return 0.0, ErrNotEnoughMetrics
 	}
-	fmt.Printf("%+v", values)
 
 	alpha := math.Exp(float64(-1 * len(values)))
 
