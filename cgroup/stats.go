@@ -42,7 +42,7 @@ func (e StatsReaderError) Unwrap() error {
 func (r *StatsReaderImpl) GetStats(ctx context.Context, containerID string) (Stats, error) {
 	manager, err := NewManager(ctx, containerID)
 	if err != nil {
-		return Stats{}, errors.Wrap(ctx, err, "create cgroup manager")
+		return Stats{}, StatsReaderError{err: errors.Wrap(ctx, err, "create cgroup manager")}
 	}
 	var stats Stats
 	if manager.IsV2() {

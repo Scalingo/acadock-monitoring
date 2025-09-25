@@ -122,6 +122,7 @@ func (m *CPUUsageMonitor) monitorContainerCPU(ctx context.Context, id string) {
 			if errors.As(err, &cgroupStatsErr) {
 				log.WithError(err).Infof("Stop monitoring CPU with error")
 				m.cleanMonitoringData(id)
+				return
 			} else if err != nil {
 				// No Error logging to prevent spamming
 				log.WithError(err).Info("Fail to update container CPU usage")

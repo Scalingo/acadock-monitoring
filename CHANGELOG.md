@@ -2,6 +2,10 @@
 
 ## To Be Released
 
+## v2.0.2 - 2025-09-25
+
+* Correctly handle error when CPU monitoring fails because cgroup has been deleted (container stopped)
+
 ## v2.0.1 - 2025-09-09
 
 * dist(cgo) Disable CGO to build binaries

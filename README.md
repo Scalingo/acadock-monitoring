@@ -1,4 +1,4 @@
-# Acadock Monitoring - Docker container monitoring v2.0.1
+# Acadock Monitoring - Docker container monitoring v2.0.2
 
 This webservice provides live data on Docker containers. It takes
 data from the Linux kernel control groups and from the namespace of
@@ -88,7 +88,7 @@ Bump new version number in:
 Commit, tag and create a new release:
 
 ```sh
-version="2.0.1"
+version="2.0.2"
 
 git switch --create release/${version}
 git add CHANGELOG.md README.md
