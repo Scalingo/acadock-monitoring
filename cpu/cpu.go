@@ -56,7 +56,7 @@ func (m *CPUUsageMonitor) Start(ctx context.Context) {
 		case docker.ContainerActionStart:
 			ctx, cancel := context.WithCancel(ctx)
 			cancels[event.ContainerID] = cancel
-			log.Infof("Start monitoring CPU")
+			log.Info("Start monitoring CPU")
 			go m.monitorContainerCPU(ctx, event.ContainerID)
 		case docker.ContainerActionStop:
 			log.Info("Stop monitoring CPU")
