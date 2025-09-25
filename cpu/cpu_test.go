@@ -79,13 +79,9 @@ func TestCPUUsageMonitor_Start_Shutdown(t *testing.T) {
 	dockerID := "1"
 	config.RefreshTime = 100 * time.Millisecond
 
-	// 10% usage
-	for i := 1; i < 10; i++ {
-		cpuStatsReader.EXPECT().Read(gomock.Any()).Return(procfs.CPUStats{}, nil).AnyTimes()
-
-		err := errors.New("cgroup error")
-		cgroupStatsReader.EXPECT().GetStats(gomock.Any(), dockerID).Return(cgroup.Stats{}, cgroup.NewStatsReaderError(err)).MaxTimes(1)
-	}
+	cpuStatsReader.EXPECT().Read(gomock.Any()).Return(procfs.CPUStats{}, nil).AnyTimes()
+	err := errors.New("cgroup error")
+	cgroupStatsReader.EXPECT().GetStats(gomock.Any(), dockerID).Return(cgroup.Stats{}, cgroup.NewStatsReaderError(err)).MaxTimes(1)
 
 	eventsChan := make(chan docker.ContainerEvent)
 	containerRepository.EXPECT().RegisterToContainersStream(gomock.Any()).Return(eventsChan)
