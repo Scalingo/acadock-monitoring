@@ -56,7 +56,7 @@ func (m *CPUUsageMonitor) Start(ctx context.Context) {
 		case docker.ContainerActionStart:
 			ctx, cancel := context.WithCancel(ctx)
 			cancels[event.ContainerID] = cancel
-			log.Infof("Start monitoring CPU")
+			log.Info("Start monitoring CPU")
 			go m.monitorContainerCPU(ctx, event.ContainerID)
 		case docker.ContainerActionStop:
 			log.Info("Stop monitoring CPU")
@@ -122,6 +122,7 @@ func (m *CPUUsageMonitor) monitorContainerCPU(ctx context.Context, id string) {
 			if errors.As(err, &cgroupStatsErr) {
 				log.WithError(err).Infof("Stop monitoring CPU with error")
 				m.cleanMonitoringData(id)
+				return
 			} else if err != nil {
 				// No Error logging to prevent spamming
 				log.WithError(err).Info("Fail to update container CPU usage")

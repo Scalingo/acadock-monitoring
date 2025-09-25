@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -63,6 +64,47 @@ func TestCPUUsageMonitor_Start(t *testing.T) {
 	usage, err := monitor.GetContainerUsage(dockerID)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, usage.UsageInPercents, 10)
+
+	// Check that the context does stop the Monitor
+	cancel()
+	wg.Wait()
+}
+
+func TestCPUUsageMonitor_Start_Shutdown(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	cgroupStatsReader := cgroupmock.NewMockStatsReader(ctrl)
+	cpuStatsReader := procfs.NewMockCPUStat(ctrl)
+	containerRepository := dockermock.NewMockContainerRepository(ctrl)
+	dockerID := "1"
+	config.RefreshTime = 100 * time.Millisecond
+
+	cpuStatsReader.EXPECT().Read(gomock.Any()).Return(procfs.CPUStats{}, nil).AnyTimes()
+	err := errors.New("cgroup error")
+	cgroupStatsReader.EXPECT().GetStats(gomock.Any(), dockerID).Return(cgroup.Stats{}, cgroup.NewStatsReaderError(err)).MaxTimes(1)
+
+	eventsChan := make(chan docker.ContainerEvent)
+	containerRepository.EXPECT().RegisterToContainersStream(gomock.Any()).Return(eventsChan)
+	go func() {
+		eventsChan <- docker.ContainerEvent{ContainerID: dockerID, Action: docker.ContainerActionStart}
+		close(eventsChan)
+	}()
+
+	monitor := NewCPUUsageMonitor(containerRepository, cpuStatsReader, cgroupStatsReader)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		monitor.Start(ctx)
+		wg.Done()
+	}()
+
+	// After 2 cycles it must have accurate CPU information
+	time.Sleep(2 * config.RefreshTime)
+	usage, err := monitor.GetContainerUsage(dockerID)
+	require.NoError(t, err)
+	require.Zero(t, usage)
 
 	// Check that the context does stop the Monitor
 	cancel()

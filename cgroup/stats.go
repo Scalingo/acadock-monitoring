@@ -39,10 +39,14 @@ func (e StatsReaderError) Unwrap() error {
 	return e.err
 }
 
+func NewStatsReaderError(err error) StatsReaderError {
+	return StatsReaderError{err: err}
+}
+
 func (r *StatsReaderImpl) GetStats(ctx context.Context, containerID string) (Stats, error) {
 	manager, err := NewManager(ctx, containerID)
 	if err != nil {
-		return Stats{}, errors.Wrap(ctx, err, "create cgroup manager")
+		return Stats{}, NewStatsReaderError(errors.Wrap(ctx, err, "create cgroup manager"))
 	}
 	var stats Stats
 	if manager.IsV2() {
@@ -51,7 +55,7 @@ func (r *StatsReaderImpl) GetStats(ctx context.Context, containerID string) (Sta
 		stats, err = r.getCgroupV1Stats(ctx, manager)
 	}
 	if err != nil {
-		return Stats{}, StatsReaderError{err: errors.Wrap(ctx, err, "get cgroup stats")}
+		return Stats{}, NewStatsReaderError(errors.Wrap(ctx, err, "get cgroup stats"))
 	}
 	return stats, nil
 }
