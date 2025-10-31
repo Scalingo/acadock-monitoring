@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	docker "github.com/Scalingo/acadock-monitoring/docker"
+	docker "github.com/Scalingo/acadock-monitoring/v2/docker"
 	gomock "github.com/golang/mock/gomock"
 )
 

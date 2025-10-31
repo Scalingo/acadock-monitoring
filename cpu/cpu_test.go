@@ -10,12 +10,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Scalingo/acadock-monitoring/cgroup"
-	"github.com/Scalingo/acadock-monitoring/cgroup/cgroupmock"
-	"github.com/Scalingo/acadock-monitoring/config"
-	"github.com/Scalingo/acadock-monitoring/docker"
-	"github.com/Scalingo/acadock-monitoring/docker/dockermock"
-	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/Scalingo/acadock-monitoring/v2/cgroup"
+	"github.com/Scalingo/acadock-monitoring/v2/cgroup/cgroupmock"
+	"github.com/Scalingo/acadock-monitoring/v2/config"
+	"github.com/Scalingo/acadock-monitoring/v2/docker"
+	"github.com/Scalingo/acadock-monitoring/v2/docker/dockermock"
+	"github.com/Scalingo/acadock-monitoring/v2/procfs"
 )
 
 func TestCPUUsageMonitor_Start(t *testing.T) {

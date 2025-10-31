@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Scalingo/acadock-monitoring/procfs/procfsmock"
+	"github.com/Scalingo/acadock-monitoring/v2/procfs/procfsmock"
 
 	"github.com/golang/mock/gomock"
 )

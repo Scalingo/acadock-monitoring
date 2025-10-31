@@ -5,7 +5,7 @@ import (
 
 	docker "github.com/docker/docker/client"
 
-	"github.com/Scalingo/acadock-monitoring/config"
+	"github.com/Scalingo/acadock-monitoring/v2/config"
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 

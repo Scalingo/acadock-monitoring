@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Scalingo/acadock-monitoring/config"
+	"github.com/Scalingo/acadock-monitoring/v2/config"
 
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"

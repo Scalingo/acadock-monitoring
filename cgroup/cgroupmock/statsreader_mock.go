@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	cgroup "github.com/Scalingo/acadock-monitoring/cgroup"
+	cgroup "github.com/Scalingo/acadock-monitoring/v2/cgroup"
 	gomock "github.com/golang/mock/gomock"
 )
 

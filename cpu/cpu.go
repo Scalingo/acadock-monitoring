@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Scalingo/acadock-monitoring/cgroup"
-	"github.com/Scalingo/acadock-monitoring/client"
-	"github.com/Scalingo/acadock-monitoring/config"
-	"github.com/Scalingo/acadock-monitoring/docker"
-	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/Scalingo/acadock-monitoring/v2/cgroup"
+	"github.com/Scalingo/acadock-monitoring/v2/client"
+	"github.com/Scalingo/acadock-monitoring/v2/config"
+	"github.com/Scalingo/acadock-monitoring/v2/docker"
+	"github.com/Scalingo/acadock-monitoring/v2/procfs"
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )

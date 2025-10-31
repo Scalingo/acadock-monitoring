@@ -3,8 +3,8 @@ package mem
 import (
 	"context"
 
-	"github.com/Scalingo/acadock-monitoring/cgroup"
-	"github.com/Scalingo/acadock-monitoring/client"
+	"github.com/Scalingo/acadock-monitoring/v2/cgroup"
+	"github.com/Scalingo/acadock-monitoring/v2/client"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 )

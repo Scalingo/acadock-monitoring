@@ -7,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Scalingo/acadock-monitoring/client"
-	"github.com/Scalingo/acadock-monitoring/config"
-	"github.com/Scalingo/acadock-monitoring/docker"
+	"github.com/Scalingo/acadock-monitoring/v2/client"
+	"github.com/Scalingo/acadock-monitoring/v2/config"
+	"github.com/Scalingo/acadock-monitoring/v2/docker"
 	"github.com/Scalingo/go-netstat"
 	"github.com/Scalingo/go-utils/logger"
 )
