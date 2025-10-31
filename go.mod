@@ -1,4 +1,4 @@
-module github.com/Scalingo/acadock-monitoring
+module github.com/Scalingo/acadock-monitoring/v2
 
 go 1.24
 
