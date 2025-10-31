@@ -1,11 +1,11 @@
 package webserver
 
 import (
-	"github.com/Scalingo/acadock-monitoring/cpu"
-	"github.com/Scalingo/acadock-monitoring/filters"
-	"github.com/Scalingo/acadock-monitoring/mem"
-	"github.com/Scalingo/acadock-monitoring/net"
-	"github.com/Scalingo/acadock-monitoring/procfs"
+	"github.com/Scalingo/acadock-monitoring/v2/cpu"
+	"github.com/Scalingo/acadock-monitoring/v2/filters"
+	"github.com/Scalingo/acadock-monitoring/v2/mem"
+	"github.com/Scalingo/acadock-monitoring/v2/net"
+	"github.com/Scalingo/acadock-monitoring/v2/procfs"
 )
 
 type Controller struct {

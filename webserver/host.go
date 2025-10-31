@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Scalingo/acadock-monitoring/client"
-	"github.com/Scalingo/acadock-monitoring/docker"
-	"github.com/Scalingo/acadock-monitoring/filters"
+	"github.com/Scalingo/acadock-monitoring/v2/client"
+	"github.com/Scalingo/acadock-monitoring/v2/docker"
+	"github.com/Scalingo/acadock-monitoring/v2/filters"
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )
