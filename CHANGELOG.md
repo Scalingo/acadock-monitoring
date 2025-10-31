@@ -2,6 +2,12 @@
 
 ## To Be Released
 
+## v2.0.3 - 2025-10-31
+
+* Update module name to add /v2
+* Deps: go.opentelemetry.io/auto/sdk to v1.2.1 (indirect)
+* Deps: golang.org/x/sync to v0.17.0 (indirect)
+
 ## v2.0.2 - 2025-09-25
 
 * Correctly handle error when CPU monitoring fails because cgroup has been deleted (container stopped)
