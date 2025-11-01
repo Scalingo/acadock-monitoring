@@ -23,14 +23,14 @@ github.com/Scalingo/go-utils/errors/v3
 # github.com/Scalingo/go-utils/graceful v1.3.1
 ## explicit; go 1.24
 github.com/Scalingo/go-utils/graceful
-# github.com/Scalingo/go-utils/logger v1.9.1
-## explicit; go 1.24
+# github.com/Scalingo/go-utils/logger v1.11.0
+## explicit; go 1.24.0
 github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.1.1
 ## explicit; go 1.24
 github.com/Scalingo/go-utils/security
-# github.com/cilium/ebpf v0.19.0
-## explicit; go 1.23.0
+# github.com/cilium/ebpf v0.20.0
+## explicit; go 1.24.0
 github.com/cilium/ebpf
 github.com/cilium/ebpf/asm
 github.com/cilium/ebpf/btf
@@ -73,7 +73,7 @@ github.com/davecgh/go-spew/spew
 # github.com/distribution/reference v0.6.0
 ## explicit; go 1.20
 github.com/distribution/reference
-# github.com/docker/docker v28.4.0+incompatible
+# github.com/docker/docker v28.5.1+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
@@ -120,7 +120,7 @@ github.com/go-logr/stdr
 # github.com/godbus/dbus/v5 v5.1.0
 ## explicit; go 1.12
 github.com/godbus/dbus/v5
-# github.com/gofrs/uuid/v5 v5.3.2
+# github.com/gofrs/uuid/v5 v5.4.0
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5
 # github.com/gogo/protobuf v1.3.2
@@ -219,13 +219,11 @@ go.opentelemetry.io/otel/trace/internal/telemetry
 go.opentelemetry.io/otel/trace/noop
 # go.uber.org/goleak v1.3.0
 ## explicit; go 1.20
-# golang.org/x/sync v0.17.0
-## explicit; go 1.24.0
-# golang.org/x/sys v0.36.0
+# golang.org/x/sys v0.37.0
 ## explicit; go 1.24.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/time v0.13.0
+# golang.org/x/time v0.14.0
 ## explicit; go 1.24.0
 # gopkg.in/errgo.v1 v1.0.1
 ## explicit
