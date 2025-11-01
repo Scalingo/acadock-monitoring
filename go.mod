@@ -1,15 +1,15 @@
 module github.com/Scalingo/acadock-monitoring/v2
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/Scalingo/go-handlers v1.9.1
 	github.com/Scalingo/go-netstat v0.0.0-20230914125908-9d8b87751191
 	github.com/Scalingo/go-utils/errors/v3 v3.1.1
 	github.com/Scalingo/go-utils/graceful v1.3.1
-	github.com/Scalingo/go-utils/logger v1.9.1
+	github.com/Scalingo/go-utils/logger v1.11.0
 	github.com/containerd/cgroups v1.1.0
-	github.com/docker/docker v28.4.0+incompatible
+	github.com/docker/docker v28.5.1+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/sirupsen/logrus v1.9.3
@@ -25,7 +25,7 @@ require (
 	github.com/Scalingo/go-utils/crypto v1.1.1 // indirect
 	github.com/Scalingo/go-utils/errors/v2 v2.5.1 // indirect
 	github.com/Scalingo/go-utils/security v1.1.1 // indirect
-	github.com/cilium/ebpf v0.19.0 // indirect
+	github.com/cilium/ebpf v0.20.0 // indirect
 	github.com/cloudflare/tableflip v1.2.3 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
@@ -40,7 +40,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/gofrs/uuid/v5 v5.3.2 // indirect
+	github.com/gofrs/uuid/v5 v5.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/sys/atomicwriter v0.1.0 // indirect
@@ -59,9 +59,8 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/time v0.13.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
