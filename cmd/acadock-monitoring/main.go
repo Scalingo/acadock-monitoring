@@ -33,7 +33,7 @@ func (m *JSONContentTypeMiddleware) ServeHTTP(res http.ResponseWriter, req *http
 
 func main() {
 	if config.Debug {
-		_ = os.Setenv("LOGGER_LEVEL", "debug")
+		os.Setenv("LOGGER_LEVEL", "debug")
 	}
 
 	log := logger.Default()
@@ -112,7 +112,6 @@ func main() {
 
 	err = s.ListenAndServe(ctx, "tcp", ":"+config.ENV["PORT"], n)
 	if err != nil {
-		log.WithError(err).Error("fail to stop http server")
+		log.WithError(err).Error("Fail to stop http server")
 	}
-
 }
