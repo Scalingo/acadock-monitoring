@@ -1,2 +1,2 @@
 go.sum @scalingo/team-ist
-github/workflows/* @scalingo/team-ist
+.github/workflows/* @scalingo/team-ist
