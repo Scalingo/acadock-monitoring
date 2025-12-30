@@ -94,7 +94,7 @@ git switch --create release/${version}
 git add CHANGELOG.md README.md
 git commit -m "Bump v${version}"
 git push --set-upstream origin release/${version}
-gh pr create --reviewer=EtienneM --fill-first
+gh pr create --reviewer=Scalingo/team-ist --fill-first
 ```
 
 Once the pull request merged, you can tag the new release.
