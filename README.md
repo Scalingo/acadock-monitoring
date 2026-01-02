@@ -114,4 +114,4 @@ goreleaser release --skip=publish,announce,sign --clean
 
 On the web interface, unset the pre-release checkbox, check the "Set as the latest release" checkbox, and upload the archives in the `dist` folder.
 
-Last, update the default version installed in the [cookbook](https://github.com/Scalingo/cookbook-acadock).
+Last, update the default version installed in the kitchen.
