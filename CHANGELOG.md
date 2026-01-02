@@ -2,6 +2,10 @@
 
 ## To Be Released
 
+## v2.0.4 - 2025-12-30
+
+* chore(deps): various updates
+
 ## v2.0.3 - 2025-10-31
 
 * Update module name to add /v2
