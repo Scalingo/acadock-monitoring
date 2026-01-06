@@ -6,15 +6,15 @@ import (
 
 	"github.com/Scalingo/acadock-monitoring/v2/config"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 type Manager struct {
-	cgroupV1Manager cgroups.Cgroup
-	cgroupV2Manager *cgroupsv2.Manager
+	cgroupV1Manager cgroup1.Cgroup
+	cgroupV2Manager *cgroup2.Manager
 	v2              bool
 	systemd         bool
 }
@@ -27,11 +27,14 @@ func NewManager(ctx context.Context, containerID string) (*Manager, error) {
 	}
 
 	if manager.v2 {
-		manager.cgroupV2Manager, err = cgroupsv2.LoadSystemd("/system.slice", fmt.Sprintf("docker-%s.scope", containerID))
+		manager.cgroupV2Manager, err = cgroup2.LoadSystemd("/system.slice", fmt.Sprintf("docker-%s.scope", containerID))
 	} else if manager.systemd {
-		manager.cgroupV1Manager, err = cgroups.Load(cgroups.Systemd, cgroups.Slice("system.slice", fmt.Sprintf("docker-%s.scope", containerID)))
+		manager.cgroupV1Manager, err = cgroup1.Load(
+			cgroup1.Slice("system.slice", fmt.Sprintf("docker-%s.scope", containerID)),
+			cgroup1.WithHierarchy(cgroup1.Systemd),
+		)
 	} else {
-		manager.cgroupV1Manager, err = cgroups.Load(cgroups.V1, cgroups.StaticPath("docker/"+containerID))
+		manager.cgroupV1Manager, err = cgroup1.Load(cgroup1.StaticPath("docker/" + containerID))
 	}
 	if err != nil {
 		return nil, errors.Wrapf(ctx, err, "load cgroup, systemd: %v, v2: %v", manager.systemd, manager.v2)
@@ -44,11 +47,11 @@ func (m *Manager) IsV2() bool {
 	return m.v2
 }
 
-func (m *Manager) V1Manager() cgroups.Cgroup {
+func (m *Manager) V1Manager() cgroup1.Cgroup {
 	return m.cgroupV1Manager
 }
 
-func (m *Manager) V2Manager() *cgroupsv2.Manager {
+func (m *Manager) V2Manager() *cgroup2.Manager {
 	return m.cgroupV2Manager
 }
 

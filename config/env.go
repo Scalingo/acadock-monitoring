@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/containerd/cgroups"
+	"github.com/containerd/cgroups/v3"
 )
 
 var ENV = map[string]string{
