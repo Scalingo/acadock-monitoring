@@ -8,7 +8,7 @@ require (
 	github.com/Scalingo/go-utils/errors/v3 v3.1.1
 	github.com/Scalingo/go-utils/graceful v1.3.1
 	github.com/Scalingo/go-utils/logger v1.11.0
-	github.com/containerd/cgroups v1.1.0
+	github.com/containerd/cgroups/v3 v3.1.2
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -42,9 +42,9 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/gofrs/uuid/v5 v5.4.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/sys/atomicwriter v0.1.0 // indirect
+	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
 	github.com/morikuni/aec v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -63,9 +63,8 @@ require (
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
-
-replace github.com/opencontainers/runtime-spec v1.3.0 => github.com/opencontainers/runtime-spec v1.2.1
