@@ -2,6 +2,11 @@
 
 ## To be Released
 
+## v3.2.0
+
+* feat(errors) Add `Join` wrapping `errors.Join` from standard library
+* feat(errctx) `RootCtxOrFallback` is now compatible with `Join(...error)` and returns context of the first error
+
 ## v.3.1.1
 
 * feat(errctx) RootCtxOrFallback is now compatible with different versions of errors package.

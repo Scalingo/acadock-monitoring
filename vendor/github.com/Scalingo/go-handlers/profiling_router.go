@@ -26,44 +26,45 @@ type pprofAuthentication struct {
 func NewProfilingRouter(ctx context.Context) (*Router, error) {
 	log := logger.Get(ctx)
 
-	prof := new(profiling)
+	prof := profiling{}
 
-	err := prof.initialize(ctx)
+	err := prof.initializeFromEnv(ctx)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "initialize pprof profiling")
 	}
 
+	pprofRouter := NewRouter(log)
+
 	if !prof.isActivable() {
 		log.Info("Profiling router is not activable")
-		return new(Router), nil
+		return pprofRouter, nil
 	}
 
-	r := NewRouter(log)
-
-	log.Info("Add basic authentication middleware to access profiling routes")
-	r.Use(ErrorMiddleware)
-	r.Use(AuthMiddleware(func(user, password string) bool {
+	log.Info("Add Basic Auth middleware to access profiling routes")
+	pprofRouter.Use(ErrorMiddleware)
+	pprofRouter.Use(AuthMiddleware(func(user, password string) bool {
 		return user == prof.auth.username && password == prof.auth.password
 	}))
 
 	log.Info("Enabling pprof endpoints under " + PprofRoutePrefix)
 
-	r.HandleFunc(PprofRoutePrefix+"/", index)
-	r.HandleFunc(PprofRoutePrefix+"/profile", profile)
-	r.HandleFunc(PprofRoutePrefix+"/symbol", symbol)
-	r.HandleFunc(PprofRoutePrefix+"/cmdline", cmdline)
-	r.HandleFunc(PprofRoutePrefix+"/trace", trace)
-	r.HandleFunc(PprofRoutePrefix+"/allocs", allocs)
-	r.HandleFunc(PprofRoutePrefix+"/heap", heap)
-	r.HandleFunc(PprofRoutePrefix+"/mutex", mutex)
-	r.HandleFunc(PprofRoutePrefix+"/goroutine", goroutine)
-	r.HandleFunc(PprofRoutePrefix+"/threadcreate", threadcreate)
-	r.HandleFunc(PprofRoutePrefix+"/block", block)
+	pprofRouter.HandleFunc(PprofRoutePrefix, redirectToIndex)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/", index)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/profile", profile)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/symbol", symbol)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/cmdline", cmdline)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/trace", trace)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/allocs", allocs)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/heap", heap)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/mutex", mutex)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/goroutine", goroutine)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/threadcreate", threadcreate)
+	pprofRouter.HandleFunc(PprofRoutePrefix+"/block", block)
 
-	return r, nil
+	return pprofRouter, nil
 }
 
-func (prof *profiling) initialize(ctx context.Context) error {
+func (prof *profiling) initializeFromEnv(ctx context.Context) error {
 	pprofEnable := os.Getenv("PPROF_ENABLED")
 	if pprofEnable == "" {
 		return nil
@@ -82,6 +83,11 @@ func (prof *profiling) initialize(ctx context.Context) error {
 
 func (prof *profiling) isActivable() bool {
 	return prof.enable && prof.auth.username != "" && prof.auth.password != ""
+}
+
+func redirectToIndex(w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+	http.Redirect(w, r, PprofRoutePrefix+"/", http.StatusPermanentRedirect)
+	return nil
 }
 
 func index(w http.ResponseWriter, r *http.Request, vars map[string]string) error {

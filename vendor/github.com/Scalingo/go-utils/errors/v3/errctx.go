@@ -68,6 +68,15 @@ func RootCtxOrFallback(ctx context.Context, err error) context.Context {
 			continue
 		}
 
+		joinErr, ok := err.(interface{ Unwrap() []error })
+		if ok {
+			unwrapped := joinErr.Unwrap()
+			if len(unwrapped) > 0 {
+				err = unwrapped[0]
+				continue
+			}
+			break
+		}
 		// If err is matching the `ErrCtx` interface type, unwrap it and get its context.
 		// We compare with the interface to match different versions of ErrCtx package.
 		ctxerr, ok := err.(interface {
