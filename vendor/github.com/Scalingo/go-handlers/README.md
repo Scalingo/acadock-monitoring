@@ -1,6 +1,4 @@
-# Custom Router and Handler v1.9.1
-
-[ ![Codeship Status for Scalingo/go-handlers](https://app.codeship.com/projects/9bd8e5d0-d609-0135-e8d1-2aadb9628cc1/status?branch=master)](https://app.codeship.com/projects/263154)
+# Custom Router and Handler v1.10.0
 
 ## Advantages
 
@@ -95,6 +93,70 @@ router := handlers.NewRouter(logger)
 router.Use(MiddlewareFunc(ErrorHandler))
 ```
 
+### Profiling router (pprof)
+
+This package provides a ready-to-use router exposing Go's `net/http/pprof` endpoints behind HTTP Basic Auth.
+
+Profiling endpoints are enabled only if all the following environment variables are set:
+
+- `PPROF_ENABLED`: `true` to enable
+- `PPROF_USERNAME`: username for Basic Auth
+- `PPROF_PASSWORD`: password for Basic Auth
+
+If one of these variables is missing (or if `PPROF_ENABLED` is `false`), the profiling router is returned but has no routes registered (requests will return `404`).
+
+Create the router with `NewProfilingRouter(ctx)` and mount it on your main router.
+
+```go
+import (
+	"context"
+	"net/http"
+
+	"github.com/Scalingo/go-handlers"
+	"github.com/Scalingo/go-utils/logger"
+)
+
+func main() {
+	log := logger.Default()
+	ctx := logger.ToCtx(context.Background(), log)
+
+	router := handlers.NewRouter(log)
+
+	pprofRouter, err := handlers.NewProfilingRouter(ctx)
+	if err != nil {
+		log.WithError(err).Error("Fail to start profiling routes")
+	} else {
+		log.Info("Adding profiling routes to the web server")
+		// Route all /debug/pprof/* requests to the profiling router.
+		router.PathPrefix(handlers.PprofRoutePrefix).Handler(pprofRouter)
+	}
+
+	_ = http.ListenAndServe(":8080", router)
+}
+```
+
+The profiling endpoints are exposed under `handlers.PprofRoutePrefix` (currently `/debug/pprof`).
+
+When enabled, the following endpoints are available under `/debug/pprof`:
+
+- `/` (index)
+- `/profile`
+- `/symbol`
+- `/cmdline`
+- `/trace`
+- `/allocs`
+- `/heap`
+- `/mutex`
+- `/goroutine`
+- `/threadcreate`
+- `/block`
+
+Example (CPU profile):
+
+```sh
+go tool pprof -http=:12345 http://PPROF_USERNAME:PPROF_PASSWORD@localhost:8080/debug/pprof/profile?seconds=30
+```
+
 ## Release a New Version
 
 Bump new version number in `CHANGELOG.md` and `README.md`.
@@ -102,13 +164,13 @@ Bump new version number in `CHANGELOG.md` and `README.md`.
 Commit, tag and create a new release:
 
 ```sh
-version="1.9.1"
+version="1.10.0"
 
 git switch --create release/${version}
 git add CHANGELOG.md README.md
-git commit -m "Bump v${version}"
+git commit --message="Bump v${version}"
 git push --set-upstream origin release/${version}
-gh pr create --reviewer=EtienneM --title "$(git log -1 --pretty=%B)"
+gh pr create --reviewer=Scalingo/team-ist --title "$(git log -1 --pretty=%B)"
 ```
 
 Once the pull request merged, you can tag the new release.

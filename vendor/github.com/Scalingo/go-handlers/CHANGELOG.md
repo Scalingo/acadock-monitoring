@@ -2,6 +2,20 @@
 
 ## To be Released
 
+## v1.11.0
+
+- feat(otel) Improve opentelemetry instrumentation by integrating with gorilla mux, add missing http.route attribute
+
+## v1.10.0
+
+- deprecation(constructor) Add deprecation command for `New()` method
+- feat(otel) Add opentelemetry instrumentation by default for all requests served by the server
+
+## v1.9.2
+
+- fix(profiling_router): correctly initialize the empty router
+- chore(deps): various dependencies updates
+
 ## v1.9.1
 
 - build(go.mod): update github.com/Scalingo/go-utils/errors from v3.0.0 to v3.1.1
