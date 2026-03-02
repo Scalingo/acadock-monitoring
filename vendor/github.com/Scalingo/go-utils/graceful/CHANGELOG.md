@@ -2,6 +2,11 @@
 
 ## To be released
 
+## v1.3.2
+
+* build(deps): update `github.com/Scalingo/go-utils/errors` from v2 to v3
+* refactor(graceful): small nitpicks for consistency
+
 ## v1.3.1
 
 * chore(go): corrective bump - Go version regression from 1.24.3 to 1.24
