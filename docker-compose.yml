@@ -4,7 +4,8 @@ services:
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /proc:/host/proc:ro
-      - /var/run/docker.sock:/host/docker.sock
+      - /var/run/docker.sock:/host/docker.sock:ro
+      - /var/run/docker.pid:/var/run/docker.pid:ro
       - .:/go/src/github.com/Scalingo/acadock-monitoring
     env_file:
       - .env
