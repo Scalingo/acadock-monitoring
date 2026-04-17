@@ -1,4 +1,4 @@
-# Acadock Monitoring - Docker container monitoring v2.0.4
+# Acadock Monitoring - Docker container monitoring v2.0.5
 
 This webservice provides live data on Docker containers. It takes
 data from the Linux kernel control groups and from the namespace of
