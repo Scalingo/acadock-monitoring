@@ -19,6 +19,8 @@ type Service struct {
 	upg         *tableflip.Upgrader
 	mx          sync.Mutex
 	wg          *sync.WaitGroup
+	prepared    bool
+	finalized   bool
 	// waitDuration is the duration which is waited for all connections to stop
 	// in order to graceful shutdown the server. If some connections are still up
 	// after this timer they'll be cut aggressively.
@@ -115,15 +117,25 @@ func (s *Service) listenAndServe(ctx context.Context, _ string, addr string, ser
 
 	log := logger.Get(ctx)
 
-	if len(s.httpServers) == 0 {
+	// Guard startup state so concurrent ListenAndServe calls run prepare() once and
+	// update prepared/httpServers/finalized atomically.
+	s.mx.Lock()
+	if !s.prepared {
 		err := s.prepare(ctx)
 		if err != nil {
+			s.mx.Unlock()
 			// purposefully do not wrap error here, as it is wrapped in prepare
 			return err
 		}
+		s.prepared = true
 	}
 
 	s.httpServers = append(s.httpServers, server)
+	shouldFinalize := !s.finalized && len(s.httpServers) == s.numServers
+	if shouldFinalize {
+		s.finalized = true
+	}
+	s.mx.Unlock()
 
 	// Listen must be called before Ready
 	ln, err := s.upg.Listen("tcp", addr)
@@ -142,7 +154,7 @@ func (s *Service) listenAndServe(ctx context.Context, _ string, addr string, ser
 		}
 	}()
 
-	if len(s.httpServers) == s.numServers {
+	if shouldFinalize {
 		err := s.finalize(ctx)
 		if err != nil {
 			// purposefully do not wrap error here, as it is wrapped in finalize
