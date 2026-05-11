@@ -3,7 +3,7 @@ package client
 import (
 	"bytes"
 
-	"github.com/docker/docker/api/types/image"
+	"github.com/moby/moby/api/types/image"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -28,8 +28,9 @@ func ImageInspectWithRawResponse(raw *bytes.Buffer) ImageInspectOption {
 
 // ImageInspectWithManifests sets manifests API option for the image inspect operation.
 // This option is only available for API version 1.48 and up.
-// With this option set, the image inspect operation response will have the
-// [image.InspectResponse.Manifests] field populated if the server is multi-platform capable.
+// With this option set, the image inspect operation response includes
+// the [image.InspectResponse.Manifests] field if the server is multi-platform
+// capable.
 func ImageInspectWithManifests(manifests bool) ImageInspectOption {
 	return imageInspectOptionFunc(func(clientOpts *imageInspectOpts) error {
 		clientOpts.apiOptions.Manifests = manifests
@@ -39,7 +40,7 @@ func ImageInspectWithManifests(manifests bool) ImageInspectOption {
 
 // ImageInspectWithPlatform sets platform API option for the image inspect operation.
 // This option is only available for API version 1.49 and up.
-// With this option set, the image inspect operation will return information for the
+// With this option set, the image inspect operation returns information for the
 // specified platform variant of the multi-platform image.
 func ImageInspectWithPlatform(platform *ocispec.Platform) ImageInspectOption {
 	return imageInspectOptionFunc(func(clientOpts *imageInspectOpts) error {
@@ -48,15 +49,21 @@ func ImageInspectWithPlatform(platform *ocispec.Platform) ImageInspectOption {
 	})
 }
 
-// ImageInspectWithAPIOpts sets the API options for the image inspect operation.
-func ImageInspectWithAPIOpts(opts image.InspectOptions) ImageInspectOption {
-	return imageInspectOptionFunc(func(clientOpts *imageInspectOpts) error {
-		clientOpts.apiOptions = opts
-		return nil
-	})
-}
-
 type imageInspectOpts struct {
 	raw        *bytes.Buffer
-	apiOptions image.InspectOptions
+	apiOptions imageInspectOptions
+}
+
+type imageInspectOptions struct {
+	// Manifests returns the image manifests.
+	Manifests bool
+
+	// Platform selects the specific platform of a multi-platform image to inspect.
+	//
+	// This option is only available for API version 1.49 and up.
+	Platform *ocispec.Platform
+}
+
+type ImageInspectResult struct {
+	image.InspectResponse
 }

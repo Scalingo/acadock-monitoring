@@ -2,55 +2,74 @@ package client
 
 import (
 	"context"
+	"io"
 	"net/url"
-
-	"github.com/docker/docker/api/types/container"
 )
 
-// ContainerStats returns near realtime stats for a given container.
-// It's up to the caller to close the io.ReadCloser returned.
-func (cli *Client) ContainerStats(ctx context.Context, containerID string, stream bool) (container.StatsResponseReader, error) {
-	containerID, err := trimID("container", containerID)
-	if err != nil {
-		return container.StatsResponseReader{}, err
-	}
+// ContainerStatsOptions holds parameters to retrieve container statistics
+// using the [Client.ContainerStats] method.
+type ContainerStatsOptions struct {
+	// Stream enables streaming [container.StatsResponse] results instead
+	// of collecting a single sample. If enabled, the client remains attached
+	// until the [ContainerStatsResult.Body] is closed or the context is
+	// cancelled.
+	Stream bool
 
-	query := url.Values{}
-	query.Set("stream", "0")
-	if stream {
-		query.Set("stream", "1")
-	}
-
-	resp, err := cli.get(ctx, "/containers/"+containerID+"/stats", query, nil)
-	if err != nil {
-		return container.StatsResponseReader{}, err
-	}
-
-	return container.StatsResponseReader{
-		Body:   resp.Body,
-		OSType: resp.Header.Get("Ostype"),
-	}, nil
+	// IncludePreviousSample asks the daemon to  collect a prior sample to populate the
+	// [container.StatsResponse.PreRead] and [container.StatsResponse.PreCPUStats]
+	// fields.
+	//
+	// It set, the daemon collects two samples at a one-second interval before
+	// returning the result. The first sample populates the PreCPUStats (“previous
+	// CPU”) field, allowing delta calculations for CPU usage. If false, only
+	// a single sample is taken and returned immediately, leaving PreRead and
+	// PreCPUStats empty.
+	//
+	// This option has no effect if Stream is enabled. If Stream is enabled,
+	// [container.StatsResponse.PreCPUStats] is never populated for the first
+	// record.
+	IncludePreviousSample bool
 }
 
-// ContainerStatsOneShot gets a single stat entry from a container.
-// It differs from `ContainerStats` in that the API should not wait to prime the stats
-func (cli *Client) ContainerStatsOneShot(ctx context.Context, containerID string) (container.StatsResponseReader, error) {
+// ContainerStatsResult holds the result from [Client.ContainerStats].
+//
+// It wraps an [io.ReadCloser] that provides one or more [container.StatsResponse]
+// objects for a container, as produced by the "GET /containers/{id}/stats" endpoint.
+// If streaming is disabled, the stream contains a single record.
+type ContainerStatsResult struct {
+	Body io.ReadCloser
+}
+
+// ContainerStats retrieves live resource usage statistics for the specified
+// container. The caller must close the [io.ReadCloser] in the returned result
+// to release associated resources.
+//
+// The underlying [io.ReadCloser] is automatically closed if the context is canceled,
+func (cli *Client) ContainerStats(ctx context.Context, containerID string, options ContainerStatsOptions) (ContainerStatsResult, error) {
 	containerID, err := trimID("container", containerID)
 	if err != nil {
-		return container.StatsResponseReader{}, err
+		return ContainerStatsResult{}, err
 	}
 
 	query := url.Values{}
-	query.Set("stream", "0")
-	query.Set("one-shot", "1")
+	if options.Stream {
+		query.Set("stream", "true")
+	} else {
+		// Note: daemons before v29.0 return an error if both set: "cannot have stream=true and one-shot=true"
+		//
+		// TODO(thaJeztah): consider making "stream=false" the default for the API as well, or using Accept Header to switch.
+		query.Set("stream", "false")
+		if !options.IncludePreviousSample {
+			query.Set("one-shot", "true")
+		}
+	}
 
 	resp, err := cli.get(ctx, "/containers/"+containerID+"/stats", query, nil)
 	if err != nil {
-		return container.StatsResponseReader{}, err
+		return ContainerStatsResult{}, err
 	}
 
-	return container.StatsResponseReader{
-		Body:   resp.Body,
-		OSType: resp.Header.Get("Ostype"),
+	return ContainerStatsResult{
+		Body: newCancelReadCloser(ctx, resp.Body),
 	}, nil
 }

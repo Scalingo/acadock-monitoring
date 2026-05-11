@@ -3,15 +3,21 @@ package client
 import (
 	"context"
 	"net/url"
-
-	"github.com/docker/docker/api/types/swarm"
 )
 
+// NodeRemoveOptions holds parameters to remove nodes with.
+type NodeRemoveOptions struct {
+	Force bool
+}
+
+// NodeRemoveResult holds the result of [Client.NodeRemove].
+type NodeRemoveResult struct{}
+
 // NodeRemove removes a Node.
-func (cli *Client) NodeRemove(ctx context.Context, nodeID string, options swarm.NodeRemoveOptions) error {
+func (cli *Client) NodeRemove(ctx context.Context, nodeID string, options NodeRemoveOptions) (NodeRemoveResult, error) {
 	nodeID, err := trimID("node", nodeID)
 	if err != nil {
-		return err
+		return NodeRemoveResult{}, err
 	}
 
 	query := url.Values{}
@@ -21,5 +27,5 @@ func (cli *Client) NodeRemove(ctx context.Context, nodeID string, options swarm.
 
 	resp, err := cli.delete(ctx, "/nodes/"+nodeID, query, nil)
 	defer ensureReaderClosed(resp)
-	return err
+	return NodeRemoveResult{}, err
 }

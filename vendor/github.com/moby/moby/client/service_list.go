@@ -5,22 +5,28 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/moby/moby/api/types/swarm"
 )
 
+// ServiceListOptions holds parameters to list services with.
+type ServiceListOptions struct {
+	Filters Filters
+
+	// Status indicates whether the server should include the service task
+	// count of running and desired tasks.
+	Status bool
+}
+
+// ServiceListResult represents the result of a service list operation.
+type ServiceListResult struct {
+	Items []swarm.Service
+}
+
 // ServiceList returns the list of services.
-func (cli *Client) ServiceList(ctx context.Context, options swarm.ServiceListOptions) ([]swarm.Service, error) {
+func (cli *Client) ServiceList(ctx context.Context, options ServiceListOptions) (ServiceListResult, error) {
 	query := url.Values{}
 
-	if options.Filters.Len() > 0 {
-		filterJSON, err := filters.ToJSON(options.Filters)
-		if err != nil {
-			return nil, err
-		}
-
-		query.Set("filters", filterJSON)
-	}
+	options.Filters.updateURLValues(query)
 
 	if options.Status {
 		query.Set("status", "true")
@@ -29,10 +35,10 @@ func (cli *Client) ServiceList(ctx context.Context, options swarm.ServiceListOpt
 	resp, err := cli.get(ctx, "/services", query, nil)
 	defer ensureReaderClosed(resp)
 	if err != nil {
-		return nil, err
+		return ServiceListResult{}, err
 	}
 
 	var services []swarm.Service
 	err = json.NewDecoder(resp.Body).Decode(&services)
-	return services, err
+	return ServiceListResult{Items: services}, err
 }

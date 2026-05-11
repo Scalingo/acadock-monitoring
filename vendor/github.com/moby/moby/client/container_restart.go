@@ -4,18 +4,38 @@ import (
 	"context"
 	"net/url"
 	"strconv"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/versions"
 )
 
-// ContainerRestart stops and starts a container again.
+// ContainerRestartOptions holds options for [Client.ContainerRestart].
+type ContainerRestartOptions struct {
+	// Signal (optional) is the signal to send to the container to (gracefully)
+	// stop it before forcibly terminating the container with SIGKILL after the
+	// timeout expires. If no value is set, the default (SIGTERM) is used.
+	Signal string `json:",omitempty"`
+
+	// Timeout (optional) is the timeout (in seconds) to wait for the container
+	// to stop gracefully before forcibly terminating it with SIGKILL.
+	//
+	// - Use nil to use the default timeout (10 seconds).
+	// - Use '-1' to wait indefinitely.
+	// - Use '0' to not wait for the container to exit gracefully, and
+	//   immediately proceeds to forcibly terminating the container.
+	// - Other positive values are used as timeout (in seconds).
+	Timeout *int `json:",omitempty"`
+}
+
+// ContainerRestartResult holds the result of [Client.ContainerRestart],
+type ContainerRestartResult struct {
+	// Add future fields here.
+}
+
+// ContainerRestart stops, and starts a container again.
 // It makes the daemon wait for the container to be up again for
 // a specific amount of time, given the timeout.
-func (cli *Client) ContainerRestart(ctx context.Context, containerID string, options container.StopOptions) error {
+func (cli *Client) ContainerRestart(ctx context.Context, containerID string, options ContainerRestartOptions) (ContainerRestartResult, error) {
 	containerID, err := trimID("container", containerID)
 	if err != nil {
-		return err
+		return ContainerRestartResult{}, err
 	}
 
 	query := url.Values{}
@@ -23,19 +43,12 @@ func (cli *Client) ContainerRestart(ctx context.Context, containerID string, opt
 		query.Set("t", strconv.Itoa(*options.Timeout))
 	}
 	if options.Signal != "" {
-		// Make sure we negotiated (if the client is configured to do so),
-		// as code below contains API-version specific handling of options.
-		//
-		// Normally, version-negotiation (if enabled) would not happen until
-		// the API request is made.
-		if err := cli.checkVersion(ctx); err != nil {
-			return err
-		}
-		if versions.GreaterThanOrEqualTo(cli.version, "1.42") {
-			query.Set("signal", options.Signal)
-		}
+		query.Set("signal", options.Signal)
 	}
 	resp, err := cli.post(ctx, "/containers/"+containerID+"/restart", query, nil, nil)
-	ensureReaderClosed(resp)
-	return err
+	defer ensureReaderClosed(resp)
+	if err != nil {
+		return ContainerRestartResult{}, err
+	}
+	return ContainerRestartResult{}, nil
 }

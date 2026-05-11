@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 
-	"github.com/docker/docker/api/types/image"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -18,7 +17,16 @@ func (f imageLoadOptionFunc) Apply(o *imageLoadOpts) error {
 }
 
 type imageLoadOpts struct {
-	apiOptions image.LoadOptions
+	apiOptions imageLoadOptions
+}
+
+type imageLoadOptions struct {
+	// Quiet suppresses progress output
+	Quiet bool
+
+	// Platforms selects the platforms to load if the image is a
+	// multi-platform image and has multiple variants.
+	Platforms []ocispec.Platform
 }
 
 // ImageLoadWithQuiet sets the quiet option for the image load operation.
@@ -30,6 +38,10 @@ func ImageLoadWithQuiet(quiet bool) ImageLoadOption {
 }
 
 // ImageLoadWithPlatforms sets the platforms to be loaded from the image.
+//
+// Platform is an optional parameter that specifies the platform to load from
+// the provided multi-platform image. Passing a platform only has an effect
+// if the input image is a multi-platform image.
 func ImageLoadWithPlatforms(platforms ...ocispec.Platform) ImageLoadOption {
 	return imageLoadOptionFunc(func(opt *imageLoadOpts) error {
 		if opt.apiOptions.Platforms != nil {

@@ -2,25 +2,38 @@ package client
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/distribution/reference"
-	"github.com/pkg/errors"
 )
 
+// ImageTagOptions holds options for [Client.ImageTag].
+type ImageTagOptions struct {
+	Source string
+	Target string
+}
+
+// ImageTagResult holds the result of [Client.ImageTag].
+type ImageTagResult struct{}
+
 // ImageTag tags an image in the docker host
-func (cli *Client) ImageTag(ctx context.Context, source, target string) error {
+func (cli *Client) ImageTag(ctx context.Context, options ImageTagOptions) (ImageTagResult, error) {
+	source := options.Source
+	target := options.Target
+
 	if _, err := reference.ParseAnyReference(source); err != nil {
-		return errors.Wrapf(err, "Error parsing reference: %q is not a valid repository/tag", source)
+		return ImageTagResult{}, fmt.Errorf("error parsing reference: %q is not a valid repository/tag: %w", source, err)
 	}
 
 	ref, err := reference.ParseNormalizedNamed(target)
 	if err != nil {
-		return errors.Wrapf(err, "Error parsing reference: %q is not a valid repository/tag", target)
+		return ImageTagResult{}, fmt.Errorf("error parsing reference: %q is not a valid repository/tag: %w", target, err)
 	}
 
-	if _, isCanonical := ref.(reference.Canonical); isCanonical {
-		return errors.New("refusing to create a tag with a digest reference")
+	if _, ok := ref.(reference.Digested); ok {
+		return ImageTagResult{}, errors.New("refusing to create a tag with a digest reference")
 	}
 
 	ref = reference.TagNameOnly(ref)
@@ -32,6 +45,6 @@ func (cli *Client) ImageTag(ctx context.Context, source, target string) error {
 	}
 
 	resp, err := cli.post(ctx, "/images/"+source+"/tag", query, nil, nil)
-	ensureReaderClosed(resp)
-	return err
+	defer ensureReaderClosed(resp)
+	return ImageTagResult{}, err
 }

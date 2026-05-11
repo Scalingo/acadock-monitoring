@@ -5,30 +5,30 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/moby/moby/api/types/swarm"
 )
 
+// NodeListOptions holds parameters to list nodes with.
+type NodeListOptions struct {
+	Filters Filters
+}
+
+// NodeListResult holds the result of [Client.NodeList].
+type NodeListResult struct {
+	Items []swarm.Node
+}
+
 // NodeList returns the list of nodes.
-func (cli *Client) NodeList(ctx context.Context, options swarm.NodeListOptions) ([]swarm.Node, error) {
+func (cli *Client) NodeList(ctx context.Context, options NodeListOptions) (NodeListResult, error) {
 	query := url.Values{}
-
-	if options.Filters.Len() > 0 {
-		filterJSON, err := filters.ToJSON(options.Filters)
-		if err != nil {
-			return nil, err
-		}
-
-		query.Set("filters", filterJSON)
-	}
-
+	options.Filters.updateURLValues(query)
 	resp, err := cli.get(ctx, "/nodes", query, nil)
 	defer ensureReaderClosed(resp)
 	if err != nil {
-		return nil, err
+		return NodeListResult{}, err
 	}
 
 	var nodes []swarm.Node
 	err = json.NewDecoder(resp.Body).Decode(&nodes)
-	return nodes, err
+	return NodeListResult{Items: nodes}, err
 }

@@ -5,12 +5,20 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/docker/docker/api/types"
 )
 
+// PluginCreateOptions hold all options to plugin create.
+type PluginCreateOptions struct {
+	RepoName string
+}
+
+// PluginCreateResult represents the result of a plugin create operation.
+type PluginCreateResult struct {
+	// Currently empty; can be extended in the future if needed.
+}
+
 // PluginCreate creates a plugin
-func (cli *Client) PluginCreate(ctx context.Context, createContext io.Reader, createOptions types.PluginCreateOptions) error {
+func (cli *Client) PluginCreate(ctx context.Context, createContext io.Reader, createOptions PluginCreateOptions) (PluginCreateResult, error) {
 	headers := http.Header(make(map[string][]string))
 	headers.Set("Content-Type", "application/x-tar")
 
@@ -18,6 +26,6 @@ func (cli *Client) PluginCreate(ctx context.Context, createContext io.Reader, cr
 	query.Set("name", createOptions.RepoName)
 
 	resp, err := cli.postRaw(ctx, "/plugins/create", query, createContext, headers)
-	ensureReaderClosed(resp)
-	return err
+	defer ensureReaderClosed(resp)
+	return PluginCreateResult{}, err
 }

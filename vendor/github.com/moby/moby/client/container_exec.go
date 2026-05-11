@@ -5,77 +5,199 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/versions"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
 )
 
-// ContainerExecCreate creates a new exec configuration to run an exec process.
-func (cli *Client) ContainerExecCreate(ctx context.Context, containerID string, options container.ExecOptions) (container.ExecCreateResponse, error) {
+// ExecCreateOptions is a small subset of the Config struct that holds the configuration
+// for the exec feature of docker.
+type ExecCreateOptions struct {
+	User         string      // User that will run the command
+	Privileged   bool        // Is the container in privileged mode
+	TTY          bool        // Attach standard streams to a tty.
+	ConsoleSize  ConsoleSize // Initial terminal size [height, width], unused if TTY == false
+	AttachStdin  bool        // Attach the standard input, makes possible user interaction
+	AttachStderr bool        // Attach the standard error
+	AttachStdout bool        // Attach the standard output
+	DetachKeys   string      // Escape keys for detach
+	Env          []string    // Environment variables
+	WorkingDir   string      // Working directory
+	Cmd          []string    // Execution commands and args
+}
+
+// ExecCreateResult holds the result of creating a container exec.
+type ExecCreateResult struct {
+	ID string
+}
+
+// ExecCreate creates a new exec configuration to run an exec process.
+func (cli *Client) ExecCreate(ctx context.Context, containerID string, options ExecCreateOptions) (ExecCreateResult, error) {
 	containerID, err := trimID("container", containerID)
 	if err != nil {
-		return container.ExecCreateResponse{}, err
+		return ExecCreateResult{}, err
 	}
 
-	// Make sure we negotiated (if the client is configured to do so),
-	// as code below contains API-version specific handling of options.
-	//
-	// Normally, version-negotiation (if enabled) would not happen until
-	// the API request is made.
-	if err := cli.checkVersion(ctx); err != nil {
-		return container.ExecCreateResponse{}, err
+	consoleSize, err := getConsoleSize(options.TTY, options.ConsoleSize)
+	if err != nil {
+		return ExecCreateResult{}, err
 	}
 
-	if err := cli.NewVersionError(ctx, "1.25", "env"); len(options.Env) != 0 && err != nil {
-		return container.ExecCreateResponse{}, err
-	}
-	if versions.LessThan(cli.ClientVersion(), "1.42") {
-		options.ConsoleSize = nil
+	req := container.ExecCreateRequest{
+		User:         options.User,
+		Privileged:   options.Privileged,
+		Tty:          options.TTY,
+		ConsoleSize:  consoleSize,
+		AttachStdin:  options.AttachStdin,
+		AttachStderr: options.AttachStderr,
+		AttachStdout: options.AttachStdout,
+		DetachKeys:   options.DetachKeys,
+		Env:          options.Env,
+		WorkingDir:   options.WorkingDir,
+		Cmd:          options.Cmd,
 	}
 
-	resp, err := cli.post(ctx, "/containers/"+containerID+"/exec", nil, options, nil)
+	resp, err := cli.post(ctx, "/containers/"+containerID+"/exec", nil, req, nil)
 	defer ensureReaderClosed(resp)
 	if err != nil {
-		return container.ExecCreateResponse{}, err
+		return ExecCreateResult{}, err
 	}
 
 	var response container.ExecCreateResponse
 	err = json.NewDecoder(resp.Body).Decode(&response)
-	return response, err
+	return ExecCreateResult{ID: response.ID}, err
 }
 
-// ContainerExecStart starts an exec process already created in the docker host.
-func (cli *Client) ContainerExecStart(ctx context.Context, execID string, config container.ExecStartOptions) error {
-	if versions.LessThan(cli.ClientVersion(), "1.42") {
-		config.ConsoleSize = nil
-	}
-	resp, err := cli.post(ctx, "/exec/"+execID+"/start", nil, config, nil)
-	ensureReaderClosed(resp)
-	return err
+type ConsoleSize struct {
+	Height, Width uint
 }
 
-// ContainerExecAttach attaches a connection to an exec process in the server.
-// It returns a types.HijackedConnection with the hijacked connection
-// and the a reader to get output. It's up to the called to close
-// the hijacked connection by calling types.HijackedResponse.Close.
-func (cli *Client) ContainerExecAttach(ctx context.Context, execID string, config container.ExecAttachOptions) (types.HijackedResponse, error) {
-	if versions.LessThan(cli.ClientVersion(), "1.42") {
-		config.ConsoleSize = nil
+// ExecStartOptions holds options for starting a container exec.
+type ExecStartOptions struct {
+	// ExecStart will first check if it's detached
+	Detach bool
+	// Check if there's a tty
+	TTY bool
+	// Terminal size [height, width], unused if TTY == false
+	ConsoleSize ConsoleSize
+}
+
+// ExecStartResult holds the result of starting a container exec.
+type ExecStartResult struct{}
+
+// ExecStart starts an exec process already created in the docker host.
+func (cli *Client) ExecStart(ctx context.Context, execID string, options ExecStartOptions) (ExecStartResult, error) {
+	consoleSize, err := getConsoleSize(options.TTY, options.ConsoleSize)
+	if err != nil {
+		return ExecStartResult{}, err
 	}
-	return cli.postHijacked(ctx, "/exec/"+execID+"/start", nil, config, http.Header{
+
+	req := container.ExecStartRequest{
+		Detach:      options.Detach,
+		Tty:         options.TTY,
+		ConsoleSize: consoleSize,
+	}
+	resp, err := cli.post(ctx, "/exec/"+execID+"/start", nil, req, nil)
+	defer ensureReaderClosed(resp)
+	return ExecStartResult{}, err
+}
+
+// ExecAttachOptions holds options for attaching to a container exec.
+type ExecAttachOptions struct {
+	// Check if there's a tty
+	TTY bool
+	// Terminal size [height, width], unused if TTY == false
+	ConsoleSize ConsoleSize `json:",omitzero"`
+}
+
+// ExecAttachResult holds the result of attaching to a container exec.
+type ExecAttachResult struct {
+	HijackedResponse
+}
+
+// ExecAttach attaches a connection to an exec process in the server.
+//
+// It returns a [HijackedResponse] with the hijacked connection
+// and a reader to get output. It's up to the caller to close
+// the hijacked connection by calling [HijackedResponse.Close].
+//
+// The stream format on the response uses one of two formats:
+//
+//   - If the container is using a TTY, there is only a single stream (stdout)
+//     and data is copied directly from the container output stream, no extra
+//     multiplexing or headers.
+//   - If the container is *not* using a TTY, streams for stdout and stderr are
+//     multiplexed.
+//
+// You can use [stdcopy.StdCopy] to demultiplex this stream. Refer to
+// [Client.ContainerAttach] for details about the multiplexed stream.
+//
+// [stdcopy.StdCopy]: https://pkg.go.dev/github.com/moby/moby/api/pkg/stdcopy#StdCopy
+func (cli *Client) ExecAttach(ctx context.Context, execID string, options ExecAttachOptions) (ExecAttachResult, error) {
+	consoleSize, err := getConsoleSize(options.TTY, options.ConsoleSize)
+	if err != nil {
+		return ExecAttachResult{}, err
+	}
+	req := container.ExecStartRequest{
+		Detach:      false,
+		Tty:         options.TTY,
+		ConsoleSize: consoleSize,
+	}
+	response, err := cli.postHijacked(ctx, "/exec/"+execID+"/start", nil, req, http.Header{
 		"Content-Type": {"application/json"},
 	})
+	return ExecAttachResult{HijackedResponse: response}, err
 }
 
-// ContainerExecInspect returns information about a specific exec process on the docker host.
-func (cli *Client) ContainerExecInspect(ctx context.Context, execID string) (container.ExecInspect, error) {
-	var response container.ExecInspect
+func getConsoleSize(hasTTY bool, consoleSize ConsoleSize) (*[2]uint, error) {
+	if consoleSize.Height != 0 || consoleSize.Width != 0 {
+		if !hasTTY {
+			return nil, cerrdefs.ErrInvalidArgument.WithMessage("console size is only supported when TTY is enabled")
+		}
+		return &[2]uint{consoleSize.Height, consoleSize.Width}, nil
+	}
+	return nil, nil
+}
+
+// ExecInspectOptions holds options for inspecting a container exec.
+type ExecInspectOptions struct{}
+
+// ExecInspectResult holds the result of inspecting a container exec.
+//
+// It provides a subset of the information included in [container.ExecInspectResponse].
+//
+// TODO(thaJeztah): include all fields of [container.ExecInspectResponse] ?
+type ExecInspectResult struct {
+	ID          string
+	ContainerID string
+	Running     bool
+	ExitCode    int
+	PID         int
+}
+
+// ExecInspect returns information about a specific exec process on the docker host.
+func (cli *Client) ExecInspect(ctx context.Context, execID string, options ExecInspectOptions) (ExecInspectResult, error) {
 	resp, err := cli.get(ctx, "/exec/"+execID+"/json", nil, nil)
+	defer ensureReaderClosed(resp)
 	if err != nil {
-		return response, err
+		return ExecInspectResult{}, err
 	}
 
+	var response container.ExecInspectResponse
 	err = json.NewDecoder(resp.Body).Decode(&response)
-	ensureReaderClosed(resp)
-	return response, err
+	if err != nil {
+		return ExecInspectResult{}, err
+	}
+
+	var ec int
+	if response.ExitCode != nil {
+		ec = *response.ExitCode
+	}
+
+	return ExecInspectResult{
+		ID:          response.ID,
+		ContainerID: response.ContainerID,
+		Running:     response.Running,
+		ExitCode:    ec,
+		PID:         response.Pid,
+	}, nil
 }

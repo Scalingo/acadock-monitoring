@@ -8,25 +8,24 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
-	"github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
 )
 
 // ImageBuild sends a request to the daemon to build images.
-// The Body in the response implements an io.ReadCloser and it's up to the caller to
+// The Body in the response implements an [io.ReadCloser] and it's up to the caller to
 // close it.
-func (cli *Client) ImageBuild(ctx context.Context, buildContext io.Reader, options build.ImageBuildOptions) (build.ImageBuildResponse, error) {
+func (cli *Client) ImageBuild(ctx context.Context, buildContext io.Reader, options ImageBuildOptions) (ImageBuildResult, error) {
 	query, err := cli.imageBuildOptionsToQuery(ctx, options)
 	if err != nil {
-		return build.ImageBuildResponse{}, err
+		return ImageBuildResult{}, err
 	}
 
-	buf, err := json.Marshal(options.AuthConfigs)
+	buf, err := json.Marshal(options.AuthConfigs) // #nosec G117 -- ignore "Marshaled struct field "Password" (JSON key "password") matches secret pattern"
 	if err != nil {
-		return build.ImageBuildResponse{}, err
+		return ImageBuildResult{}, err
 	}
 
 	headers := http.Header{}
@@ -35,16 +34,15 @@ func (cli *Client) ImageBuild(ctx context.Context, buildContext io.Reader, optio
 
 	resp, err := cli.postRaw(ctx, "/build", query, buildContext, headers)
 	if err != nil {
-		return build.ImageBuildResponse{}, err
+		return ImageBuildResult{}, err
 	}
 
-	return build.ImageBuildResponse{
-		Body:   resp.Body,
-		OSType: resp.Header.Get("Ostype"),
+	return ImageBuildResult{
+		Body: resp.Body,
 	}, nil
 }
 
-func (cli *Client) imageBuildOptionsToQuery(ctx context.Context, options build.ImageBuildOptions) (url.Values, error) {
+func (cli *Client) imageBuildOptionsToQuery(_ context.Context, options ImageBuildOptions) (url.Values, error) {
 	query := url.Values{}
 	if len(options.Tags) > 0 {
 		query["t"] = options.Tags
@@ -81,9 +79,7 @@ func (cli *Client) imageBuildOptionsToQuery(ctx context.Context, options build.I
 	}
 
 	if options.Squash {
-		if err := cli.NewVersionError(ctx, "1.25", "squash"); err != nil {
-			return query, err
-		}
+		// TODO(thaJeztah): squash is experimental, and deprecated when using BuildKit?
 		query.Set("squash", "1")
 	}
 
@@ -158,11 +154,12 @@ func (cli *Client) imageBuildOptionsToQuery(ctx context.Context, options build.I
 	if options.SessionID != "" {
 		query.Set("session", options.SessionID)
 	}
-	if options.Platform != "" {
-		if err := cli.NewVersionError(ctx, "1.32", "platform"); err != nil {
-			return query, err
+	if len(options.Platforms) > 0 {
+		if len(options.Platforms) > 1 {
+			// TODO(thaJeztah): update API spec and add equivalent check on the daemon. We need this still for older daemons, which would ignore it.
+			return query, cerrdefs.ErrInvalidArgument.WithMessage("specifying multiple platforms is not yet supported")
 		}
-		query.Set("platform", strings.ToLower(options.Platform))
+		query.Set("platform", formatPlatform(options.Platforms[0]))
 	}
 	if options.BuildID != "" {
 		query.Set("buildid", options.BuildID)

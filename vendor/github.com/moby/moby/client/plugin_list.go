@@ -5,29 +5,31 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
+	"github.com/moby/moby/api/types/plugin"
 )
 
+// PluginListOptions holds parameters to list plugins.
+type PluginListOptions struct {
+	Filters Filters
+}
+
+// PluginListResult represents the result of a plugin list operation.
+type PluginListResult struct {
+	Items []plugin.Plugin
+}
+
 // PluginList returns the installed plugins
-func (cli *Client) PluginList(ctx context.Context, filter filters.Args) (types.PluginsListResponse, error) {
-	var plugins types.PluginsListResponse
+func (cli *Client) PluginList(ctx context.Context, options PluginListOptions) (PluginListResult, error) {
 	query := url.Values{}
 
-	if filter.Len() > 0 {
-		//nolint:staticcheck // ignore SA1019 for old code
-		filterJSON, err := filters.ToParamWithVersion(cli.version, filter)
-		if err != nil {
-			return plugins, err
-		}
-		query.Set("filters", filterJSON)
-	}
+	options.Filters.updateURLValues(query)
 	resp, err := cli.get(ctx, "/plugins", query, nil)
 	defer ensureReaderClosed(resp)
 	if err != nil {
-		return plugins, err
+		return PluginListResult{}, err
 	}
 
+	var plugins plugin.ListResponse
 	err = json.NewDecoder(resp.Body).Decode(&plugins)
-	return plugins, err
+	return PluginListResult{Items: plugins}, err
 }

@@ -6,26 +6,38 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/http"
 	"net/url"
 
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/registry"
+	"github.com/moby/moby/api/types/jsonstream"
+	"github.com/moby/moby/api/types/registry"
+	"github.com/moby/moby/client/internal"
 )
+
+type ImagePushResponse interface {
+	io.ReadCloser
+	JSONMessages(ctx context.Context) iter.Seq2[jsonstream.Message, error]
+	Wait(ctx context.Context) error
+}
 
 // ImagePush requests the docker host to push an image to a remote registry.
 // It executes the privileged function if the operation is unauthorized
 // and it tries one more time.
-// It's up to the caller to handle the io.ReadCloser and close it properly.
-func (cli *Client) ImagePush(ctx context.Context, image string, options image.PushOptions) (io.ReadCloser, error) {
+// Callers can
+//   - use [ImagePushResponse.Wait] to wait for push to complete
+//   - use [ImagePushResponse.JSONMessages] to monitor pull progress as a sequence
+//     of JSONMessages, [ImagePushResponse.Close] does not need to be called in this case.
+//   - use the [io.Reader] interface and call [ImagePushResponse.Close] after processing.
+func (cli *Client) ImagePush(ctx context.Context, image string, options ImagePushOptions) (ImagePushResponse, error) {
 	ref, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, isCanonical := ref.(reference.Canonical); isCanonical {
+	if _, ok := ref.(reference.Digested); ok {
 		return nil, errors.New("cannot push a digest reference")
 	}
 
@@ -38,7 +50,7 @@ func (cli *Client) ImagePush(ctx context.Context, image string, options image.Pu
 	}
 
 	if options.Platform != nil {
-		if err := cli.NewVersionError(ctx, "1.46", "platform"); err != nil {
+		if err := cli.requiresVersion(ctx, "1.46", "platform"); err != nil {
 			return nil, err
 		}
 
@@ -51,21 +63,28 @@ func (cli *Client) ImagePush(ctx context.Context, image string, options image.Pu
 		query.Set("platform", string(pJson))
 	}
 
-	resp, err := cli.tryImagePush(ctx, ref.Name(), query, options.RegistryAuth)
+	resp, err := cli.tryImagePush(ctx, ref.Name(), query, staticAuth(options.RegistryAuth))
 	if cerrdefs.IsUnauthorized(err) && options.PrivilegeFunc != nil {
-		newAuthHeader, privilegeErr := options.PrivilegeFunc(ctx)
-		if privilegeErr != nil {
-			return nil, privilegeErr
-		}
-		resp, err = cli.tryImagePush(ctx, ref.Name(), query, newAuthHeader)
+		resp, err = cli.tryImagePush(ctx, ref.Name(), query, options.PrivilegeFunc)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+	return internal.NewJSONMessageStream(resp.Body), nil
 }
 
-func (cli *Client) tryImagePush(ctx context.Context, imageID string, query url.Values, registryAuth string) (*http.Response, error) {
+func (cli *Client) tryImagePush(ctx context.Context, imageID string, query url.Values, resolveAuth registry.RequestAuthConfig) (*http.Response, error) {
+	hdr := http.Header{}
+	if resolveAuth != nil {
+		registryAuth, err := resolveAuth(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if registryAuth != "" {
+			hdr.Set(registry.AuthHeader, registryAuth)
+		}
+	}
+
 	// Always send a body (which may be an empty JSON document ("{}")) to prevent
 	// EOF errors on older daemons which had faulty fallback code for handling
 	// authentication in the body when no auth-header was set, resulting in;
@@ -75,7 +94,5 @@ func (cli *Client) tryImagePush(ctx context.Context, imageID string, query url.V
 	// We use [http.NoBody], which gets marshaled to an empty JSON document.
 	//
 	// see: https://github.com/moby/moby/commit/ea29dffaa541289591aa44fa85d2a596ce860e16
-	return cli.post(ctx, "/images/"+imageID+"/push", query, http.NoBody, http.Header{
-		registry.AuthHeader: {registryAuth},
-	})
+	return cli.post(ctx, "/images/"+imageID+"/push", query, http.NoBody, hdr)
 }

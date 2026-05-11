@@ -4,15 +4,20 @@ import (
 	"context"
 	"io"
 	"net/url"
-	"strings"
 
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/image"
 )
 
-// ImageImport creates a new image based on the source options.
-// It returns the JSON content in the response body.
-func (cli *Client) ImageImport(ctx context.Context, source image.ImportSource, ref string, options image.ImportOptions) (io.ReadCloser, error) {
+// ImageImportResult holds the response body returned by the daemon for image import.
+type ImageImportResult interface {
+	io.ReadCloser
+}
+
+// ImageImport creates a new image based on the source options. It returns the
+// JSON content in the [ImageImportResult].
+//
+// The underlying [io.ReadCloser] is automatically closed if the context is canceled,
+func (cli *Client) ImageImport(ctx context.Context, source ImageImportSource, ref string, options ImageImportOptions) (ImageImportResult, error) {
 	if ref != "" {
 		// Check if the given image name can be resolved
 		if _, err := reference.ParseNormalizedNamed(ref); err != nil {
@@ -33,8 +38,9 @@ func (cli *Client) ImageImport(ctx context.Context, source image.ImportSource, r
 	if options.Message != "" {
 		query.Set("message", options.Message)
 	}
-	if options.Platform != "" {
-		query.Set("platform", strings.ToLower(options.Platform))
+	if p := formatPlatform(options.Platform); p != "unknown" {
+		// TODO(thaJeztah): would we ever support multiple platforms here? (would require multiple rootfs tars as well?)
+		query.Set("platform", p)
 	}
 	for _, change := range options.Changes {
 		query.Add("changes", change)
@@ -44,5 +50,17 @@ func (cli *Client) ImageImport(ctx context.Context, source image.ImportSource, r
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+	return &imageImportResult{
+		ReadCloser: newCancelReadCloser(ctx, resp.Body),
+	}, nil
 }
+
+// ImageImportResult holds the response body returned by the daemon for image import.
+type imageImportResult struct {
+	io.ReadCloser
+}
+
+var (
+	_ io.ReadCloser     = (*imageImportResult)(nil)
+	_ ImageImportResult = (*imageImportResult)(nil)
+)

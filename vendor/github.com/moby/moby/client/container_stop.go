@@ -4,10 +4,30 @@ import (
 	"context"
 	"net/url"
 	"strconv"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/versions"
 )
+
+// ContainerStopOptions holds the options for [Client.ContainerStop].
+type ContainerStopOptions struct {
+	// Signal (optional) is the signal to send to the container to (gracefully)
+	// stop it before forcibly terminating the container with SIGKILL after the
+	// timeout expires. If no value is set, the default (SIGTERM) is used.
+	Signal string `json:",omitempty"`
+
+	// Timeout (optional) is the timeout (in seconds) to wait for the container
+	// to stop gracefully before forcibly terminating it with SIGKILL.
+	//
+	// - Use nil to use the default timeout (10 seconds).
+	// - Use '-1' to wait indefinitely.
+	// - Use '0' to not wait for the container to exit gracefully, and
+	//   immediately proceeds to forcibly terminating the container.
+	// - Other positive values are used as timeout (in seconds).
+	Timeout *int `json:",omitempty"`
+}
+
+// ContainerStopResult holds the result of [Client.ContainerStop],
+type ContainerStopResult struct {
+	// Add future fields here.
+}
 
 // ContainerStop stops a container. In case the container fails to stop
 // gracefully within a time frame specified by the timeout argument,
@@ -16,10 +36,10 @@ import (
 // If the timeout is nil, the container's StopTimeout value is used, if set,
 // otherwise the engine default. A negative timeout value can be specified,
 // meaning no timeout, i.e. no forceful termination is performed.
-func (cli *Client) ContainerStop(ctx context.Context, containerID string, options container.StopOptions) error {
+func (cli *Client) ContainerStop(ctx context.Context, containerID string, options ContainerStopOptions) (ContainerStopResult, error) {
 	containerID, err := trimID("container", containerID)
 	if err != nil {
-		return err
+		return ContainerStopResult{}, err
 	}
 
 	query := url.Values{}
@@ -27,19 +47,12 @@ func (cli *Client) ContainerStop(ctx context.Context, containerID string, option
 		query.Set("t", strconv.Itoa(*options.Timeout))
 	}
 	if options.Signal != "" {
-		// Make sure we negotiated (if the client is configured to do so),
-		// as code below contains API-version specific handling of options.
-		//
-		// Normally, version-negotiation (if enabled) would not happen until
-		// the API request is made.
-		if err := cli.checkVersion(ctx); err != nil {
-			return err
-		}
-		if versions.GreaterThanOrEqualTo(cli.version, "1.42") {
-			query.Set("signal", options.Signal)
-		}
+		query.Set("signal", options.Signal)
 	}
 	resp, err := cli.post(ctx, "/containers/"+containerID+"/stop", query, nil, nil)
-	ensureReaderClosed(resp)
-	return err
+	defer ensureReaderClosed(resp)
+	if err != nil {
+		return ContainerStopResult{}, err
+	}
+	return ContainerStopResult{}, nil
 }

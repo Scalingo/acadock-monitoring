@@ -8,7 +8,7 @@ import (
 
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/containerd/errdefs/pkg/errhttp"
-	"github.com/docker/docker/api/types/versions"
+	"github.com/moby/moby/client/pkg/versions"
 )
 
 // errConnectionFailed implements an error returned when connection failed.
@@ -30,13 +30,6 @@ func IsErrConnectionFailed(err error) bool {
 	return errors.As(err, &errConnectionFailed{})
 }
 
-// ErrorConnectionFailed returns an error with host in the error message when connection to docker daemon failed.
-//
-// Deprecated: this function was only used internally, and will be removed in the next release.
-func ErrorConnectionFailed(host string) error {
-	return connectionFailed(host)
-}
-
 // connectionFailed returns an error with host in the error message when connection
 // to docker daemon failed.
 func connectionFailed(host string) error {
@@ -47,14 +40,6 @@ func connectionFailed(host string) error {
 		err = fmt.Errorf("Cannot connect to the Docker daemon at %s. Is the docker daemon running?", host)
 	}
 	return errConnectionFailed{error: err}
-}
-
-// IsErrNotFound returns true if the error is a NotFound error, which is returned
-// by the API when some object is not found. It is an alias for [cerrdefs.IsNotFound].
-//
-// Deprecated: use [cerrdefs.IsNotFound] instead.
-func IsErrNotFound(err error) bool {
-	return cerrdefs.IsNotFound(err)
 }
 
 type objectNotFoundError struct {
@@ -68,12 +53,12 @@ func (e objectNotFoundError) Error() string {
 	return fmt.Sprintf("Error: No such %s: %s", e.object, e.id)
 }
 
-// NewVersionError returns an error if the APIVersion required is less than the
+// requiresVersion returns an error if the APIVersion required is less than the
 // current supported version.
 //
 // It performs API-version negotiation if the Client is configured with this
 // option, otherwise it assumes the latest API version is used.
-func (cli *Client) NewVersionError(ctx context.Context, APIrequired, feature string) error {
+func (cli *Client) requiresVersion(ctx context.Context, apiRequired, feature string) error {
 	// Make sure we negotiated (if the client is configured to do so),
 	// as code below contains API-version specific handling of options.
 	//
@@ -82,8 +67,8 @@ func (cli *Client) NewVersionError(ctx context.Context, APIrequired, feature str
 	if err := cli.checkVersion(ctx); err != nil {
 		return err
 	}
-	if cli.version != "" && versions.LessThan(cli.version, APIrequired) {
-		return fmt.Errorf("%q requires API version %s, but the Docker daemon API version is %s", feature, APIrequired, cli.version)
+	if cli.version != "" && versions.LessThan(cli.version, apiRequired) {
+		return fmt.Errorf("%q requires API version %s, but the Docker daemon API version is %s", feature, apiRequired, cli.version)
 	}
 	return nil
 }

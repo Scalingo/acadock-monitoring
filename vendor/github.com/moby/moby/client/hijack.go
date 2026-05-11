@@ -9,33 +9,25 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/versions"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // postHijacked sends a POST request and hijacks the connection.
-func (cli *Client) postHijacked(ctx context.Context, path string, query url.Values, body interface{}, headers map[string][]string) (types.HijackedResponse, error) {
-	bodyEncoded, err := encodeData(body)
+func (cli *Client) postHijacked(ctx context.Context, path string, query url.Values, body any, headers map[string][]string) (HijackedResponse, error) {
+	jsonBody, err := jsonEncode(body)
 	if err != nil {
-		return types.HijackedResponse{}, err
+		return HijackedResponse{}, err
 	}
-	req, err := cli.buildRequest(ctx, http.MethodPost, cli.getAPIPath(ctx, path, query), bodyEncoded, headers)
+	req, err := cli.buildRequest(ctx, http.MethodPost, cli.getAPIPath(ctx, path, query), jsonBody, headers)
 	if err != nil {
-		return types.HijackedResponse{}, err
+		return HijackedResponse{}, err
 	}
 	conn, mediaType, err := setupHijackConn(cli.dialer(), req, "tcp")
 	if err != nil {
-		return types.HijackedResponse{}, err
+		return HijackedResponse{}, err
 	}
 
-	if versions.LessThan(cli.ClientVersion(), "1.42") {
-		// Prior to 1.42, Content-Type is always set to raw-stream and not relevant
-		mediaType = ""
-	}
-
-	return types.NewHijackedResponse(conn, mediaType), nil
+	return NewHijackedResponse(conn, mediaType), nil
 }
 
 // DialHijack returns a hijacked connection with negotiated protocol proto.
@@ -57,18 +49,18 @@ func setupHijackConn(dialer func(context.Context) (net.Conn, error), req *http.R
 
 	conn, err := dialer(ctx)
 	if err != nil {
-		return nil, "", errors.Wrap(err, "cannot connect to the Docker daemon. Is 'docker daemon' running on this host?")
+		return nil, "", fmt.Errorf("cannot connect to the Docker daemon. Is 'docker daemon' running on this host?: %w", err)
 	}
 	defer func() {
 		if retErr != nil {
-			conn.Close()
+			_ = conn.Close()
 		}
 	}()
 
 	// When we set up a TCP connection for hijack, there could be long periods
 	// of inactivity (a long running command with no output) that in certain
 	// network setups may cause ECONNTIMEOUT, leaving the client in an unknown
-	// state. Setting TCP KeepAlive on the socket connection will prohibit
+	// state. Setting TCP KeepAlive on the socket connection prohibits
 	// ECONNTIMEOUT unless the socket connection truly is broken
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		_ = tcpConn.SetKeepAlive(true)
@@ -91,7 +83,7 @@ func setupHijackConn(dialer func(context.Context) (net.Conn, error), req *http.R
 		// If there is buffered content, wrap the connection.  We return an
 		// object that implements CloseWrite if the underlying connection
 		// implements it.
-		if _, ok := hc.Conn.(types.CloseWriter); ok {
+		if _, ok := hc.Conn.(CloseWriter); ok {
 			conn = &hijackedConnCloseWriter{hc}
 		} else {
 			conn = hc
@@ -131,9 +123,50 @@ type hijackedConnCloseWriter struct {
 	*hijackedConn
 }
 
-var _ types.CloseWriter = &hijackedConnCloseWriter{}
+var _ CloseWriter = &hijackedConnCloseWriter{}
 
 func (c *hijackedConnCloseWriter) CloseWrite() error {
-	conn := c.Conn.(types.CloseWriter)
+	conn := c.Conn.(CloseWriter)
 	return conn.CloseWrite()
+}
+
+// NewHijackedResponse initializes a [HijackedResponse] type.
+func NewHijackedResponse(conn net.Conn, mediaType string) HijackedResponse {
+	return HijackedResponse{Conn: conn, Reader: bufio.NewReader(conn), mediaType: mediaType}
+}
+
+// HijackedResponse holds connection information for a hijacked request.
+type HijackedResponse struct {
+	mediaType string
+	Conn      net.Conn
+	Reader    *bufio.Reader
+}
+
+// Close closes the hijacked connection and reader.
+func (h *HijackedResponse) Close() {
+	h.Conn.Close()
+}
+
+// MediaType let client know if HijackedResponse hold a raw or multiplexed stream.
+// returns false if HTTP Content-Type is not relevant, and the container must be
+// inspected.
+func (h *HijackedResponse) MediaType() (string, bool) {
+	if h.mediaType == "" {
+		return "", false
+	}
+	return h.mediaType, true
+}
+
+// CloseWriter is an interface that implements structs
+// that close input streams to prevent from writing.
+type CloseWriter interface {
+	CloseWrite() error
+}
+
+// CloseWrite closes a readWriter for writing.
+func (h *HijackedResponse) CloseWrite() error {
+	if conn, ok := h.Conn.(CloseWriter); ok {
+		return conn.CloseWrite()
+	}
+	return nil
 }

@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* build(deps): replace dependency `github.com/docker/docker` with `github.com/moby/moby`
+
 ## v2.0.5 - 2025-04-13
 
 * chore(deps): various updates
@@ -37,7 +39,7 @@
 * chore(go): use Go 1.22.10
 * use github.com/Scalingo/go-utils/graceful for graceful upgrades and shutdowns
 * use github.com/Scalingo/go-utils/errors/v3 for errors management
-* use github.com/moby/moby instead of github.com/fsouza/go-dockerclient
+* use github.com/docker/docker instead of github.com/fsouza/go-dockerclient
 
 ## v1.2.1 - 2023-12-27
 

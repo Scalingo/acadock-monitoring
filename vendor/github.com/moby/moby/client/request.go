@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -13,9 +14,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/versions"
-	"github.com/pkg/errors"
+	"github.com/moby/moby/api/types/common"
 )
 
 // head sends an http request to the docker API using the method HEAD.
@@ -28,25 +27,25 @@ func (cli *Client) get(ctx context.Context, path string, query url.Values, heade
 	return cli.sendRequest(ctx, http.MethodGet, path, query, nil, headers)
 }
 
-// post sends an http request to the docker API using the method POST with a specific Go context.
-func (cli *Client) post(ctx context.Context, path string, query url.Values, obj interface{}, headers http.Header) (*http.Response, error) {
-	body, headers, err := encodeBody(obj, headers)
+// post sends an http POST request to the API.
+func (cli *Client) post(ctx context.Context, path string, query url.Values, body any, headers http.Header) (*http.Response, error) {
+	jsonBody, headers, err := prepareJSONRequest(body, headers)
 	if err != nil {
 		return nil, err
 	}
-	return cli.sendRequest(ctx, http.MethodPost, path, query, body, headers)
+	return cli.sendRequest(ctx, http.MethodPost, path, query, jsonBody, headers)
 }
 
 func (cli *Client) postRaw(ctx context.Context, path string, query url.Values, body io.Reader, headers http.Header) (*http.Response, error) {
 	return cli.sendRequest(ctx, http.MethodPost, path, query, body, headers)
 }
 
-func (cli *Client) put(ctx context.Context, path string, query url.Values, obj interface{}, headers http.Header) (*http.Response, error) {
-	body, headers, err := encodeBody(obj, headers)
+func (cli *Client) put(ctx context.Context, path string, query url.Values, body any, headers http.Header) (*http.Response, error) {
+	jsonBody, headers, err := prepareJSONRequest(body, headers)
 	if err != nil {
 		return nil, err
 	}
-	return cli.putRaw(ctx, path, query, body, headers)
+	return cli.putRaw(ctx, path, query, jsonBody, headers)
 }
 
 // putRaw sends an http request to the docker API using the method PUT.
@@ -65,26 +64,27 @@ func (cli *Client) delete(ctx context.Context, path string, query url.Values, he
 	return cli.sendRequest(ctx, http.MethodDelete, path, query, nil, headers)
 }
 
-func encodeBody(obj interface{}, headers http.Header) (io.Reader, http.Header, error) {
-	if obj == nil {
-		return nil, headers, nil
-	}
-	// encoding/json encodes a nil pointer as the JSON document `null`,
-	// irrespective of whether the type implements json.Marshaler or encoding.TextMarshaler.
-	// That is almost certainly not what the caller intended as the request body.
-	if reflect.TypeOf(obj).Kind() == reflect.Ptr && reflect.ValueOf(obj).IsNil() {
-		return nil, headers, nil
-	}
-
-	body, err := encodeData(obj)
+// prepareJSONRequest encodes the given body to JSON and returns it as an [io.Reader], and sets the Content-Type
+// header. If body is nil, or a nil-interface, a "nil" body is returned without
+// error.
+func prepareJSONRequest(body any, headers http.Header) (io.Reader, http.Header, error) {
+	jsonBody, err := jsonEncode(body)
 	if err != nil {
 		return nil, headers, err
 	}
-	if headers == nil {
-		headers = make(map[string][]string)
+	if jsonBody == nil || jsonBody == http.NoBody {
+		// no content-type is set on empty requests.
+		return jsonBody, headers, nil
 	}
-	headers["Content-Type"] = []string{"application/json"}
-	return body, headers, nil
+
+	hdr := http.Header{}
+	if headers != nil {
+		hdr = headers.Clone()
+	}
+
+	// TODO(thaJeztah): should this return an error if a different Content-Type is already set?
+	hdr.Set("Content-Type", "application/json")
+	return jsonBody, hdr, nil
 }
 
 func (cli *Client) buildRequest(ctx context.Context, method, path string, body io.Reader, headers http.Header) (*http.Request, error) {
@@ -101,9 +101,6 @@ func (cli *Client) buildRequest(ctx context.Context, method, path string, body i
 		req.Host = DummyHost
 	}
 
-	if body != nil && req.Header.Get("Content-Type") == "" {
-		req.Header.Set("Content-Type", "text/plain")
-	}
 	return req, nil
 }
 
@@ -114,81 +111,114 @@ func (cli *Client) sendRequest(ctx context.Context, method, path string, query u
 	}
 
 	resp, err := cli.doRequest(req)
-	switch {
-	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-		return nil, err
-	case err == nil:
-		return resp, cli.checkResponseErr(resp)
-	default:
+	if err != nil {
+		// Failed to connect or context error.
 		return resp, err
 	}
+
+	// Successfully made a request; return the response and handle any
+	// API HTTP response errors.
+	return resp, checkResponseErr(resp)
 }
 
+// doRequest sends an HTTP request and returns an HTTP response. It is a
+// wrapper around [http.Client.Do] with extra handling to decorate errors.
+//
+// Otherwise, it behaves identical to [http.Client.Do]; an error is returned
+// when failing to make a connection, On error, any Response can be ignored.
+// A non-2xx status code doesn't cause an error.
 func (cli *Client) doRequest(req *http.Request) (*http.Response, error) {
-	resp, err := cli.client.Do(req)
-	if err != nil {
-		if cli.scheme != "https" && strings.Contains(err.Error(), "malformed HTTP response") {
-			return nil, errConnectionFailed{fmt.Errorf("%v.\n* Are you trying to connect to a TLS-enabled daemon without TLS?", err)}
-		}
-
-		if cli.scheme == "https" && strings.Contains(err.Error(), "bad certificate") {
-			return nil, errConnectionFailed{errors.Wrap(err, "the server probably has client authentication (--tlsverify) enabled; check your TLS client certification settings")}
-		}
-
-		// Don't decorate context sentinel errors; users may be comparing to
-		// them directly.
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-			return nil, err
-		}
-
-		var uErr *url.Error
-		if errors.As(err, &uErr) {
-			var nErr *net.OpError
-			if errors.As(uErr.Err, &nErr) {
-				if os.IsPermission(nErr.Err) {
-					return nil, errConnectionFailed{errors.Wrapf(err, "permission denied while trying to connect to the Docker daemon socket at %v", cli.host)}
-				}
-			}
-		}
-
-		var nErr net.Error
-		if errors.As(err, &nErr) {
-			// FIXME(thaJeztah): any net.Error should be considered a connection error (but we should include the original error)?
-			if nErr.Timeout() {
-				return nil, connectionFailed(cli.host)
-			}
-			if strings.Contains(nErr.Error(), "connection refused") || strings.Contains(nErr.Error(), "dial unix") {
-				return nil, connectionFailed(cli.host)
-			}
-		}
-
-		// Although there's not a strongly typed error for this in go-winio,
-		// lots of people are using the default configuration for the docker
-		// daemon on Windows where the daemon is listening on a named pipe
-		// `//./pipe/docker_engine, and the client must be running elevated.
-		// Give users a clue rather than the not-overly useful message
-		// such as `error during connect: Get http://%2F%2F.%2Fpipe%2Fdocker_engine/v1.26/info:
-		// open //./pipe/docker_engine: The system cannot find the file specified.`.
-		// Note we can't string compare "The system cannot find the file specified" as
-		// this is localised - for example in French the error would be
-		// `open //./pipe/docker_engine: Le fichier spécifié est introuvable.`
-		if strings.Contains(err.Error(), `open //./pipe/docker_engine`) {
-			// Checks if client is running with elevated privileges
-			if f, elevatedErr := os.Open(`\\.\PHYSICALDRIVE0`); elevatedErr != nil {
-				err = errors.Wrap(err, "in the default daemon configuration on Windows, the docker client must be run with elevated privileges to connect")
-			} else {
-				_ = f.Close()
-				err = errors.Wrap(err, "this error may indicate that the docker daemon is not running")
-			}
-		}
-
-		return nil, errConnectionFailed{errors.Wrap(err, "error during connect")}
+	resp, err := cli.client.Do(req) // #nosec G704 -- ignore "SSRF via taint analysis"; API client intentionally sends caller-provided requests/URLs.
+	if err == nil {
+		return resp, nil
 	}
 
-	return resp, nil
+	if cli.scheme != "https" && strings.Contains(err.Error(), "malformed HTTP response") {
+		return nil, errConnectionFailed{fmt.Errorf("%w.\n* Are you trying to connect to a TLS-enabled daemon without TLS?", err)}
+	}
+
+	const (
+		// Go 1.25 /  TLS 1.3 may produce a generic "handshake failure"
+		// whereas TLS 1.2 may produce a "bad certificate" TLS alert.
+		// See https://github.com/golang/go/issues/56371
+		//
+		// > https://tip.golang.org/doc/go1.12#tls_1_3
+		// >
+		// > In TLS 1.3 the client is the last one to speak in the handshake, so if
+		// > it causes an error to occur on the server, it will be returned on the
+		// > client by the first Read, not by Handshake. For example, that will be
+		// > the case if the server rejects the client certificate.
+		//
+		// https://github.com/golang/go/blob/go1.25.1/src/crypto/tls/alert.go#L71-L72
+		alertBadCertificate   = "bad certificate"   // go1.24 / TLS 1.2
+		alertHandshakeFailure = "handshake failure" // go1.25 / TLS 1.3
+	)
+
+	// TODO(thaJeztah): see if we can use errors.As for a [crypto/tls.AlertError] instead of bare string matching.
+	if cli.scheme == "https" && (strings.Contains(err.Error(), alertHandshakeFailure) || strings.Contains(err.Error(), alertBadCertificate)) {
+		return nil, errConnectionFailed{fmt.Errorf("the server probably has client authentication (--tlsverify) enabled; check your TLS client certification settings: %w", err)}
+	}
+
+	// Don't decorate context sentinel errors; users may be comparing to
+	// them directly.
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return nil, err
+	}
+
+	if errors.Is(err, os.ErrPermission) {
+		// Don't include request errors (Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/version"),
+		// which are irrelevant if we weren't able to connect.
+		return nil, errConnectionFailed{fmt.Errorf("permission denied while trying to connect to the docker API at %v", cli.host)}
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		// Unwrap the error to remove request errors (Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/version"),
+		// which are irrelevant if we weren't able to connect.
+		err = errors.Unwrap(err)
+		return nil, errConnectionFailed{fmt.Errorf("failed to connect to the docker API at %v; check if the path is correct and if the daemon is running: %w", cli.host, err)}
+	}
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return nil, errConnectionFailed{fmt.Errorf("failed to connect to the docker API at %v: %w", cli.host, dnsErr)}
+	}
+
+	var nErr net.Error
+	if errors.As(err, &nErr) {
+		// FIXME(thaJeztah): any net.Error should be considered a connection error (but we should include the original error)?
+		if nErr.Timeout() {
+			return nil, connectionFailed(cli.host)
+		}
+		if strings.Contains(nErr.Error(), "connection refused") || strings.Contains(nErr.Error(), "dial unix") {
+			return nil, connectionFailed(cli.host)
+		}
+	}
+
+	// Although there's not a strongly typed error for this in go-winio,
+	// lots of people are using the default configuration for the docker
+	// daemon on Windows where the daemon is listening on a named pipe
+	// ("//./pipe/docker_engine"), and the client must be running elevated.
+	//
+	// Give users a clue rather than the not-overly useful message such as;
+	//
+	// 	open //./pipe/docker_engine: The system cannot find the file specified.
+	//
+	// Note we can't string compare "The system cannot find the file specified" as
+	// this is localized; for example. in French the error would be;
+	//
+	//	open //./pipe/docker_engine: Le fichier spécifié est introuvable.
+	if strings.Contains(err.Error(), `open //./pipe/docker_engine`) {
+		// Checks if client is running with elevated privileges
+		if f, elevatedErr := os.Open(`\\.\PHYSICALDRIVE0`); elevatedErr != nil {
+			err = fmt.Errorf("in the default daemon configuration on Windows, the docker client must be run with elevated privileges to connect: %w", err)
+		} else {
+			_ = f.Close()
+			err = fmt.Errorf("this error may indicate that the docker daemon is not running: %w", err)
+		}
+	}
+
+	return nil, errConnectionFailed{fmt.Errorf("error during connect: %w", err)}
 }
 
-func (cli *Client) checkResponseErr(serverResp *http.Response) (retErr error) {
+func checkResponseErr(serverResp *http.Response) (retErr error) {
 	if serverResp == nil {
 		return nil
 	}
@@ -209,7 +239,11 @@ func (cli *Client) checkResponseErr(serverResp *http.Response) (retErr error) {
 	if statusMsg == "" {
 		statusMsg = http.StatusText(serverResp.StatusCode)
 	}
-	if serverResp.Body != nil {
+	var reqMethod string
+	if serverResp.Request != nil {
+		reqMethod = serverResp.Request.Method
+	}
+	if serverResp.Body != nil && reqMethod != http.MethodHead {
 		bodyMax := 1 * 1024 * 1024 // 1 MiB
 		bodyR := &io.LimitedReader{
 			R: serverResp.Body,
@@ -235,20 +269,20 @@ func (cli *Client) checkResponseErr(serverResp *http.Response) (retErr error) {
 
 	var daemonErr error
 	if serverResp.Header.Get("Content-Type") == "application/json" {
-		var errorResponse types.ErrorResponse
+		var errorResponse common.ErrorResponse
 		if err := json.Unmarshal(body, &errorResponse); err != nil {
-			return errors.Wrap(err, "Error reading JSON")
+			return fmt.Errorf("error reading JSON: %w", err)
 		}
 		if errorResponse.Message == "" {
 			// Error-message is empty, which means that we successfully parsed the
 			// JSON-response (no error produced), but it didn't contain an error
 			// message. This could either be because the response was empty, or
 			// the response was valid JSON, but not with the expected schema
-			// ([types.ErrorResponse]).
+			// ([common.ErrorResponse]).
 			//
 			// We cannot use "strict" JSON handling (json.NewDecoder with DisallowUnknownFields)
 			// due to the API using an open schema (we must anticipate fields
-			// being added to [types.ErrorResponse] in the future, and not
+			// being added to [common.ErrorResponse] in the future, and not
 			// reject those responses.
 			//
 			// For these cases, we construct an error with the status-code
@@ -264,22 +298,18 @@ func (cli *Client) checkResponseErr(serverResp *http.Response) (retErr error) {
 			daemonErr = errors.New(strings.TrimSpace(errorResponse.Message))
 		}
 	} else {
-		// Fall back to returning the response as-is for API versions < 1.24
-		// that didn't support JSON error responses, and for situations
-		// where a plain text error is returned. This branch may also catch
-		// situations where a proxy is involved, returning a HTML response.
+		// Fall back to returning the response as-is for situations where a
+		// plain text error is returned. This branch may also catch
+		// situations where a proxy is involved, returning an HTML response.
 		daemonErr = errors.New(strings.TrimSpace(string(body)))
 	}
-	return errors.Wrap(daemonErr, "Error response from daemon")
+	return fmt.Errorf("Error response from daemon: %w", daemonErr)
 }
 
 func (cli *Client) addHeaders(req *http.Request, headers http.Header) *http.Request {
 	// Add CLI Config's HTTP Headers BEFORE we set the Docker headers
 	// then the user can't change OUR headers
 	for k, v := range cli.customHTTPHeaders {
-		if versions.LessThan(cli.version, "1.25") && http.CanonicalHeaderKey(k) == "User-Agent" {
-			continue
-		}
 		req.Header.Set(k, v)
 	}
 
@@ -287,36 +317,65 @@ func (cli *Client) addHeaders(req *http.Request, headers http.Header) *http.Requ
 		req.Header[http.CanonicalHeaderKey(k)] = v
 	}
 
-	if cli.userAgent != nil {
-		if *cli.userAgent == "" {
-			req.Header.Del("User-Agent")
-		} else {
-			req.Header.Set("User-Agent", *cli.userAgent)
+	if cli.userAgent == nil {
+		// No custom User-Agent set: use the default.
+		if req.Header.Get("User-Agent") == "" {
+			req.Header.Set("User-Agent", defaultUserAgent())
 		}
+	} else if *cli.userAgent == "" {
+		// User-Agent set to empty value; remove User-Agent.
+		req.Header.Del("User-Agent")
+	} else {
+		// Custom User-Agent set.
+		req.Header.Set("User-Agent", *cli.userAgent)
 	}
 	return req
 }
 
-func encodeData(data interface{}) (*bytes.Buffer, error) {
-	params := bytes.NewBuffer(nil)
-	if data != nil {
-		if err := json.NewEncoder(params).Encode(data); err != nil {
-			return nil, err
+func jsonEncode(data any) (io.Reader, error) {
+	switch x := data.(type) {
+	case nil:
+		return http.NoBody, nil
+	case io.Reader:
+		// http.NoBody or other readers
+		return x, nil
+	case json.RawMessage:
+		if len(x) == 0 {
+			return http.NoBody, nil
 		}
+		return bytes.NewReader(x), nil
 	}
-	return params, nil
+
+	// encoding/json encodes a nil pointer as the JSON document `null`,
+	// irrespective of whether the type implements json.Marshaler or encoding.TextMarshaler.
+	// That is almost certainly not what the caller intended as the request body.
+	if v := reflect.ValueOf(data); v.Kind() == reflect.Pointer && v.IsNil() {
+		return http.NoBody, nil
+	}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
 }
 
 func ensureReaderClosed(response *http.Response) {
-	if response != nil && response.Body != nil {
-		// Drain up to 512 bytes and close the body to let the Transport reuse the connection
-		// see https://github.com/google/go-github/pull/317/files#r57536827
-		//
-		// TODO(thaJeztah): see if this optimization is still needed, or already implemented in stdlib,
-		//   and check if context-cancellation should handle this as well. If still needed, consider
-		//   wrapping response.Body, or returning a "closer()" from [Client.sendRequest] and related
-		//   methods.
-		_, _ = io.CopyN(io.Discard, response.Body, 512)
-		_ = response.Body.Close()
+	if response == nil || response.Body == nil {
+		return
 	}
+	if response.ContentLength == 0 || (response.Request != nil && response.Request.Method == http.MethodHead) {
+		// No need to drain head requests or zero-length responses.
+		_ = response.Body.Close()
+		return
+	}
+	// Drain up to 512 bytes and close the body to let the Transport reuse the connection
+	// see https://github.com/google/go-github/pull/317/files#r57536827
+	//
+	// TODO(thaJeztah): see if this optimization is still needed, or already implemented in stdlib,
+	//   and check if context-cancellation should handle this as well. If still needed, consider
+	//   wrapping response.Body, or returning a "closer()" from [Client.sendRequest] and related
+	//   methods.
+	_, _ = io.CopyN(io.Discard, response.Body, 512)
+	_ = response.Body.Close()
 }

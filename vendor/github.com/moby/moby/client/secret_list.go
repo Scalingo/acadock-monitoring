@@ -5,33 +5,34 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/moby/moby/api/types/swarm"
 )
 
+// SecretListOptions holds parameters to list secrets
+type SecretListOptions struct {
+	Filters Filters
+}
+
+// SecretListResult holds the result from the [client.SecretList] method.
+type SecretListResult struct {
+	Items []swarm.Secret
+}
+
 // SecretList returns the list of secrets.
-func (cli *Client) SecretList(ctx context.Context, options swarm.SecretListOptions) ([]swarm.Secret, error) {
-	if err := cli.NewVersionError(ctx, "1.25", "secret list"); err != nil {
-		return nil, err
-	}
+func (cli *Client) SecretList(ctx context.Context, options SecretListOptions) (SecretListResult, error) {
 	query := url.Values{}
-
-	if options.Filters.Len() > 0 {
-		filterJSON, err := filters.ToJSON(options.Filters)
-		if err != nil {
-			return nil, err
-		}
-
-		query.Set("filters", filterJSON)
-	}
+	options.Filters.updateURLValues(query)
 
 	resp, err := cli.get(ctx, "/secrets", query, nil)
 	defer ensureReaderClosed(resp)
 	if err != nil {
-		return nil, err
+		return SecretListResult{}, err
 	}
 
-	var secrets []swarm.Secret
-	err = json.NewDecoder(resp.Body).Decode(&secrets)
-	return secrets, err
+	var out SecretListResult
+	err = json.NewDecoder(resp.Body).Decode(&out.Items)
+	if err != nil {
+		return SecretListResult{}, err
+	}
+	return out, nil
 }

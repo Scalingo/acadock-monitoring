@@ -5,22 +5,23 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/docker/docker/api/types/image"
 )
 
-// ImageLoad loads an image in the docker host from the client host.
-// It's up to the caller to close the io.ReadCloser in the
-// ImageLoadResponse returned by this function.
+// ImageLoadResult returns information to the client about a load process.
+// It implements [io.ReadCloser] and must be closed to avoid a resource leak.
+type ImageLoadResult interface {
+	io.ReadCloser
+}
+
+// ImageLoad loads an image in the docker host from the client host. It's up
+// to the caller to close the [ImageLoadResult] returned by this function.
 //
-// Platform is an optional parameter that specifies the platform to load from
-// the provided multi-platform image. This is only has effect if the input image
-// is a multi-platform image.
-func (cli *Client) ImageLoad(ctx context.Context, input io.Reader, loadOpts ...ImageLoadOption) (image.LoadResponse, error) {
+// The underlying [io.ReadCloser] is automatically closed if the context is canceled,
+func (cli *Client) ImageLoad(ctx context.Context, input io.Reader, loadOpts ...ImageLoadOption) (ImageLoadResult, error) {
 	var opts imageLoadOpts
 	for _, opt := range loadOpts {
 		if err := opt.Apply(&opts); err != nil {
-			return image.LoadResponse{}, err
+			return nil, err
 		}
 	}
 
@@ -30,13 +31,13 @@ func (cli *Client) ImageLoad(ctx context.Context, input io.Reader, loadOpts ...I
 		query.Set("quiet", "1")
 	}
 	if len(opts.apiOptions.Platforms) > 0 {
-		if err := cli.NewVersionError(ctx, "1.48", "platform"); err != nil {
-			return image.LoadResponse{}, err
+		if err := cli.requiresVersion(ctx, "1.48", "platform"); err != nil {
+			return nil, err
 		}
 
 		p, err := encodePlatforms(opts.apiOptions.Platforms...)
 		if err != nil {
-			return image.LoadResponse{}, err
+			return nil, err
 		}
 		query["platform"] = p
 	}
@@ -45,10 +46,19 @@ func (cli *Client) ImageLoad(ctx context.Context, input io.Reader, loadOpts ...I
 		"Content-Type": {"application/x-tar"},
 	})
 	if err != nil {
-		return image.LoadResponse{}, err
+		return nil, err
 	}
-	return image.LoadResponse{
-		Body: resp.Body,
-		JSON: resp.Header.Get("Content-Type") == "application/json",
+	return &imageLoadResult{
+		ReadCloser: newCancelReadCloser(ctx, resp.Body),
 	}, nil
 }
+
+// imageLoadResult returns information to the client about a load process.
+type imageLoadResult struct {
+	io.ReadCloser
+}
+
+var (
+	_ io.ReadCloser   = (*imageLoadResult)(nil)
+	_ ImageLoadResult = (*imageLoadResult)(nil)
+)

@@ -3,26 +3,38 @@ package client
 import (
 	"context"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/network"
 )
 
+// NetworkConnectOptions represents the data to be used to connect a container to the
+// network.
+type NetworkConnectOptions struct {
+	Container      string
+	EndpointConfig *network.EndpointSettings
+}
+
+// NetworkConnectResult represents the result of a NetworkConnect operation.
+type NetworkConnectResult struct {
+	// Currently empty; placeholder for future fields.
+}
+
 // NetworkConnect connects a container to an existent network in the docker host.
-func (cli *Client) NetworkConnect(ctx context.Context, networkID, containerID string, config *network.EndpointSettings) error {
+func (cli *Client) NetworkConnect(ctx context.Context, networkID string, options NetworkConnectOptions) (NetworkConnectResult, error) {
 	networkID, err := trimID("network", networkID)
 	if err != nil {
-		return err
+		return NetworkConnectResult{}, err
 	}
 
-	containerID, err = trimID("container", containerID)
+	containerID, err := trimID("container", options.Container)
 	if err != nil {
-		return err
+		return NetworkConnectResult{}, err
 	}
 
-	nc := network.ConnectOptions{
+	nc := network.ConnectRequest{
 		Container:      containerID,
-		EndpointConfig: config,
+		EndpointConfig: options.EndpointConfig,
 	}
 	resp, err := cli.post(ctx, "/networks/"+networkID+"/connect", nil, nc, nil)
-	ensureReaderClosed(resp)
-	return err
+	defer ensureReaderClosed(resp)
+	return NetworkConnectResult{}, err
 }

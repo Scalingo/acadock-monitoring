@@ -6,11 +6,18 @@ import (
 	"net/url"
 )
 
-// ImageSave retrieves one or more images from the docker host as an io.ReadCloser.
+type ImageSaveResult interface {
+	io.ReadCloser
+}
+
+// ImageSave retrieves one or more images from the docker host as an
+// [ImageSaveResult]. Callers should close the reader, but the underlying
+// [io.ReadCloser] is automatically closed if the context is canceled,
 //
-// Platforms is an optional parameter that specifies the platforms to save from the image.
-// This is only has effect if the input image is a multi-platform image.
-func (cli *Client) ImageSave(ctx context.Context, imageIDs []string, saveOpts ...ImageSaveOption) (io.ReadCloser, error) {
+// Platforms is an optional parameter that specifies the platforms to save
+// from the image. Passing a platform only has an effect if the input image
+// is a multi-platform image.
+func (cli *Client) ImageSave(ctx context.Context, imageIDs []string, saveOpts ...ImageSaveOption) (ImageSaveResult, error) {
 	var opts imageSaveOpts
 	for _, opt := range saveOpts {
 		if err := opt.Apply(&opts); err != nil {
@@ -23,7 +30,7 @@ func (cli *Client) ImageSave(ctx context.Context, imageIDs []string, saveOpts ..
 	}
 
 	if len(opts.apiOptions.Platforms) > 0 {
-		if err := cli.NewVersionError(ctx, "1.48", "platform"); err != nil {
+		if err := cli.requiresVersion(ctx, "1.48", "platform"); err != nil {
 			return nil, err
 		}
 		p, err := encodePlatforms(opts.apiOptions.Platforms...)
@@ -37,5 +44,16 @@ func (cli *Client) ImageSave(ctx context.Context, imageIDs []string, saveOpts ..
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+	return &imageSaveResult{
+		ReadCloser: newCancelReadCloser(ctx, resp.Body),
+	}, nil
 }
+
+type imageSaveResult struct {
+	io.ReadCloser
+}
+
+var (
+	_ io.ReadCloser   = (*imageSaveResult)(nil)
+	_ ImageSaveResult = (*imageSaveResult)(nil)
+)

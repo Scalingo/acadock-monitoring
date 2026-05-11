@@ -1,13 +1,18 @@
 package client
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/url"
+	"io"
+	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 
 	cerrdefs "github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types/filters"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -28,18 +33,45 @@ func trimID(objType, id string) (string, error) {
 	return id, nil
 }
 
-// getFiltersQuery returns a url query with "filters" query term, based on the
-// filters provided.
-func getFiltersQuery(f filters.Args) (url.Values, error) {
-	query := url.Values{}
-	if f.Len() > 0 {
-		filterJSON, err := filters.ToJSON(f)
-		if err != nil {
-			return query, err
-		}
-		query.Set("filters", filterJSON)
+// parseAPIVersion checks v to be a well-formed ("<major>.<minor>")
+// API version. It returns an error if the value is empty or does not
+// have the correct format, but does not validate if the API version is
+// within the supported range ([MinAPIVersion] <= v <= [MaxAPIVersion]).
+//
+// It returns version after normalizing, or an error if validation failed.
+func parseAPIVersion(version string) (string, error) {
+	if strings.TrimPrefix(strings.TrimSpace(version), "v") == "" {
+		return "", cerrdefs.ErrInvalidArgument.WithMessage("value is empty")
 	}
-	return query, nil
+	major, minor, err := parseMajorMinor(version)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d.%d", major, minor), nil
+}
+
+// parseMajorMinor is a helper for parseAPIVersion.
+func parseMajorMinor(v string) (major, minor int, _ error) {
+	if strings.HasPrefix(v, "v") {
+		return 0, 0, cerrdefs.ErrInvalidArgument.WithMessage("must be formatted <major>.<minor>")
+	}
+	if strings.TrimSpace(v) == "" {
+		return 0, 0, cerrdefs.ErrInvalidArgument.WithMessage("value is empty")
+	}
+
+	majVer, minVer, ok := strings.Cut(v, ".")
+	if !ok {
+		return 0, 0, cerrdefs.ErrInvalidArgument.WithMessage("must be formatted <major>.<minor>")
+	}
+	major, err := strconv.Atoi(majVer)
+	if err != nil {
+		return 0, 0, cerrdefs.ErrInvalidArgument.WithMessage("invalid major version: must be formatted <major>.<minor>")
+	}
+	minor, err = strconv.Atoi(minVer)
+	if err != nil {
+		return 0, 0, cerrdefs.ErrInvalidArgument.WithMessage("invalid minor version: must be formatted <major>.<minor>")
+	}
+	return major, minor, nil
 }
 
 // encodePlatforms marshals the given platform(s) to JSON format, to
@@ -80,4 +112,43 @@ func encodePlatform(platform *ocispec.Platform) (string, error) {
 		return "", fmt.Errorf("%w: invalid platform: %v", cerrdefs.ErrInvalidArgument, err)
 	}
 	return string(p), nil
+}
+
+func decodeWithRaw[T any](resp *http.Response, out *T) (raw json.RawMessage, _ error) {
+	if resp == nil || resp.Body == nil {
+		return nil, errors.New("empty response")
+	}
+	defer ensureReaderClosed(resp)
+
+	var buf bytes.Buffer
+	tr := io.TeeReader(resp.Body, &buf)
+	err := json.NewDecoder(tr).Decode(out)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// newCancelReadCloser wraps rc so it's automatically closed when ctx is canceled.
+// Close is idempotent and returns the first error from rc.Close.
+func newCancelReadCloser(ctx context.Context, rc io.ReadCloser) io.ReadCloser {
+	crc := &cancelReadCloser{
+		rc:    rc,
+		close: sync.OnceValue(rc.Close),
+	}
+	crc.stop = context.AfterFunc(ctx, func() { _ = crc.close() })
+	return crc
+}
+
+type cancelReadCloser struct {
+	rc    io.ReadCloser
+	close func() error
+	stop  func() bool
+}
+
+func (c *cancelReadCloser) Read(p []byte) (int, error) { return c.rc.Read(p) }
+
+func (c *cancelReadCloser) Close() error {
+	c.stop() // unregister AfterFunc
+	return c.close()
 }
