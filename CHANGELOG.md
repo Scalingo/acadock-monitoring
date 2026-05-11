@@ -37,7 +37,7 @@
 * chore(go): use Go 1.22.10
 * use github.com/Scalingo/go-utils/graceful for graceful upgrades and shutdowns
 * use github.com/Scalingo/go-utils/errors/v3 for errors management
-* use github.com/docker/docker instead of github.com/fsouza/go-dockerclient
+* use github.com/moby/moby instead of github.com/fsouza/go-dockerclient
 
 ## v1.2.1 - 2023-12-27
 

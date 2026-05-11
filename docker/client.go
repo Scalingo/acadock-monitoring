@@ -3,7 +3,7 @@ package docker
 import (
 	"context"
 
-	docker "github.com/docker/docker/client"
+	docker "github.com/moby/moby/client"
 
 	"github.com/Scalingo/acadock-monitoring/v2/config"
 	"github.com/Scalingo/go-utils/errors/v3"

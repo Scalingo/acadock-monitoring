@@ -12,6 +12,7 @@ require (
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
+	github.com/moby/moby v28.5.2+incompatible
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/tklauser/go-sysconf v0.3.16
