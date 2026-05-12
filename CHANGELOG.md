@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* build(deps): replace dependency `github.com/docker/docker` with `github.com/moby/moby`
+
 ## v2.0.5 - 2025-04-13
 
 * chore(deps): various updates
