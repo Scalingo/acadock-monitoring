@@ -69,7 +69,6 @@ func ioUsageFromStats(stats cgroup.Stats) client.IOUsage {
 	devices := make([]client.IODeviceUsage, 0, len(stats.IOUsage.Devices))
 	for _, device := range stats.IOUsage.Devices {
 		devices = append(devices, client.IODeviceUsage{
-			Device:     device.Device,
 			DevicePath: device.DevicePath,
 			Mountpoint: device.Mountpoint,
 			Major:      device.Major,

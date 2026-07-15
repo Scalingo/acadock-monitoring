@@ -82,7 +82,6 @@ func TestCgroupV1IOUsageAggregatesReadAndWriteStats(t *testing.T) {
 
 	require.Equal(t, IOUsage{Devices: []IODeviceUsage{
 		{
-			Device:     "sda",
 			DevicePath: "/dev/sda",
 			Mountpoint: "/var/lib",
 			Major:      8,

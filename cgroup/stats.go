@@ -37,7 +37,6 @@ type IOUsage struct {
 }
 
 type IODeviceUsage struct {
-	Device     string
 	DevicePath string
 	Mountpoint string
 	Major      uint64
@@ -210,7 +209,6 @@ func updateCgroupV1Device(devices map[string]*IODeviceUsage, order *[]string, en
 	device, ok := devices[key]
 	if !ok {
 		device = &IODeviceUsage{
-			Device:     entry.Device,
 			DevicePath: mountInfos.DevicePath(entry.Major, entry.Minor),
 			Mountpoint: mountInfos.Mountpoint(entry.Major, entry.Minor),
 			Major:      entry.Major,
