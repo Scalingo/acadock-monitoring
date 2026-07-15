@@ -2,9 +2,12 @@ package cgroup
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"time"
 
-	"github.com/containerd/cgroups/v3/cgroup1/stats"
+	statsV1 "github.com/containerd/cgroups/v3/cgroup1/stats"
+	statsV2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 )
@@ -23,6 +26,21 @@ type Stats struct {
 	SwapUsage      uint64
 	SwapMaxUsage   uint64
 	SwapLimit      uint64
+	IOUsage        IOUsage
+}
+
+type IOUsage struct {
+	Devices []IODeviceUsage
+}
+
+type IODeviceUsage struct {
+	Device     string
+	Major      uint64
+	Minor      uint64
+	ReadBytes  uint64
+	WriteBytes uint64
+	ReadIOs    uint64
+	WriteIOs   uint64
 }
 
 func NewStatsReader() *StatsReaderImpl {
@@ -74,6 +92,7 @@ func (r *StatsReaderImpl) getCgroupV2Stats(ctx context.Context, manager *Manager
 		MemoryLimit: stats.Memory.UsageLimit,
 		SwapUsage:   stats.Memory.SwapUsage,
 		SwapLimit:   stats.Memory.SwapLimit,
+		IOUsage:     cgroupV2IOUsage(stats.Io),
 	}, nil
 }
 
@@ -83,8 +102,8 @@ func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v1 stats")
 	}
 
-	memoryStats := &stats.MemoryEntry{}
-	swapStats := &stats.MemoryEntry{}
+	memoryStats := &statsV1.MemoryEntry{}
+	swapStats := &statsV1.MemoryEntry{}
 	if cgroupStats.Memory != nil && cgroupStats.Memory.Usage != nil {
 		memoryStats = cgroupStats.Memory.Usage
 		swapStats = cgroupStats.Memory.Swap
@@ -99,5 +118,88 @@ func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager
 		SwapUsage:    swapStats.Usage - memoryStats.Usage,
 		SwapMaxUsage: swapStats.Max - memoryStats.Max,
 		SwapLimit:    swapStats.Limit - memoryStats.Limit,
+		IOUsage:      cgroupV1IOUsage(cgroupStats.Blkio),
 	}, nil
+}
+
+func cgroupV2IOUsage(ioStat *statsV2.IOStat) IOUsage {
+	if ioStat == nil {
+		return IOUsage{}
+	}
+
+	devices := make([]IODeviceUsage, 0, len(ioStat.Usage))
+	for _, entry := range ioStat.Usage {
+		devices = append(devices, IODeviceUsage{
+			Major:      entry.Major,
+			Minor:      entry.Minor,
+			ReadBytes:  entry.Rbytes,
+			WriteBytes: entry.Wbytes,
+			ReadIOs:    entry.Rios,
+			WriteIOs:   entry.Wios,
+		})
+	}
+
+	return IOUsage{Devices: devices}
+}
+
+func cgroupV1IOUsage(blkioStat *statsV1.BlkIOStat) IOUsage {
+	if blkioStat == nil {
+		return IOUsage{}
+	}
+
+	devices := make(map[string]*IODeviceUsage)
+	order := make([]string, 0)
+
+	for _, entry := range blkioStat.IoServiceBytesRecursive {
+		updateCgroupV1Device(devices, &order, entry, func(device *IODeviceUsage, op string, value uint64) {
+			switch op {
+			case "read":
+				device.ReadBytes += value
+			case "write":
+				device.WriteBytes += value
+			}
+		})
+	}
+
+	for _, entry := range blkioStat.IoServicedRecursive {
+		updateCgroupV1Device(devices, &order, entry, func(device *IODeviceUsage, op string, value uint64) {
+			switch op {
+			case "read":
+				device.ReadIOs += value
+			case "write":
+				device.WriteIOs += value
+			}
+		})
+	}
+
+	usage := IOUsage{Devices: make([]IODeviceUsage, 0, len(order))}
+	for _, key := range order {
+		usage.Devices = append(usage.Devices, *devices[key])
+	}
+
+	return usage
+}
+
+func updateCgroupV1Device(devices map[string]*IODeviceUsage, order *[]string, entry *statsV1.BlkIOEntry, update func(device *IODeviceUsage, op string, value uint64)) {
+	op := strings.ToLower(entry.Op)
+	if op != "read" && op != "write" {
+		return
+	}
+
+	key := entry.Device
+	if key == "" {
+		key = strconv.FormatUint(entry.Major, 10) + ":" + strconv.FormatUint(entry.Minor, 10)
+	}
+	device, ok := devices[key]
+	if !ok {
+		device = &IODeviceUsage{
+			Device: entry.Device,
+			Major:  entry.Major,
+			Minor:  entry.Minor,
+		}
+		devices[key] = device
+		*order = append(*order, key)
+	}
+
+	update(device, op, entry.Value)
 }

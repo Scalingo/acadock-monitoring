@@ -15,9 +15,9 @@ import (
 	"github.com/Scalingo/acadock-monitoring/v2/cpu"
 	"github.com/Scalingo/acadock-monitoring/v2/docker"
 	"github.com/Scalingo/acadock-monitoring/v2/filters"
-	"github.com/Scalingo/acadock-monitoring/v2/mem"
 	"github.com/Scalingo/acadock-monitoring/v2/net"
 	"github.com/Scalingo/acadock-monitoring/v2/procfs"
+	"github.com/Scalingo/acadock-monitoring/v2/resources"
 	"github.com/Scalingo/acadock-monitoring/v2/webserver"
 	"github.com/Scalingo/go-handlers"
 	"github.com/Scalingo/go-utils/graceful"
@@ -61,9 +61,9 @@ func main() {
 	go cpuMonitor.Start(ctx)
 	netMonitor := net.NewNetMonitor(ctx, containerRepository)
 	go netMonitor.Start()
-	memMonitor := mem.NewMemoryUsageGetter()
+	resourcesGetter := resources.NewUsageGetter()
 
-	controller := webserver.NewController(memMonitor, cpuMonitor, netMonitor, queueLength, hostMemory)
+	controller := webserver.NewController(resourcesGetter, cpuMonitor, netMonitor, queueLength, hostMemory)
 
 	globalRouter := mux.NewRouter()
 	r := handlers.NewRouter(log)

@@ -16,11 +16,12 @@ func (c Controller) ContainerUsageHandler(res http.ResponseWriter, req *http.Req
 	id := params["id"]
 	usage := client.Usage{}
 
-	memUsage, err := c.mem.GetMemoryUsage(ctx, id)
+	resourceUsage, err := c.resources.GetUsage(ctx, id)
 	if err != nil {
-		return errors.Wrap(ctx, err, "get container memory usage")
+		return errors.Wrap(ctx, err, "get container resources usage")
 	}
-	usage.Memory = &memUsage
+	usage.Memory = &resourceUsage.Memory
+	usage.IO = &resourceUsage.IO
 
 	cpuUsage, err := c.cpu.GetContainerUsage(id)
 	if err != nil {
@@ -47,7 +48,7 @@ func (c Controller) ContainerMemUsageHandler(res http.ResponseWriter, req *http.
 	log := logger.Get(ctx)
 	id := params["id"]
 
-	containerMemoryUsage, err := c.mem.GetMemoryUsage(ctx, id)
+	containerMemoryUsage, err := c.resources.GetMemoryUsage(ctx, id)
 	if err != nil {
 		return errors.Wrap(ctx, err, "get container memory usage")
 	}
@@ -122,9 +123,9 @@ func (c Controller) ContainersUsageHandler(res http.ResponseWriter, req *http.Re
 			continue
 		}
 
-		memUsage, err := c.mem.GetMemoryUsage(ctx, container.ID)
+		resourceUsage, err := c.resources.GetUsage(ctx, container.ID)
 		if err != nil {
-			log.WithError(err).Info("Fail to get Memory usage")
+			log.WithError(err).Info("Could not get resources usage")
 			continue
 		}
 
@@ -136,7 +137,8 @@ func (c Controller) ContainersUsageHandler(res http.ResponseWriter, req *http.Re
 
 		usage[container.ID] = client.Usage{
 			Cpu:    (*client.CpuUsage)(&cpuUsage),
-			Memory: &memUsage,
+			Memory: &resourceUsage.Memory,
+			IO:     &resourceUsage.IO,
 			Net:    (*client.NetUsage)(&netUsage),
 			Labels: container.Labels,
 		}
