@@ -102,24 +102,34 @@ func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v1 stats")
 	}
 
-	memoryStats := &statsV1.MemoryEntry{}
-	swapStats := &statsV1.MemoryEntry{}
-	if cgroupStats.Memory != nil && cgroupStats.Memory.Usage != nil {
-		memoryStats = cgroupStats.Memory.Usage
-		swapStats = cgroupStats.Memory.Swap
-	}
+	return cgroupV1Stats(cgroupStats), nil
+}
+
+func cgroupV1Stats(stats *statsV1.Metrics) Stats {
+	cpuUsage := stats.GetCPU().GetUsage()
+	memoryUsage := stats.GetMemory().GetUsage()
+	memorySwap := stats.GetMemory().GetSwap()
+
 	return Stats{
-		CPUUsage:       time.Duration(cgroupStats.CPU.Usage.Total) * time.Nanosecond,
-		MemoryUsage:    memoryStats.Usage,
-		MemoryMaxUsage: memoryStats.Max,
-		MemoryLimit:    memoryStats.Limit,
+		CPUUsage:       time.Duration(cpuUsage.GetTotal()) * time.Nanosecond,
+		MemoryUsage:    memoryUsage.GetUsage(),
+		MemoryMaxUsage: memoryUsage.GetMax(),
+		MemoryLimit:    memoryUsage.GetLimit(),
 		// In cgroupv1, swap metrics is the sum of memory + swap, here we make it
 		// independent them by making a difference
-		SwapUsage:    swapStats.Usage - memoryStats.Usage,
-		SwapMaxUsage: swapStats.Max - memoryStats.Max,
-		SwapLimit:    swapStats.Limit - memoryStats.Limit,
-		IOUsage:      cgroupV1IOUsage(cgroupStats.Blkio),
-	}, nil
+		SwapUsage:    cgroupV1SwapMetric(memorySwap.GetUsage(), memoryUsage.GetUsage()),
+		SwapMaxUsage: cgroupV1SwapMetric(memorySwap.GetMax(), memoryUsage.GetMax()),
+		SwapLimit:    cgroupV1SwapMetric(memorySwap.GetLimit(), memoryUsage.GetLimit()),
+		IOUsage:      cgroupV1IOUsage(stats.GetBlkio()),
+	}
+}
+
+func cgroupV1SwapMetric(memoryAndSwap uint64, memory uint64) uint64 {
+	if memoryAndSwap < memory {
+		return 0
+	}
+
+	return memoryAndSwap - memory
 }
 
 func cgroupV2IOUsage(ioStat *statsV2.IOStat) IOUsage {

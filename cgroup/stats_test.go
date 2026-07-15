@@ -2,11 +2,54 @@ package cgroup
 
 import (
 	"testing"
+	"time"
 
 	statsV1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	statsV2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 	"github.com/stretchr/testify/require"
 )
+
+func TestCgroupV1StatsMapsStats(t *testing.T) {
+	stats := cgroupV1Stats(&statsV1.Metrics{
+		CPU: &statsV1.CPUStat{Usage: &statsV1.CPUUsage{Total: 42}},
+		Memory: &statsV1.MemoryStat{
+			Usage: &statsV1.MemoryEntry{Usage: 10, Max: 20, Limit: 30},
+			Swap:  &statsV1.MemoryEntry{Usage: 15, Max: 27, Limit: 41},
+		},
+	})
+
+	require.Equal(t, Stats{
+		CPUUsage:       42 * time.Nanosecond,
+		MemoryUsage:    10,
+		MemoryMaxUsage: 20,
+		MemoryLimit:    30,
+		SwapUsage:      5,
+		SwapMaxUsage:   7,
+		SwapLimit:      11,
+		IOUsage:        IOUsage{},
+	}, stats)
+}
+
+func TestCgroupV1StatsHandlesMissingSections(t *testing.T) {
+	stats := cgroupV1Stats(&statsV1.Metrics{})
+
+	require.Equal(t, Stats{IOUsage: IOUsage{}}, stats)
+}
+
+func TestCgroupV1StatsHandlesMissingSwap(t *testing.T) {
+	stats := cgroupV1Stats(&statsV1.Metrics{
+		Memory: &statsV1.MemoryStat{
+			Usage: &statsV1.MemoryEntry{Usage: 10, Max: 20, Limit: 30},
+		},
+	})
+
+	require.Equal(t, Stats{
+		MemoryUsage:    10,
+		MemoryMaxUsage: 20,
+		MemoryLimit:    30,
+		IOUsage:        IOUsage{},
+	}, stats)
+}
 
 func TestCgroupV1IOUsageAggregatesReadAndWriteStats(t *testing.T) {
 	usage := cgroupV1IOUsage(&statsV1.BlkIOStat{
