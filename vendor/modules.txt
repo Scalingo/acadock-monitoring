@@ -159,6 +159,11 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
+# github.com/prometheus/procfs v0.21.1
+## explicit; go 1.25.0
+github.com/prometheus/procfs
+github.com/prometheus/procfs/internal/fs
+github.com/prometheus/procfs/internal/util
 # github.com/sirupsen/logrus v1.9.4
 ## explicit; go 1.17
 github.com/sirupsen/logrus
@@ -226,6 +231,7 @@ go.opentelemetry.io/otel/trace/noop
 # go.uber.org/goleak v1.3.0
 ## explicit; go 1.20
 # golang.org/x/net v0.56.0
+# golang.org/x/sync v0.21.0
 ## explicit; go 1.25.0
 # golang.org/x/sys v0.46.0
 ## explicit; go 1.25.0
