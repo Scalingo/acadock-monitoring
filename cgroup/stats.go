@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/containerd/cgroups/v3/cgroup1/stats"
+
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
@@ -76,19 +78,26 @@ func (r *StatsReaderImpl) getCgroupV2Stats(ctx context.Context, manager *Manager
 }
 
 func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager) (Stats, error) {
-	stats, err := manager.V1Manager().Stat()
+	cgroupStats, err := manager.V1Manager().Stat()
 	if err != nil {
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v1 stats")
 	}
+
+	memoryStats := &stats.MemoryEntry{}
+	swapStats := &stats.MemoryEntry{}
+	if cgroupStats.Memory != nil && cgroupStats.Memory.Usage != nil {
+		memoryStats = cgroupStats.Memory.Usage
+		swapStats = cgroupStats.Memory.Swap
+	}
 	return Stats{
-		CPUUsage:       time.Duration(stats.CPU.Usage.Total) * time.Nanosecond,
-		MemoryUsage:    stats.Memory.Usage.Usage,
-		MemoryMaxUsage: stats.Memory.Usage.Max,
-		MemoryLimit:    stats.Memory.Usage.Limit,
+		CPUUsage:       time.Duration(cgroupStats.CPU.Usage.Total) * time.Nanosecond,
+		MemoryUsage:    memoryStats.Usage,
+		MemoryMaxUsage: memoryStats.Max,
+		MemoryLimit:    memoryStats.Limit,
 		// In cgroupv1, swap metrics is the sum of memory + swap, here we make it
 		// independent them by making a difference
-		SwapUsage:    stats.Memory.Swap.Usage - stats.Memory.Usage.Usage,
-		SwapMaxUsage: stats.Memory.Swap.Max - stats.Memory.Usage.Max,
-		SwapLimit:    stats.Memory.Swap.Limit - stats.Memory.Usage.Limit,
+		SwapUsage:    swapStats.Usage - memoryStats.Usage,
+		SwapMaxUsage: swapStats.Max - memoryStats.Max,
+		SwapLimit:    swapStats.Limit - memoryStats.Limit,
 	}, nil
 }
