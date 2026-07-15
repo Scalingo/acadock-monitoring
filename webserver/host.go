@@ -53,7 +53,7 @@ func (c Controller) HostResourcesHandler(res http.ResponseWriter, req *http.Requ
 			}
 		}
 
-		usage, err := c.mem.GetMemoryUsage(ctx, container.ID)
+		usage, err := c.resources.GetMemoryUsage(ctx, container.ID)
 		if err != nil {
 			log.WithError(err).Infof("Fail to get memory usage")
 			continue
