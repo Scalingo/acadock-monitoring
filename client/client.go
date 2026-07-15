@@ -60,6 +60,8 @@ type IOUsage struct {
 
 type IODeviceUsage struct {
 	Device     string `json:"device,omitempty"`
+	DevicePath string `json:"device_path,omitempty"`
+	Mountpoint string `json:"mountpoint,omitempty"`
 	Major      uint64 `json:"major"`
 	Minor      uint64 `json:"minor"`
 	ReadBytes  uint64 `json:"read_bytes"`

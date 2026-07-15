@@ -10,7 +10,7 @@ import (
 )
 
 type UsageGetter struct {
-	cgroupStatsReader cgroup.StatsReaderImpl
+	cgroupStatsReader cgroup.StatsReader
 }
 
 type Usage struct {
@@ -18,9 +18,9 @@ type Usage struct {
 	IO     client.IOUsage
 }
 
-func NewUsageGetter() UsageGetter {
+func NewUsageGetter(cgroupStatsReader cgroup.StatsReader) UsageGetter {
 	return UsageGetter{
-		cgroupStatsReader: *cgroup.NewStatsReader(),
+		cgroupStatsReader: cgroupStatsReader,
 	}
 }
 
@@ -70,6 +70,8 @@ func ioUsageFromStats(stats cgroup.Stats) client.IOUsage {
 	for _, device := range stats.IOUsage.Devices {
 		devices = append(devices, client.IODeviceUsage{
 			Device:     device.Device,
+			DevicePath: device.DevicePath,
+			Mountpoint: device.Mountpoint,
 			Major:      device.Major,
 			Minor:      device.Minor,
 			ReadBytes:  device.ReadBytes,

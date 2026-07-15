@@ -55,13 +55,18 @@ func main() {
 	go queueLength.Start(ctx)
 
 	containerRepository := docker.NewContainerRepository()
-	cgroupStatsReader := cgroup.NewStatsReader()
+	mountInfos, err := procfs.NewMountInfoReader(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	go mountInfos.Start(ctx)
+	cgroupStatsReader := cgroup.NewStatsReader(mountInfos)
 	go containerRepository.StartListeningToNewContainers(ctx)
 	cpuMonitor := cpu.NewCPUUsageMonitor(containerRepository, hostCPU, cgroupStatsReader)
 	go cpuMonitor.Start(ctx)
 	netMonitor := net.NewNetMonitor(ctx, containerRepository)
 	go netMonitor.Start()
-	resourcesGetter := resources.NewUsageGetter()
+	resourcesGetter := resources.NewUsageGetter(cgroupStatsReader)
 
 	controller := webserver.NewController(resourcesGetter, cpuMonitor, netMonitor, queueLength, hostMemory)
 

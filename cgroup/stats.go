@@ -9,10 +9,13 @@ import (
 	statsV1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	statsV2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 
+	"github.com/Scalingo/acadock-monitoring/v2/procfs"
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-type StatsReaderImpl struct{}
+type StatsReaderImpl struct {
+	mountInfos procfs.MountInfos
+}
 
 type StatsReader interface {
 	GetStats(ctx context.Context, containerID string) (Stats, error)
@@ -35,6 +38,8 @@ type IOUsage struct {
 
 type IODeviceUsage struct {
 	Device     string
+	DevicePath string
+	Mountpoint string
 	Major      uint64
 	Minor      uint64
 	ReadBytes  uint64
@@ -43,8 +48,8 @@ type IODeviceUsage struct {
 	WriteIOs   uint64
 }
 
-func NewStatsReader() *StatsReaderImpl {
-	return &StatsReaderImpl{}
+func NewStatsReader(mountInfos procfs.MountInfos) *StatsReaderImpl {
+	return &StatsReaderImpl{mountInfos: mountInfos}
 }
 
 type StatsReaderError struct {
@@ -92,7 +97,7 @@ func (r *StatsReaderImpl) getCgroupV2Stats(ctx context.Context, manager *Manager
 		MemoryLimit: stats.Memory.UsageLimit,
 		SwapUsage:   stats.Memory.SwapUsage,
 		SwapLimit:   stats.Memory.SwapLimit,
-		IOUsage:     cgroupV2IOUsage(stats.Io),
+		IOUsage:     cgroupV2IOUsage(stats.Io, r.mountInfos),
 	}, nil
 }
 
@@ -102,10 +107,10 @@ func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v1 stats")
 	}
 
-	return cgroupV1Stats(stats), nil
+	return cgroupV1Stats(stats, r.mountInfos), nil
 }
 
-func cgroupV1Stats(stats *statsV1.Metrics) Stats {
+func cgroupV1Stats(stats *statsV1.Metrics, mountInfos procfs.MountInfos) Stats {
 	cpuUsage := stats.GetCPU().GetUsage()
 	memoryUsage := stats.GetMemory().GetUsage()
 	memorySwap := stats.GetMemory().GetSwap()
@@ -120,7 +125,7 @@ func cgroupV1Stats(stats *statsV1.Metrics) Stats {
 		SwapUsage:    cgroupV1SwapMetric(memorySwap.GetUsage(), memoryUsage.GetUsage()),
 		SwapMaxUsage: cgroupV1SwapMetric(memorySwap.GetMax(), memoryUsage.GetMax()),
 		SwapLimit:    cgroupV1SwapMetric(memorySwap.GetLimit(), memoryUsage.GetLimit()),
-		IOUsage:      cgroupV1IOUsage(stats.GetBlkio()),
+		IOUsage:      cgroupV1IOUsage(stats.GetBlkio(), mountInfos),
 	}
 }
 
@@ -132,7 +137,7 @@ func cgroupV1SwapMetric(memoryAndSwap uint64, memory uint64) uint64 {
 	return memoryAndSwap - memory
 }
 
-func cgroupV2IOUsage(ioStat *statsV2.IOStat) IOUsage {
+func cgroupV2IOUsage(ioStat *statsV2.IOStat, mountInfos procfs.MountInfos) IOUsage {
 	if ioStat == nil {
 		return IOUsage{}
 	}
@@ -140,6 +145,8 @@ func cgroupV2IOUsage(ioStat *statsV2.IOStat) IOUsage {
 	devices := make([]IODeviceUsage, 0, len(ioStat.Usage))
 	for _, entry := range ioStat.Usage {
 		devices = append(devices, IODeviceUsage{
+			DevicePath: mountInfos.DevicePath(entry.Major, entry.Minor),
+			Mountpoint: mountInfos.Mountpoint(entry.Major, entry.Minor),
 			Major:      entry.Major,
 			Minor:      entry.Minor,
 			ReadBytes:  entry.Rbytes,
@@ -152,7 +159,7 @@ func cgroupV2IOUsage(ioStat *statsV2.IOStat) IOUsage {
 	return IOUsage{Devices: devices}
 }
 
-func cgroupV1IOUsage(blkioStat *statsV1.BlkIOStat) IOUsage {
+func cgroupV1IOUsage(blkioStat *statsV1.BlkIOStat, mountInfos procfs.MountInfos) IOUsage {
 	if blkioStat == nil {
 		return IOUsage{}
 	}
@@ -161,7 +168,7 @@ func cgroupV1IOUsage(blkioStat *statsV1.BlkIOStat) IOUsage {
 	order := make([]string, 0)
 
 	for _, entry := range blkioStat.IoServiceBytesRecursive {
-		updateCgroupV1Device(devices, &order, entry, func(device *IODeviceUsage, op string, value uint64) {
+		updateCgroupV1Device(devices, &order, entry, mountInfos, func(device *IODeviceUsage, op string, value uint64) {
 			switch op {
 			case "read":
 				device.ReadBytes += value
@@ -172,7 +179,7 @@ func cgroupV1IOUsage(blkioStat *statsV1.BlkIOStat) IOUsage {
 	}
 
 	for _, entry := range blkioStat.IoServicedRecursive {
-		updateCgroupV1Device(devices, &order, entry, func(device *IODeviceUsage, op string, value uint64) {
+		updateCgroupV1Device(devices, &order, entry, mountInfos, func(device *IODeviceUsage, op string, value uint64) {
 			switch op {
 			case "read":
 				device.ReadIOs += value
@@ -190,7 +197,7 @@ func cgroupV1IOUsage(blkioStat *statsV1.BlkIOStat) IOUsage {
 	return usage
 }
 
-func updateCgroupV1Device(devices map[string]*IODeviceUsage, order *[]string, entry *statsV1.BlkIOEntry, update func(device *IODeviceUsage, op string, value uint64)) {
+func updateCgroupV1Device(devices map[string]*IODeviceUsage, order *[]string, entry *statsV1.BlkIOEntry, mountInfos procfs.MountInfos, update func(device *IODeviceUsage, op string, value uint64)) {
 	op := strings.ToLower(entry.Op)
 	if op != "read" && op != "write" {
 		return
@@ -203,9 +210,11 @@ func updateCgroupV1Device(devices map[string]*IODeviceUsage, order *[]string, en
 	device, ok := devices[key]
 	if !ok {
 		device = &IODeviceUsage{
-			Device: entry.Device,
-			Major:  entry.Major,
-			Minor:  entry.Minor,
+			Device:     entry.Device,
+			DevicePath: mountInfos.DevicePath(entry.Major, entry.Minor),
+			Mountpoint: mountInfos.Mountpoint(entry.Major, entry.Minor),
+			Major:      entry.Major,
+			Minor:      entry.Minor,
 		}
 		devices[key] = device
 		*order = append(*order, key)
