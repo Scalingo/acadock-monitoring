@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	dockerevents "github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/filters"
+	dockerevents "github.com/moby/moby/api/types/events"
+	dockerclient "github.com/moby/moby/client"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
@@ -85,13 +85,13 @@ func (r *ContainerRepositoryImpl) listenToDockerEvents(ctx context.Context, even
 	}
 	defer client.Close()
 
-	filters := filters.NewArgs()
-	filters.Add("type", "container")
-	filters.Add("event", string(ContainerActionStart))
-	filters.Add("event", string(ContainerActionStop))
+	filters := dockerclient.Filters{}.
+		Add("type", "container").
+		Add("event", string(ContainerActionStart)).
+		Add("event", string(ContainerActionStop))
 
 	for {
-		dockerEventsReceiver, errs := client.Events(ctx, dockerevents.ListOptions{
+		eventsResult := client.Events(ctx, dockerclient.EventsListOptions{
 			Filters: filters,
 		})
 		if err != nil {
@@ -99,7 +99,7 @@ func (r *ContainerRepositoryImpl) listenToDockerEvents(ctx context.Context, even
 		}
 
 		go func() {
-			for event := range dockerEventsReceiver {
+			for event := range eventsResult.Messages {
 				events <- ContainerEvent{
 					ContainerID: event.Actor.ID,
 					Action:      event.Action,
@@ -107,7 +107,7 @@ func (r *ContainerRepositoryImpl) listenToDockerEvents(ctx context.Context, even
 			}
 		}()
 
-		err := <-errs
+		err := <-eventsResult.Err
 		if err == io.ErrUnexpectedEOF || err == io.EOF {
 			log.WithError(err).Info("Connection lost to docker, reconnecting immediately...")
 			// Not really immediately to prevent high CPU usage infinite loop during

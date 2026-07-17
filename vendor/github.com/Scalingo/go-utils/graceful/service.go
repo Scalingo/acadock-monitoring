@@ -10,7 +10,7 @@ import (
 
 	"github.com/cloudflare/tableflip"
 
-	"github.com/Scalingo/go-utils/errors/v2"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )
 
@@ -19,6 +19,8 @@ type Service struct {
 	upg         *tableflip.Upgrader
 	mx          sync.Mutex
 	wg          *sync.WaitGroup
+	prepared    bool
+	finalized   bool
 	// waitDuration is the duration which is waited for all connections to stop
 	// in order to graceful shutdown the server. If some connections are still up
 	// after this timer they'll be cut aggressively.
@@ -115,15 +117,25 @@ func (s *Service) listenAndServe(ctx context.Context, _ string, addr string, ser
 
 	log := logger.Get(ctx)
 
-	if len(s.httpServers) == 0 {
+	// Guard startup state so concurrent ListenAndServe calls run prepare() once and
+	// update prepared/httpServers/finalized atomically.
+	s.mx.Lock()
+	if !s.prepared {
 		err := s.prepare(ctx)
 		if err != nil {
+			s.mx.Unlock()
 			// purposefully do not wrap error here, as it is wrapped in prepare
 			return err
 		}
+		s.prepared = true
 	}
 
 	s.httpServers = append(s.httpServers, server)
+	shouldFinalize := !s.finalized && len(s.httpServers) == s.numServers
+	if shouldFinalize {
+		s.finalized = true
+	}
+	s.mx.Unlock()
 
 	// Listen must be called before Ready
 	ln, err := s.upg.Listen("tcp", addr)
@@ -138,11 +150,11 @@ func (s *Service) listenAndServe(ctx context.Context, _ string, addr string, ser
 	go func() {
 		err := server.Serve(ln)
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.WithError(err).Error("Http server serve")
+			log.WithError(err).Error("Fail when serving incoming HTTP connection")
 		}
 	}()
 
-	if len(s.httpServers) == s.numServers {
+	if shouldFinalize {
 		err := s.finalize(ctx)
 		if err != nil {
 			// purposefully do not wrap error here, as it is wrapped in finalize
@@ -191,13 +203,13 @@ func (s *Service) finalize(ctx context.Context) error {
 	defer cancel()
 	err := s.shutdown(ctx)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "fail to shutdown service")
+		return errors.Wrapf(ctx, err, "shutdown service")
 	}
 
 	// Wait for connections to drain.
 	errChan := make(chan error, len(s.httpServers))
 	for i, httpServer := range s.httpServers {
-		err = httpServer.Shutdown(ctx)
+		err := httpServer.Shutdown(ctx)
 		if err != nil {
 			errChan <- errors.Wrapf(ctx, err, "server shutdown %d", i)
 		}
@@ -223,7 +235,7 @@ func (s *Service) finalize(ctx context.Context) error {
 // may not want to cut them abrutely.
 func (s *Service) IncConnCount(ctx context.Context) {
 	log := logger.Get(ctx)
-	log.Debug("inc conn count")
+	log.Debug("Increment the connection count")
 	s.wg.Add(1)
 }
 
@@ -231,7 +243,7 @@ func (s *Service) IncConnCount(ctx context.Context) {
 // the hijacked connection is stopped
 func (s *Service) DecConnCount(ctx context.Context) {
 	log := logger.Get(ctx)
-	log.Debug("dec conn count")
+	log.Debug("Decrement the connection count")
 	s.wg.Done()
 }
 
@@ -253,13 +265,13 @@ func (s *Service) shutdown(ctx context.Context) error {
 			if len(s.httpServers) > 1 {
 				log = log.WithField("index", i)
 			}
-			log.Info("Shutting down http server")
+			log.Info("Shutting down HTTP server")
 			err := httpServer.Shutdown(ctx)
 			if err != nil {
-				log.WithError(err).Error("fail to shutdown http server")
+				log.WithError(err).Error("Fail to shutdown the HTTP server")
 				errChan <- errors.Wrapf(ctx, err, "shutdown http server %d", i)
 			} else {
-				log.Info("Http server is stopped")
+				log.Info("HTTP server is stopped")
 			}
 		}(i, httpServer)
 	}
@@ -280,10 +292,10 @@ func (s *Service) shutdown(ctx context.Context) error {
 		return shutdownErr
 	}
 
-	log.Info("Wait hijacked connections")
+	log.Info("Wait hijacked connections to finish")
 	err := s.waitHijackedConnections(ctx)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "fail to wait hijacked connections")
+		return errors.Wrapf(ctx, err, "wait hijacked connections")
 	}
 	log.Info("No more connection running")
 

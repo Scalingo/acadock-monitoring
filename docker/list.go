@@ -3,21 +3,22 @@ package docker
 import (
 	"context"
 
-	"github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/moby/moby/api/types/container"
+	dockerclient "github.com/moby/moby/client"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-func ListContainers(ctx context.Context) ([]container.Summary, error) {
+func ListContainers(ctx context.Context) ([]dockercontainer.Summary, error) {
 	client, err := Client(ctx)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "get docker client")
 	}
 
-	containers, err := client.ContainerList(ctx, container.ListOptions{})
+	containers, err := client.ContainerList(ctx, dockerclient.ContainerListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "list docker containers")
 	}
 
-	return containers, nil
+	return containers.Items, nil
 }

@@ -2,6 +2,18 @@
 
 ## To be Released
 
+## v1.12.2
+
+* refactor: replace `github.com/pkg/errors` with `errors`
+
+## v1.12.1
+
+* chore(deps): bump github.com/Scalingo/logrus-rollbar from 1.4.3 to 1.4.4
+
+## v1.12.0
+
+* feat(logger): automatically call `Hex` on `ObjectId` values
+
 ## v1.11.0
 
 * feat(logger): add ability to set a output io.Writer instead of stdout: `WithOutput(io.Writer)`

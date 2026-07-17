@@ -2,6 +2,10 @@
 
 ## To be Released
 
+## v1.11.1
+
+- chore(deps): bump several dependencies
+
 ## v1.11.0
 
 - feat(otel) Improve opentelemetry instrumentation by integrating with gorilla mux, add missing http.route attribute

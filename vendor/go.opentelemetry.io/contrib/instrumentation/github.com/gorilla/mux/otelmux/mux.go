@@ -149,7 +149,12 @@ func (tw traceware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// ReadCloser fulfills a certain interface and it is indeed nil or NoBody.
 	bw := request.NewBodyWrapper(r.Body, readRecordFunc)
 	if r.Body != nil && r.Body != http.NoBody {
+		prevBody := r.Body
 		r.Body = bw
+
+		// Restore the original body after the request is processed to avoid issues
+		// with extra wrapper since `http/server.go` later checks type of `r.Body`.
+		defer func() { r.Body = prevBody }()
 	}
 
 	writeRecordFunc := func(int64) {}
@@ -184,9 +189,6 @@ func (tw traceware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		WriteError: rww.Error(),
 	})...)
 
-	// Use floating point division here for higher precision (instead of Millisecond method).
-	elapsedTime := float64(time.Since(requestStartTime)) / float64(time.Millisecond)
-
 	metricAttributes := semconv.MetricAttributes{
 		Req:                  r,
 		StatusCode:           statusCode,
@@ -199,8 +201,8 @@ func (tw traceware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ResponseSize:     rww.BytesWritten(),
 		MetricAttributes: metricAttributes,
 		MetricData: semconv.MetricData{
-			RequestSize: bw.BytesRead(),
-			ElapsedTime: elapsedTime,
+			RequestSize:     bw.BytesRead(),
+			RequestDuration: time.Since(requestStartTime),
 		},
 	})
 }
