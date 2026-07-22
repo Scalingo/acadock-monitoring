@@ -10,6 +10,7 @@ import (
 	statsV2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 
 	"github.com/Scalingo/acadock-monitoring/v2/procfs"
+
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
@@ -101,12 +102,12 @@ func (r *StatsReaderImpl) getCgroupV2Stats(ctx context.Context, manager *Manager
 }
 
 func (r *StatsReaderImpl) getCgroupV1Stats(ctx context.Context, manager *Manager) (Stats, error) {
-	stats, err := manager.V1Manager().Stat()
+	cgroupStats, err := manager.V1Manager().Stat()
 	if err != nil {
 		return Stats{}, errors.Wrap(ctx, err, "get cgroup v1 stats")
 	}
 
-	return cgroupV1Stats(stats, r.mountInfos), nil
+	return cgroupV1Stats(cgroupStats, r.mountInfos), nil
 }
 
 func cgroupV1Stats(stats *statsV1.Metrics, mountInfos procfs.MountInfos) Stats {
