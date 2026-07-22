@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.0
+	github.com/prometheus/procfs v0.21.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/tklauser/go-sysconf v0.4.0

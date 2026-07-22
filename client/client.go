@@ -54,6 +54,22 @@ type NetUsage struct {
 	TxBps int64 `json:"tx_bps"`
 }
 
+type IOUsage struct {
+	Devices []IODeviceUsage `json:"devices"`
+}
+
+type IODeviceUsage struct {
+	Device     string `json:"device,omitempty"`
+	DevicePath string `json:"device_path,omitempty"`
+	Mountpoint string `json:"mountpoint,omitempty"`
+	Major      uint64 `json:"major"`
+	Minor      uint64 `json:"minor"`
+	ReadBytes  uint64 `json:"read_bytes"`
+	WriteBytes uint64 `json:"write_bytes"`
+	ReadIOs    uint64 `json:"read_ios"`
+	WriteIOs   uint64 `json:"write_ios"`
+}
+
 type AcadockClient interface {
 	AllContainersUsage(ctx context.Context) (ContainersUsage, error)
 	Memory(ctx context.Context, dockerId string) (*MemoryUsage, error)
@@ -74,6 +90,7 @@ type ClientOpts func(*Client) *Client
 type Usage struct {
 	Memory *MemoryUsage      `json:"memory"`
 	Cpu    *CpuUsage         `json:"cpu"`
+	IO     *IOUsage          `json:"io"`
 	Net    *NetUsage         `json:"net,omitempty"`
 	Labels map[string]string `json:"labels,omitempty"`
 }
