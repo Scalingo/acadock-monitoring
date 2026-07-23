@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v2.1.0 - 2026-07-23
+
 * feat(stat/io): Add monitoring of blkio (cgroupv1) / io (cgroupv2) stats, add endpoint to get them
 
 ## v2.0.6 - 2026-05-12
