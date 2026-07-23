@@ -71,7 +71,7 @@ func (c Controller) ContainerIOUsageHandler(res http.ResponseWriter, req *http.R
 		return errors.Wrap(ctx, err, "get container io usage")
 	}
 
-	res.WriteHeader(200)
+	res.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(res).Encode(&containerIOUsage)
 	if err != nil {
 		log.WithError(err).Error("Fail to encode container io usage payload")

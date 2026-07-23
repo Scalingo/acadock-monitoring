@@ -132,9 +132,9 @@ func (c *Client) Memory(ctx context.Context, dockerId string) (*MemoryUsage, err
 	return mem, nil
 }
 
-func (c *Client) IOUsage(ctx context.Context, dockerId string) (*IOUsage, error) {
+func (c *Client) IOUsage(ctx context.Context, dockerID string) (*IOUsage, error) {
 	io := &IOUsage{}
-	err := c.getResource(ctx, dockerId, "io", io)
+	err := c.getResource(ctx, dockerID, "io", io)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "get container io usage")
 	}
