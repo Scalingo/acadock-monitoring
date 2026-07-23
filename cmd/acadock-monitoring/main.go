@@ -80,6 +80,7 @@ func main() {
 	r.Use(handlers.ErrorMiddleware)
 
 	r.HandleFunc("/containers/{id}/mem", controller.ContainerMemUsageHandler).Methods("GET")
+	r.HandleFunc("/containers/{id}/io", controller.ContainerIOUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/cpu", controller.ContainerCPUUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/net", controller.ContainerNetUsageHandler).Methods("GET")
 	r.HandleFunc("/containers/{id}/usage", controller.ContainerUsageHandler).Methods("GET")

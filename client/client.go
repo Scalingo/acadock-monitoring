@@ -73,6 +73,7 @@ type IODeviceUsage struct {
 type AcadockClient interface {
 	AllContainersUsage(ctx context.Context) (ContainersUsage, error)
 	Memory(ctx context.Context, dockerId string) (*MemoryUsage, error)
+	IOUsage(ctx context.Context, dockerId string) (*IOUsage, error)
 	CpuUsage(ctx context.Context, dockerId string) (*CpuUsage, error)
 	NetUsage(ctx context.Context, dockerId string) (*NetUsage, error)
 	Usage(ctx context.Context, dockerId string, net bool) (*Usage, error)
@@ -129,6 +130,15 @@ func (c *Client) Memory(ctx context.Context, dockerId string) (*MemoryUsage, err
 		return nil, errors.Wrap(ctx, err, "get container memory usage")
 	}
 	return mem, nil
+}
+
+func (c *Client) IOUsage(ctx context.Context, dockerId string) (*IOUsage, error) {
+	io := &IOUsage{}
+	err := c.getResource(ctx, dockerId, "io", io)
+	if err != nil {
+		return nil, errors.Wrap(ctx, err, "get container io usage")
+	}
+	return io, nil
 }
 
 func (c *Client) CpuUsage(ctx context.Context, dockerId string) (*CpuUsage, error) {
