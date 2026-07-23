@@ -61,6 +61,24 @@ func (c Controller) ContainerMemUsageHandler(res http.ResponseWriter, req *http.
 	return nil
 }
 
+func (c Controller) ContainerIOUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
+	ctx := req.Context()
+	log := logger.Get(ctx)
+	id := params["id"]
+
+	containerIOUsage, err := c.resources.GetIOUsage(ctx, id)
+	if err != nil {
+		return errors.Wrap(ctx, err, "get container io usage")
+	}
+
+	res.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(res).Encode(&containerIOUsage)
+	if err != nil {
+		log.WithError(err).Error("Fail to encode container io usage payload")
+	}
+	return nil
+}
+
 func (c Controller) ContainerCPUUsageHandler(res http.ResponseWriter, req *http.Request, params map[string]string) error {
 	ctx := req.Context()
 	log := logger.Get(ctx)

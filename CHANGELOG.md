@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* feat(stat/io): Add monitoring of blkio (cgroupv1) / io (cgroupv2) stats, add endpoint to get them
+
 ## v2.0.6 - 2026-05-12
 
 * build(deps): replace dependency `github.com/docker/docker` with `github.com/moby/moby`
