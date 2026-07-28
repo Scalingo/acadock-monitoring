@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni/v3"
@@ -55,7 +56,14 @@ func main() {
 	go queueLength.Start(ctx)
 
 	containerRepository := docker.NewContainerRepository()
-	mountInfos, err := procfs.NewMountInfoReader(ctx)
+	mountInfoPID := 0
+	if config.ENV["PROC_MOUNTINFO_PID"] != "" {
+		mountInfoPID, err = strconv.Atoi(config.ENV["PROC_MOUNTINFO_PID"])
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+	mountInfos, err := procfs.NewMountInfoReader(ctx, config.ENV["PROC_DIR"], mountInfoPID)
 	if err != nil {
 		log.Fatalln(err)
 	}

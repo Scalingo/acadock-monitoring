@@ -15,6 +15,7 @@ var ENV = map[string]string{
 	"CGROUP_SOURCE":                  "docker",
 	"CGROUP_DIR":                     "/sys/fs/cgroup",
 	"PROC_DIR":                       "/proc",
+	"PROC_MOUNTINFO_PID":             "",
 	"RUNNER_DIR":                     "/usr/bin",
 	"DEBUG":                          "false",
 	"NET_MONITORING":                 "true",

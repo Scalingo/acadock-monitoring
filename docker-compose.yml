@@ -9,6 +9,9 @@ services:
       - .:/go/src/github.com/Scalingo/acadock-monitoring
     env_file:
       - .env
+    environment:
+      PROC_DIR: /host/proc
+      PROC_MOUNTINFO_PID: "1"
     command: reflex -r '\.go$$' -s -- sh -c 'go build -buildvcs=false ./cmd/acadock-monitoring && ./acadock-monitoring'
     privileged: true
     pid: host
