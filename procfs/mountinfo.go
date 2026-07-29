@@ -32,16 +32,18 @@ type MountInfoReader struct {
 	devices    map[string]string
 }
 
-func NewMountInfoReader(ctx context.Context) (*MountInfoReader, error) {
-	_, err := prometheusprocfs.NewFS("/proc")
+func NewMountInfoReader(ctx context.Context, procDir string, pid int) (*MountInfoReader, error) {
+	procFS, err := prometheusprocfs.NewFS(procDir)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "create procfs filesystem")
 	}
-	pid := os.Getpid()
+	if pid == 0 {
+		pid = os.Getpid()
+	}
 
 	return &MountInfoReader{
 		getMountInfos: func() ([]*prometheusprocfs.MountInfo, error) {
-			return prometheusprocfs.GetProcMounts(pid)
+			return procFS.GetProcMounts(pid)
 		},
 		sysDevBlock: "/sys/dev/block",
 		dev:         "/dev",
