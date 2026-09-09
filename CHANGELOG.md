@@ -2,6 +2,10 @@
 
 ## To Be Released
 
+## v2.1.1 - 2026-09-09
+
+* fix(memory): report cgroup v2 peak usage
+
 ## v2.1.0 - 2026-07-23
 
 * feat(stat/io): Add monitoring of blkio (cgroupv1) / io (cgroupv2) stats, add endpoint to get them
