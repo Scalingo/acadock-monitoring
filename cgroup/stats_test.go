@@ -1,11 +1,14 @@
 package cgroup
 
 import (
+	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
 	statsV1 "github.com/containerd/cgroups/v3/cgroup1/stats"
+	"github.com/containerd/cgroups/v3/cgroup2"
 	statsV2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 	"github.com/stretchr/testify/require"
 )
@@ -22,6 +25,43 @@ func (f fakeMountInfos) DevicePath(major uint64, minor uint64) string {
 
 func deviceKey(major uint64, minor uint64) string {
 	return strconv.FormatUint(major, 10) + ":" + strconv.FormatUint(minor, 10)
+}
+
+func TestGetCgroupV2StatsMapsPeakUsage(t *testing.T) {
+	mountpoint := t.TempDir()
+	cgroupPath := filepath.Join(mountpoint, "test")
+	require.NoError(t, os.Mkdir(cgroupPath, 0o755))
+
+	for filename, content := range map[string]string{
+		"cpu.stat":            "usage_usec 42\n",
+		"memory.stat":         "anon 0\n",
+		"memory.current":      "10\n",
+		"memory.max":          "30\n",
+		"memory.peak":         "20\n",
+		"memory.swap.current": "15\n",
+		"memory.swap.max":     "41\n",
+		"memory.swap.peak":    "27\n",
+	} {
+		require.NoError(t, os.WriteFile(filepath.Join(cgroupPath, filename), []byte(content), 0o600))
+	}
+
+	cgroupManager, err := cgroup2.Load("/test", cgroup2.WithMountpoint(mountpoint))
+	require.NoError(t, err)
+
+	stats, err := NewStatsReader(fakeMountInfos{}).getCgroupV2Stats(t.Context(), &Manager{
+		cgroupV2Manager: cgroupManager,
+	})
+	require.NoError(t, err)
+	require.Equal(t, Stats{
+		CPUUsage:       42 * time.Microsecond,
+		MemoryUsage:    10,
+		MemoryMaxUsage: 20,
+		MemoryLimit:    30,
+		SwapUsage:      15,
+		SwapMaxUsage:   27,
+		SwapLimit:      41,
+		IOUsage:        IOUsage{Devices: []IODeviceUsage{}},
+	}, stats)
 }
 
 func TestCgroupV1StatsMapsStats(t *testing.T) {
