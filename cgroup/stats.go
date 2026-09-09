@@ -92,12 +92,14 @@ func (r *StatsReaderImpl) getCgroupV2Stats(ctx context.Context, manager *Manager
 	}
 
 	return Stats{
-		CPUUsage:    time.Duration(stats.CPU.UsageUsec) * time.Microsecond,
-		MemoryUsage: stats.Memory.Usage,
-		MemoryLimit: stats.Memory.UsageLimit,
-		SwapUsage:   stats.Memory.SwapUsage,
-		SwapLimit:   stats.Memory.SwapLimit,
-		IOUsage:     cgroupV2IOUsage(stats.Io, r.mountInfos),
+		CPUUsage:       time.Duration(stats.CPU.UsageUsec) * time.Microsecond,
+		MemoryUsage:    stats.Memory.Usage,
+		MemoryLimit:    stats.Memory.UsageLimit,
+		MemoryMaxUsage: stats.Memory.MaxUsage,
+		SwapUsage:      stats.Memory.SwapUsage,
+		SwapLimit:      stats.Memory.SwapLimit,
+		SwapMaxUsage:   stats.Memory.SwapMaxUsage,
+		IOUsage:        cgroupV2IOUsage(stats.Io, r.mountInfos),
 	}, nil
 }
 
