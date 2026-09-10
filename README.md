@@ -117,4 +117,4 @@ goreleaser release --skip=publish,announce,sign --clean
 
 On the web interface, unset the pre-release checkbox, check the "Set as the latest release" checkbox, and upload the archives in the `dist` folder.
 
-Last, update the default version installed in the kitchen.
+Last, for this release to be used in the staging environment, the version must also be updated in the [kitchen]([https://github.com/Scalingo/appsdeck-kitchen/blob/79304a3e201bc67f9ce03f9e5550c464dba14709/scalingo-cookbooks/scalingo/attributes/default.rb#L90-L94](https://github.com/Scalingo/appsdeck-kitchen/blob/e73e141d8f5a6f330ad30e5a854313f404dcfd95/scalingo-cookbooks/acadock/attributes/default.rb#L1)). The version used in the production environment is declared in the [`production.rb` file]([https://github.com/Scalingo/appsdeck-kitchen/blob/79304a3e201bc67f9ce03f9e5550c464dba14709/environments/production.rb#L115-L117](https://github.com/Scalingo/appsdeck-kitchen/blob/e73e141d8f5a6f330ad30e5a854313f404dcfd95/environments/production.rb#L197-L199)).
