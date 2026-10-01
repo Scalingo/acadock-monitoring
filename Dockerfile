@@ -1,4 +1,4 @@
-FROM golang:1.25
+FROM golang:1.26
 LABEL maintainer="IST <team-infrastructure-services@scalingo.com>"
 
 RUN apt-get update \
