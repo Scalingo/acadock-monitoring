@@ -23,7 +23,7 @@ github.com/Scalingo/go-utils/errors/v3
 # github.com/Scalingo/go-utils/graceful v1.3.3
 ## explicit; go 1.25.0
 github.com/Scalingo/go-utils/graceful
-# github.com/Scalingo/go-utils/logger v1.12.2
+# github.com/Scalingo/go-utils/logger v1.13.0
 ## explicit; go 1.25.0
 github.com/Scalingo/go-utils/logger
 # github.com/Scalingo/go-utils/security v1.2.2
@@ -68,8 +68,8 @@ github.com/containerd/errdefs
 ## explicit; go 1.22
 github.com/containerd/errdefs/pkg/errhttp
 github.com/containerd/errdefs/pkg/internal/cause
-# github.com/containerd/log v0.1.0
-## explicit; go 1.20
+# github.com/containerd/log v0.2.0
+## explicit; go 1.23
 github.com/containerd/log
 # github.com/coreos/go-systemd/v22 v22.7.0
 ## explicit; go 1.23
@@ -111,7 +111,7 @@ github.com/gorilla/mux
 # github.com/moby/docker-image-spec v1.3.1
 ## explicit; go 1.18
 github.com/moby/docker-image-spec/specs-go/v1
-# github.com/moby/moby/api v1.55.0
+# github.com/moby/moby/api v1.56.0
 ## explicit; go 1.24
 github.com/moby/moby/api/types
 github.com/moby/moby/api/types/blkiodev
@@ -130,14 +130,14 @@ github.com/moby/moby/api/types/storage
 github.com/moby/moby/api/types/swarm
 github.com/moby/moby/api/types/system
 github.com/moby/moby/api/types/volume
-# github.com/moby/moby/client v0.5.1
+# github.com/moby/moby/client v0.6.0
 ## explicit; go 1.24
 github.com/moby/moby/client
 github.com/moby/moby/client/internal
 github.com/moby/moby/client/internal/mod
 github.com/moby/moby/client/internal/timestamp
 github.com/moby/moby/client/pkg/versions
-# github.com/moby/sys/userns v0.2.0
+# github.com/moby/sys/userns v0.2.1
 ## explicit; go 1.21
 github.com/moby/sys/userns
 # github.com/opencontainers/go-digest v1.0.0
@@ -161,6 +161,7 @@ github.com/prometheus/procfs/internal/parsers
 # github.com/sirupsen/logrus v1.10.2
 ## explicit; go 1.23
 github.com/sirupsen/logrus
+github.com/sirupsen/logrus/hooks/slog
 # github.com/stretchr/testify v1.12.1
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
@@ -230,10 +231,10 @@ go.opentelemetry.io/otel/trace/noop
 # go.yaml.in/yaml/v3 v3.0.5
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/net v0.58.0
-## explicit; go 1.25.0
-# golang.org/x/sys v0.47.0
-## explicit; go 1.25.0
+# golang.org/x/net v0.59.0
+## explicit; go 1.26.0
+# golang.org/x/sys v0.48.0
+## explicit; go 1.26.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # google.golang.org/protobuf v1.36.12
