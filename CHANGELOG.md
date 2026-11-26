@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* feat(net): Configure the monitored container interface with `CONTAINER_INTERFACE_NAME`
+
 ## v2.1.1 - 2026-09-09
 
 * fix(memory): report cgroup v2 peak usage

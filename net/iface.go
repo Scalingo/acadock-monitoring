@@ -11,6 +11,7 @@ import (
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 
+	"github.com/Scalingo/acadock-monitoring/v2/config"
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
@@ -48,15 +49,17 @@ func getContainerIfaceID(ctx context.Context, id string) (string, error) {
 		return "", errors.Wrapf(ctx, err, "could not get network namespace")
 	}
 	defer nshandler.Close()
+
 	nlhandler, err := netlink.NewHandleAt(nshandler)
 	if err != nil {
 		return "", errors.Wrapf(ctx, err, "could not create netlink handle")
 	}
 	defer nlhandler.Close()
 
-	containerVethLink, err := nlhandler.LinkByName("eth0")
+	interfaceName := config.ENV["CONTAINER_INTERFACE_NAME"]
+	containerVethLink, err := nlhandler.LinkByName(interfaceName)
 	if err != nil {
-		return "", errors.Wrapf(ctx, err, "could not get eth0 link")
+		return "", errors.Wrapf(ctx, err, "could not get container interface %s", interfaceName)
 	}
 
 	parentContainerVethLinkIndex := containerVethLink.Attrs().ParentIndex
