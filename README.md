@@ -19,6 +19,7 @@ From environment
   systemd: /sys/fs/cgroup/:cgroup/memory/system.slice/docker-#{id}.slice
 * `PROC_DIR`: procfs mountpoint (default to /proc)
 * `PROC_MOUNTINFO_PID`: PID used to read mountinfo for IO device mountpoints (default to the acadock-monitoring PID). Set it to 1 with `PROC_DIR=/host/proc` to use the host/root mount namespace from a container.
+* `CONTAINER_INTERFACE_NAME` sets the interface to monitor inside each Docker container (defaults to `eth0`). Chef deployments set it through the `node["acadock"]["container_interface_name"]` attribute.
 * `DEBUG`: output of debugging information (default "false", switch to "true" to enable)
 
 ## Docker
